@@ -125,6 +125,7 @@ simultanés sont mis en file ; `mode_summary()` expose
 | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Dépannage |
 | [`docs/TEST_RESULTS.md`](docs/TEST_RESULTS.md) | Résultats de tests réellement exécutés |
 | [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) | État précis, éléments bloqués, procédure de reprise |
+| [`docs/FINAL_DELIVERY.md`](docs/FINAL_DELIVERY.md) | Classification exhaustive de chaque fonctionnalité, URLs, résultats et blocage |
 | [`docs/AGENTS_CATALOG.md`](docs/AGENTS_CATALOG.md) | Les 100 agents, état individuel |
 | [`.env.example`](.env.example) | Toutes les variables, commentées |
 

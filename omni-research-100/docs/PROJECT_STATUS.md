@@ -1,6 +1,7 @@
 # État précis du projet — reprise sans recommencer
 
-Date : 2026-11-03 (UTC). Branche de session :
+Date : 2026-11-03 (UTC). Classification exhaustive : `docs/FINAL_DELIVERY.md`.
+Branche de session :
 `arena/63999462-skills-collection` du dépôt
 `blassana280-ux/skills-collection`. Code produit dans `omni-research-100/`.
 
