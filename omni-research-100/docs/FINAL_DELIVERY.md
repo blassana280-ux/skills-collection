@@ -11,7 +11,7 @@ Date : 2026-11-03 (UTC). Ce document applique la classification demandée à
 | Dépôt de livraison (réel, existant) | https://github.com/blassana280-ux/skills-collection |
 | Branche dédiée | https://github.com/blassana280-ux/skills-collection/tree/arena/63999462-skills-collection |
 | PR **ouverte, non fusionnée** | https://github.com/blassana280-ux/skills-collection/pull/2 |
-| CI verte (dernière) | run `41729820449` (1 min 17 s, 15 étapes ✓), aussi `41727882197`, `41727343863` |
+| CI verte | tous les runs de la branche : `41727343863`, `41727882197`, `41729820449`, `41730222327`, `41733501383` (15 étapes ✓, job « Tests Python (71) + interface (5) ») |
 | Application | aperçu Arena live sur le port **8000** (`uvicorn`, `0.0.0.0`) ; localement `http://localhost:8000` ; `/docs` pour OpenAPI |
 | Dépôt privé demandé | https://github.com/blassana280-ux/omni-research-100 → **n'existe pas** (404), création **BLOQUÉE** |
 
@@ -76,7 +76,7 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
   agents/providers/mission ⇒ `insufficient_evidence`, **0 source**).
 - Conformité OmniBrain : `omnibrain_contract_check.json` (6/6).
 - Fournisseurs live : `providers_live.json` (`live_verified: []`).
-- CI : run `41729820449` ✓ (intégrité 100 profils, dépendances, `pip-audit`,
+- CI : runs verts ✓ (dernier vérifié `41733501383`) (intégrité 100 profils, dépendances, `pip-audit`,
   71 tests, catalogue, 5 tests Node, pipeline hors ligne, conformance OmniBrain,
   état live des fournisseurs, artefacts).
 

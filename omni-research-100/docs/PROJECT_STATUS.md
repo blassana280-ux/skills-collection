@@ -63,8 +63,8 @@ modifié directement.
 6. Interopérabilité inter-processus avec un orchestrateur OmniBrain externe
    (aucun dépôt OmniBrain cloné ni modifié, par consigne). La conformité au
    contrat, elle, est vérifiée automatiquement.
-7. ~~Résultat CI GitHub Actions~~ → **fait** : runs `41727343863` et
-   `41727882197` verts sur la PR #2.
+7. ~~Résultat CI GitHub Actions~~ → **fait** : runs `41727343863`, `41727882197`, `41729820449`, `41730222327` et
+   `41733501383` verts sur la PR #2.
 
 ## 4. Procédure de reprise (après création du dépôt privé)
 
