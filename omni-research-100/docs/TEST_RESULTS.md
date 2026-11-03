@@ -12,9 +12,12 @@ node --test tests/test_web_ui.test.js
 .venv/bin/python scripts/verify_offline.py
 .venv/bin/python scripts/audit_dependencies.py
 .venv/bin/python scripts/gen_profiles.py --check
+.venv/bin/python scripts/verify_omnibrain_contract.py
+.venv/bin/python scripts/verify_providers_live.py
 ```
 
-Codes de retour : **0 pour les cinq commandes**.
+Codes de retour : **0 pour les sept commandes** (les deux vérifications
+supplémentaires produisent des rapports JSON conservés).
 
 ## Résultat global
 
@@ -69,6 +72,8 @@ worker qui ne cache pas `/api/*`, responsive mobile.
 | `verify_offline.txt` | Sortie console de la vérification |
 | `dependency_audit.json` / `.txt` | 11 dépendances épinglées, politique `PASS` |
 | `generated_profiles.txt` | Intégrité des fichiers générés (`--check`) |
+| `omnibrain_contract_check.json` / `.txt` | Compatibilité OmniBrain : **6/6 contrôles vrais** contre les 4 fichiers sources réels relus depuis `omni-agents-framework` |
+| `providers_live.json` / `.txt` | Vérification live des 5 connecteurs : 0 fournisseur vérifié en direct, 0 source simulée, erreurs explicites |
 | `live_app_smoke.json` | Application réelle lancée en `uvicorn` : health, UI, login, providers, validation des 100 agents, mission réelle ⇒ `insufficient_evidence` avec 0 source |
 
 ## Bugs découverts et corrigés (avant de déclarer la livraison)
@@ -102,8 +107,13 @@ worker qui ne cache pas `/api/*`, responsive mobile.
   replis locaux exécutés et testés.
 - Aucun navigateur réel : l'UI est couverte par des tests statiques et par
   les tests de ses endpoints.
-- L'orchestrateur OmniBrain externe n'a pas été lancé contre l'API ; la
-  conformité au contrat inspecté et le protocole JSONL sont testés.
+- L'orchestrateur OmniBrain externe n'a pas été lancé contre l'API ; en
+  revanche la **conformité au contrat est vérifiée automatiquement contre les
+  fichiers sources réels** et le protocole JSONL est testé.
+- `scripts/verify_providers_live.py` a été exécuté : Tavily/Brave/Exa/Firecrawl
+  `not_configured`, SearXNG `error` (hôte `searxng` non résolu, aucune instance
+  locale). **`live_verified: []`** — aucun appel live réussi, aucun résultat
+  simulé.
 - Aucune simulation de résultat de recherche réel n'a été utilisée en
   production ; les doubles sont marqués `test_double=True` et font échouer la
   gate `real_provider`.

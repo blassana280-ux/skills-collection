@@ -28,13 +28,15 @@ Date : 2026-11-03 (UTC). Branche de session :
   `.env.example`, `Makefile`.
 - **Application réelle** : `uvicorn` lancé sur `0.0.0.0:8000` (aperçu Arena, aucune infrastructure payante) ; health, UI, login, providers, validation des 100 agents et mission réelle vérifiés par HTTP — sans clé, `insufficient_evidence` avec **0 source** et rapport `NEEDS_WORK` (`test-results/live_app_smoke.json`).
 - **OmniBrain** : contrat réel inspecté en lecture seule, adaptateur versionné,
-  export des agents, file JSONL compatible, permissions alignées, 6 tests.
+  export des agents, file JSONL compatible, permissions alignées, 6 tests,
+  **et contrôle de conformité automatique 6/6 contre les 4 fichiers sources
+  réels** (`scripts/verify_omnibrain_contract.py`, rejoué en CI).
 
 ## 2. Éléments BLOQUÉS (ne pas prétendre le contraire)
 
 | Élément | Cause exacte | Intervention requise |
 |---|---|---|
-| Création du dépôt privé `blassana280-ux/omni-research-100` | `gh repo create blassana280-ux/omni-research-100 --private …` → **`GraphQL: Resource not accessible by integration (createRepository)`** : le jeton GitHub connecté n'a pas le droit de créer des dépôts | Accorder le scope d'administration/création de dépôt à la connexion GitHub d'Arena, **ou** créer manuellement un dépôt privé **vide** (sans README automatique) `blassana280-ux/omni-research-100`. Aucune autre intervention n'est demandée |
+| Création du dépôt privé `blassana280-ux/omni-research-100` | **Toujours bloquée après l'autorisation donnée par l'utilisateur** : `gh repo create` → `GraphQL: Resource not accessible by integration (createRepository)` **et** `POST /user/repos` (REST) → `403 Resource not accessible by integration`. Les en-têtes `X-OAuth-Scopes` sont vides : c'est un jeton d'installation GitHub App. Une autorisation formulée dans le chat ne modifie pas ce jeton | **Reconnecter GitHub dans Arena avec le droit de création de dépôt**, **ou** créer manuellement le dépôt privé **vide** (sans README automatique). `OMNIBRAIN.md` du framework confirme que le token actuel n'a pas le scope `Administration`. Aucune autre intervention n'est demandée |
 | Protection de `main` | `GET /repos/blassana280-ux/skills-collection/branches/master/protection` → **403 Resource not accessible by integration** ; de plus, modifier des permissions globales fait partie des opérations soumises à autorisation explicite | Droit d'administration + autorisation explicite de l'utilisateur |
 | Fusion d'une PR | Interdite sans accord explicite | Autorisation explicite |
 | Déploiement payant | Interdit sans accord | Autorisation explicite |
@@ -46,7 +48,9 @@ modifié directement.
 
 ## 3. Éléments IMPLÉMENTÉS MAIS NON VÉRIFIÉS (à faire après déblocage)
 
-1. Appels live aux 5 API de recherche (clés absentes, réseau sortant limité à
+1. Appels live aux 5 API de recherche : `test-results/providers_live.json`
+   indique `live_verified: []` (4 `not_configured`, SearXNG `error` DNS),
+   obtenu par `scripts/verify_providers_live.py`. Réseau sortant limité à
    github.com / api.github.com / codeload.github.com / registry.npmjs.org /
    pypi.org / files.pythonhosted.org). Vérifier avec
    `POST /api/providers/{name}/test` et une clé réelle.
@@ -56,8 +60,10 @@ modifié directement.
 4. Contrôle DNS SSRF en conditions réelles (`OMNI_DNS_SSRF_CHECK=true`).
 5. UI dans un navigateur Android/desktop réel.
 6. Interopérabilité inter-processus avec un orchestrateur OmniBrain externe
-   (aucun dépôt OmniBrain cloné ni modifié, par consigne).
-7. ~~Résultat CI GitHub Actions~~ → **fait** : run `41727343863` vert sur la PR #2.
+   (aucun dépôt OmniBrain cloné ni modifié, par consigne). La conformité au
+   contrat, elle, est vérifiée automatiquement.
+7. ~~Résultat CI GitHub Actions~~ → **fait** : runs `41727343863` et
+   `41727882197` verts sur la PR #2.
 
 ## 4. Procédure de reprise (après création du dépôt privé)
 

@@ -1,0 +1,30 @@
+{
+  "providers": [
+    [
+      "searxng",
+      "error",
+      0
+    ],
+    [
+      "tavily",
+      "not_configured",
+      0
+    ],
+    [
+      "brave",
+      "not_configured",
+      0
+    ],
+    [
+      "exa",
+      "not_configured",
+      0
+    ],
+    [
+      "firecrawl",
+      "not_configured",
+      0
+    ]
+  ],
+  "live_verified": []
+}

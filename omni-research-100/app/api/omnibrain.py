@@ -159,7 +159,8 @@ def contract(actor: Actor = Depends(require("agents:read")),
         "agents_exported": len(export["agents"]),
         "registry_export": export,
         "no_modification_of_omnibrain_repos": True,
-        "callback_posting": "disabled by default (SSRF policy; results via GET)",
+        "callback_posting": False,
+        "callback_policy": "disabled (SSRF policy; results retrieved via authenticated GET)",
     }
 
 

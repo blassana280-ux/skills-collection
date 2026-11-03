@@ -91,6 +91,16 @@ verify, graph, search, extract, llm` uniquement).
 
 ## 6. Ce qui est vérifié, et ce qui ne l'est pas
 
+**Vérifié contre les sources réelles** : `scripts/verify_omnibrain_contract.py`
+relit à l'exécution `OMNIBRAIN.md`, `registry/permissions.json`,
+`cf100/bridges/omni_queue.py` et `cf100/bridges/omnibrain.py` via l'API GitHub
+(lecture seule), puis compare : les **6 gates**, la **règle d'arbitrage** et
+l'égalité ⇒ `unresolved`, les **6 actions dangereuses**, les **3 fichiers
+JSONL** + `in_response_to`, le **format d'export** (100 agents, 7 clés du
+bridge) et l'**alignement des permissions**. Résultat :
+`COMPATIBILITÉ VÉRIFIÉE CONTRE LES SOURCES RÉELLES`, 6/6 contrôles vrais
+(`test-results/omnibrain_contract_check.json`). Ce contrôle est rejoué par la CI.
+
 **Vérifié** : contrat réel lu et transcrit ; 6 tests d'intégration
 (`tests/test_omnibrain.py`) exécutés : rejet de mauvaise clé, conformité du
 contrat aux sources inspectées, garde de version, cycle complet

@@ -108,6 +108,11 @@ du rapport. Les données web sont envoyées dans un bloc
 
 ## 8. Limite de ce contexte d'exécution
 
+Pour vérifier réellement les 5 connecteurs sur une machine connectée :
+`python scripts/verify_providers_live.py "ma requête"`. Le rapport
+`test-results/providers_live.json` indique `live_verified` ; un connecteur non
+configuré reste à **0 source** et aucune donnée d'exemple n'est injectée.
+
 Le sandbox de construction n'avait **aucune clé API** et un réseau sortant
 limité à `github.com`, `api.github.com`, `codeload.github.com`,
 `registry.npmjs.org`, `pypi.org`, `files.pythonhosted.org`. Les appels réels

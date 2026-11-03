@@ -44,6 +44,12 @@ jobs:
         run: node --test tests/test_web_ui.test.js
       - name: Vérification hors ligne de bout en bout
         run: python scripts/verify_offline.py
+      - name: Compatibilité OmniBrain contre les sources réelles
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/verify_omnibrain_contract.py
+      - name: État live des fournisseurs (aucune simulation)
+        run: python scripts/verify_providers_live.py
       - name: Conserver les résultats
         if: always()
         uses: actions/upload-artifact@v4

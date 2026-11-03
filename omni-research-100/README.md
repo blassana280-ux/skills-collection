@@ -22,8 +22,9 @@ données non fiables (neutralisation des injections, aucune exécution de code).
 | 100 handlers exécutés individuellement avec sorties distinctes | **OPÉRATIONNEL ET TESTÉ** (68 tests Python + 5 tests Node) |
 | Pipeline FAST / DEEP / MAXIMUM de bout en bout | **OPÉRATIONNEL ET TESTÉ** (avec double de test hors ligne déclaré) |
 | Adaptateur OmniBrain v1 (contrat réel inspecté + file JSONL) | **OPÉRATIONNEL ET TESTÉ** |
-| Parseurs des 5 connecteurs (SearXNG, Tavily, Brave, Exa, Firecrawl) | **IMPLÉMENTÉS, PARSING TESTÉ** avec transport HTTP simulé |
-| Appels **réels** aux 5 API externes | **IMPLÉMENTÉS MAIS NON VÉRIFIÉS** : aucune clé API présente et réseau sortant du sandbox limité |
+| Parseurs des 5 connecteurs (SearXNG, Tavily, Brave, Exa, Firecrawl) | **IMPLÉMENTÉS, PARSING TESTÉ** avec transport HTTP simulé ; `scripts/verify_providers_live.py` permet la vérification live dès qu'une clé/service existe |
+| Compatibilité OmniBrain au contrat réel | **OPÉRATIONNELLE ET TESTÉE** : `scripts/verify_omnibrain_contract.py` relit les 4 fichiers sources et valide 6/6 contrôles |
+| Appels **réels** aux 5 API externes | **IMPLÉMENTÉS MAIS NON VÉRIFIÉS** : `live_verified: []` (`test-results/providers_live.json`), aucune clé API présente et réseau sortant du sandbox limité |
 | PostgreSQL / Redis / Qdrant | **ADAPTATEURS IMPLÉMENTÉS, NON EXÉCUTÉS ici** (binaires absents) ; SQLite / file en mémoire / index cosinus local **exécutés et testés** |
 | Fournisseurs de modèles (OpenAI-compatible, Anthropic, Ollama) | **IMPLÉMENTÉS MAIS NON VÉRIFIÉS** (sans clé) ; synthèse extractive déterministe **exécutée et testée** |
 | Interface dans un vrai navigateur | **PARTIELLE** : tests statiques Node + tests de ses endpoints ; aucun navigateur dans le sandbox |

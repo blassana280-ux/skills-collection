@@ -1,4 +1,4 @@
-.PHONY: install test test-ui audit generate run verify docker clean
+.PHONY: install test test-ui audit generate run verify verify-omnibrain verify-live docker clean
 
 install:
 	python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
@@ -17,6 +17,12 @@ generate:
 
 verify:
 	.venv/bin/python scripts/verify_offline.py
+
+verify-omnibrain:
+	.venv/bin/python scripts/verify_omnibrain_contract.py
+
+verify-live:
+	.venv/bin/python scripts/verify_providers_live.py
 
 run:
 	.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
