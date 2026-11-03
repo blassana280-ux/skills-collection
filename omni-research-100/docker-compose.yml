@@ -1,0 +1,72 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      OMNI_DATABASE_URL: postgresql+psycopg://omni:omni@postgres:5432/omni_research
+      OMNI_REDIS_URL: redis://redis:6379/0
+      OMNI_QDRANT_URL: http://qdrant:6333
+      OMNI_SEARXNG_URL: http://searxng:8080
+      OMNI_HOST: 0.0.0.0
+      OMNI_PORT: "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      qdrant:
+        condition: service_started
+      searxng:
+        condition: service_started
+    volumes:
+      - app-data:/srv/omni/data
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: omni
+      POSTGRES_PASSWORD: omni
+      POSTGRES_DB: omni_research
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U omni -d omni_research"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.1
+    volumes:
+      - qdrant-data:/qdrant/storage
+    restart: unless-stopped
+
+  searxng:
+    image: searxng/searxng:latest
+    environment:
+      SEARXNG_BASE_URL: http://searxng:8080/
+      SEARXNG_SECRET: ${OMNI_SEARXNG_SECRET:-change-this-searxng-secret}
+    volumes:
+      - ./deploy/searxng-settings.yml:/etc/searxng/settings.yml:ro
+      - searxng-data:/etc/searxng
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  pg-data:
+  redis-data:
+  qdrant-data:
+  app-data:
+  searxng-data:

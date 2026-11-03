@@ -1,0 +1,28 @@
+.PHONY: install test test-ui audit generate run verify docker clean
+
+install:
+	python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+
+test:
+	.venv/bin/python -m pytest -q --junitxml=test-results/junit.xml
+
+test-ui:
+	node --test tests/test_web_ui.test.js
+
+audit:
+	.venv/bin/python scripts/audit_dependencies.py
+
+generate:
+	.venv/bin/python scripts/gen_profiles.py
+
+verify:
+	.venv/bin/python scripts/verify_offline.py
+
+run:
+	.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+docker:
+	docker compose up --build -d
+
+clean:
+	rm -rf .pytest_cache test-results/*.xml
