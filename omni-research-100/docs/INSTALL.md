@@ -50,7 +50,7 @@ docker run --rm -p 8000:8000 --env-file .env \
 ## Tests et vérification
 
 ```bash
-.venv/bin/python -m pytest -q                       # 68 tests
+.venv/bin/python -m pytest -q                       # 71 tests
 node --test tests/test_web_ui.test.js             # 5 tests
 .venv/bin/python scripts/verify_offline.py        # bout en bout hors ligne
 .venv/bin/python scripts/gen_profiles.py --check  # intégrité des 100 profils

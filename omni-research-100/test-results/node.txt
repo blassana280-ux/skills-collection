@@ -2,31 +2,31 @@ TAP version 13
 # Subtest: toutes les fonctionnalités demandées ont un contrôle réel
 ok 1 - toutes les fonctionnalités demandées ont un contrôle réel
   ---
-  duration_ms: 1.452013
+  duration_ms: 0.880776
   type: 'test'
   ...
 # Subtest: les trois modes sont présentés et sélectionnables
 ok 2 - les trois modes sont présentés et sélectionnables
   ---
-  duration_ms: 0.23124
+  duration_ms: 0.156952
   type: 'test'
   ...
 # Subtest: le front appelle les vrais endpoints du backend
 ok 3 - le front appelle les vrais endpoints du backend
   ---
-  duration_ms: 0.270481
+  duration_ms: 0.187694
   type: 'test'
   ...
 # Subtest: aucune donnée fictive ni interprétation HTML de contenu non fiable
 ok 4 - aucune donnée fictive ni interprétation HTML de contenu non fiable
   ---
-  duration_ms: 0.456985
+  duration_ms: 0.37365
   type: 'test'
   ...
 # Subtest: interface Android/ordinateur et PWA
 ok 5 - interface Android/ordinateur et PWA
   ---
-  duration_ms: 0.348102
+  duration_ms: 0.212448
   type: 'test'
   ...
 1..5
@@ -37,4 +37,4 @@ ok 5 - interface Android/ordinateur et PWA
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 88.629015
+# duration_ms 61.45305

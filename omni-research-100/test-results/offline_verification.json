@@ -1,5 +1,5 @@
 {
-  "mission_id": "mission-7b4be66bcc5a476a",
+  "mission_id": "mission-57c971440f1e4d9a",
   "status": "completed",
   "verdict": "NEEDS_WORK",
   "gates": {
@@ -21,7 +21,7 @@
     "firecrawl",
     "fixture"
   ],
-  "wall_s": 0.223,
+  "wall_s": 0.222,
   "report_available": true,
   "memory": {
     "source_of_truth": "sqlite",

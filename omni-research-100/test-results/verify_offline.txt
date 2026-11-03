@@ -1,9 +1,9 @@
-{"ts": 1793743120.839, "level": "INFO", "component": "commander", "event": "mission_created", "mission_id": "mission-7b4be66bcc5a476a", "mode": "fast"}
+{"ts": 1793745893.112, "level": "INFO", "component": "commander", "event": "mission_created", "mission_id": "mission-57c971440f1e4d9a", "mode": "fast"}
 HTTP Request: GET https://fixture.local/corpus?q=V%C3%A9rification+hors+ligne+%3A+versions+de+l%27API+et+%C3%A9tudes+2025 "HTTP/1.1 200 OK"
-{"ts": 1793743120.86, "level": "INFO", "component": "providers", "event": "search_ok", "mission_id": "mission-7b4be66bcc5a476a", "provider": "fixture", "results": 8, "latency_ms": 2.2}
-{"ts": 1793743120.9, "level": "INFO", "component": "evidence", "event": "collected", "mission_id": "mission-7b4be66bcc5a476a", "sources": 8, "domains": 8, "injections": 0, "rejected": 0}
+{"ts": 1793745893.134, "level": "INFO", "component": "providers", "event": "search_ok", "mission_id": "mission-57c971440f1e4d9a", "provider": "fixture", "results": 8, "latency_ms": 2.2}
+{"ts": 1793745893.174, "level": "INFO", "component": "evidence", "event": "collected", "mission_id": "mission-57c971440f1e4d9a", "sources": 8, "domains": 8, "injections": 0, "rejected": 0}
 {
-  "mission_id": "mission-7b4be66bcc5a476a",
+  "mission_id": "mission-57c971440f1e4d9a",
   "status": "completed",
   "verdict": "NEEDS_WORK",
   "gates": {
@@ -25,7 +25,7 @@ HTTP Request: GET https://fixture.local/corpus?q=V%C3%A9rification+hors+ligne+%3
     "firecrawl",
     "fixture"
   ],
-  "wall_s": 0.223,
+  "wall_s": 0.222,
   "report_available": true,
   "memory": {
     "source_of_truth": "sqlite",

@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   quality:
-    name: Tests Python (68) + interface (5) + intégrité des 100 agents
+    name: Tests Python (71) + interface (5) + intégrité des 100 agents
     runs-on: ubuntu-latest
     defaults:
       run:

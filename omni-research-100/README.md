@@ -19,7 +19,7 @@ données non fiables (neutralisation des injections, aucune exécution de code).
 | Élément | État |
 |---|---|
 | Code complet (backend, 100 agents, moteur Internet, cerveau, mémoire, API, UI) | **OPÉRATIONNEL ET TESTÉ** |
-| 100 handlers exécutés individuellement avec sorties distinctes | **OPÉRATIONNEL ET TESTÉ** (68 tests Python + 5 tests Node) |
+| 100 handlers exécutés individuellement avec sorties distinctes | **OPÉRATIONNEL ET TESTÉ** (71 tests Python + 5 tests Node) |
 | Pipeline FAST / DEEP / MAXIMUM de bout en bout | **OPÉRATIONNEL ET TESTÉ** (avec double de test hors ligne déclaré) |
 | Adaptateur OmniBrain v1 (contrat réel inspecté + file JSONL) | **OPÉRATIONNEL ET TESTÉ** |
 | Parseurs des 5 connecteurs (SearXNG, Tavily, Brave, Exa, Firecrawl) | **IMPLÉMENTÉS, PARSING TESTÉ** avec transport HTTP simulé ; `scripts/verify_providers_live.py` permet la vérification live dès qu'une clé/service existe |
@@ -30,7 +30,7 @@ données non fiables (neutralisation des injections, aucune exécution de code).
 | Interface dans un vrai navigateur | **PARTIELLE** : tests statiques Node + tests de ses endpoints ; aucun navigateur dans le sandbox |
 | Dépôt privé `blassana280-ux/omni-research-100` | **BLOQUÉ** : `gh repo create` → `GraphQL: Resource not accessible by integration (createRepository)`. Voir [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) |
 | Protection de branche `main` | **BLOQUÉE** (403 + modification de permissions globales soumise à autorisation) |
-| CI GitHub Actions (PR #2, run 41727343863) | **VERTE** : 68 tests Python, 5 tests Node, 100 profils, `pip-audit`, vérification hors ligne |
+| CI GitHub Actions (PR #2, run 41727343863) | **VERTE** : 71 tests Python, 5 tests Node, 100 profils, `pip-audit`, vérification hors ligne |
 | Application réelle en aperçu local | **OPÉRATIONNELLE** : `uvicorn` sur `0.0.0.0:8000`, health/UI/login/agents/providers/mission vérifiés via HTTP (`test-results/live_app_smoke.json`) |
 | Fusion de Pull Request | **NON EFFECTUÉE** (autorisation explicite requise) |
 

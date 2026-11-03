@@ -1,4 +1,4 @@
-....................................................................     [100%]
+.......................................................................  [100%]
 =============================== warnings summary ===============================
 ../.venv/lib/python3.11/site-packages/starlette/testclient.py:40
   /home/user/skills-collection/.venv/lib/python3.11/site-packages/starlette/testclient.py:40: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.

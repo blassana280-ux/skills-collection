@@ -21,7 +21,7 @@ Branche de session :
   réglages, métriques, sauvegarde, rétention, adaptateur OmniBrain v1.
 - **UI** : responsive/PWA, 7 vues réelles, SSE authentifié + polling de repli,
   aucune donnée fictive, aucun `innerHTML`.
-- **Tests** : 68 Python + 5 Node + 1 pipeline hors ligne, **0 échec**,
+- **Tests** : 71 Python + 5 Node + 1 pipeline hors ligne, **0 échec**,
   résultats dans `test-results/` ; 8 bugs découverts et corrigés
   (`docs/TEST_RESULTS.md`).
 - **CI / Docker / docs** : 2 workflows — **CI verte** sur la PR #2 (run `41727343863`, 1 min 03 s) après correction d'un fichier de résultats exclu par le `.gitignore` racine ; Dockerfile, docker-compose 5 services,
@@ -67,6 +67,21 @@ modifié directement.
    `41727882197` verts sur la PR #2.
 
 ## 4. Procédure de reprise (après création du dépôt privé)
+
+**Automatisée** : `scripts/bootstrap_remote.sh` (avec `--check` pour un diagnostic
+sans écriture). Il refuse de s'exécuter si le dépôt est absent ou non vide,
+n'effectue aucun force-push, aucune fusion, aucune suppression, protège `main`
+uniquement si le droit existe, crée **4 branches empilées** avec commits
+cohérents et **4 PR non fusionnées**. Son `--check` a été exécuté : il a
+correctement refusé avec `BLOQUÉ : ... n'existe pas (404)`.
+
+```bash
+cd /home/user/skills-collection/omni-research-100
+./scripts/bootstrap_remote.sh --check   # diagnostic
+./scripts/bootstrap_remote.sh           # après création manuelle du dépôt vide
+```
+
+Équivalent manuel (si le script n'est pas utilisé) :
 
 ```bash
 # 1. Créer le dépôt privé vide (utilisateur) OU reconnecter GitHub avec le scope

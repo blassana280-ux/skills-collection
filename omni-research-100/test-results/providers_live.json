@@ -13,7 +13,7 @@
       "status": "error",
       "error_type": "ConnectError",
       "detail": "[Errno -2] Name or service not known",
-      "latency_ms": 22.4
+      "latency_ms": 21.2
     },
     {
       "provider": "tavily",

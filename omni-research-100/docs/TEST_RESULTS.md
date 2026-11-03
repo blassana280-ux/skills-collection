@@ -23,16 +23,16 @@ supplémentaires produisent des rapports JSON conservés).
 
 | Suite | Tests | Échecs | Erreurs | Ignorés |
 |---|---|---|---|---|
-| `pytest` (Python) | **68** | 0 | 0 | 0 |
+| `pytest` (Python) | **71** | 0 | 0 | 0 |
 | `node --test` (interface) | **5** | 0 | 0 | 0 |
 | Vérification hors ligne de bout en bout | 1 pipeline FAST | 0 | — | — |
-| **Total** | **73 tests + 1 pipeline** | **0** | **0** | **0** |
+| **Total** | **76 tests + 1 pipeline** | **0** | **0** | **0** |
 
 Durée pytest : 16,371 s. Durée Node : 58,1 ms.
 
 **CI GitHub Actions** : PR #2, run `41727343863` → **SUCCÈS** (1 min 03 s) :
 intégrité des 100 profils, analyse locale des dépendances, `pip-audit`,
-68 tests Python, catalogue régénéré, 5 tests Node, vérification hors ligne,
+71 tests Python, catalogue régénéré, 5 tests Node, vérification hors ligne,
 artefacts conservés. Un premier run (`41727016713`) a échoué sur l'intégrité des
 profils générés car `test-results/agent_results.json` était exclu par la règle
 racine `*_results.json` ; corrigé par une négation dans le `.gitignore` du
@@ -53,6 +53,7 @@ produit (commit `824072f`), puis CI verte.
 | `tests/test_failures.py` | 4 | fournisseur en panne, agent défaillant, pannes réseau, verdict `NEEDS_WORK` honnête |
 | `tests/test_memory.py` | 5 | persistance, cache réutilisable, événements rejouables, audit, sauvegarde, purge confirmée |
 | `tests/test_citations.py` | 3 | table des preuves, citations validées, données web non fiables |
+| `tests/test_bootstrap.py` | 3 | garanties du script de reprise : aucun force-push/fusion/suppression, `main` sans code produit, 4 branches empilées, refus d'écraser un dépôt non vide |
 | `tests/test_api.py` | 7 | cycle de mission complet via HTTP, auth/RBAC, agents/fournisseurs/réglages/métriques, SSE, erreurs |
 | `tests/test_omnibrain.py` | 6 | contrat, clé, version, cycle complet, file JSONL, absence de droits admin |
 
@@ -64,7 +65,7 @@ worker qui ne cache pas `/api/*`, responsive mobile.
 
 | Fichier | Contenu |
 |---|---|
-| `junit.xml` | Rapport JUnit des 68 tests |
+| `junit.xml` | Rapport JUnit des 71 tests |
 | `pytest.txt` | Sortie console pytest |
 | `node.txt` | Sortie console Node |
 | `agent_results.json` | État individuel des 100 agents |

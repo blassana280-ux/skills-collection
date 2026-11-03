@@ -38,7 +38,7 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
 
 | # | Fonctionnalité | État |
 |---|---|---|
-| 1 | Dépôt privé dédié + protection de `main` | **BLOQUÉE** (403 `createRepository` + 403 protection ; scope `Administration` absent, cf. `OMNIBRAIN.md` du framework) |
+| 1 | Dépôt privé dédié + protection de `main` | **BLOQUÉE** (403 `createRepository` + 403 protection même après reconnexion ; installation GitHub App sans `administration` ni création de dépôt) |
 | 2 | Branches dédiées, commits cohérents (6), PR ouverte non fusionnée, `master` intact | **OPÉRATIONNELLE ET TESTÉE** |
 | 3 | 100 profils + exécution réelle + coordination + collecte | **OPÉRATIONNELLE ET TESTÉE** |
 | 4 | Abstraction de modèles interchangeable (4 fournisseurs) | **PARTIELLE** : extractive locale testée ; 3 adaptateurs implémentés mais non vérifiés sans clé |
@@ -67,7 +67,7 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
 
 ## 5. Tests et CI
 
-- 68 tests Python, 5 tests Node, **0 échec** ; `test-results/junit.xml`,
+- 71 tests Python, 5 tests Node, **0 échec** ; `test-results/junit.xml`,
   `pytest.txt`, `node.txt`.
 - 100 handlers : `agent_results.json` (100/100 verts).
 - Pipeline hors ligne : `offline_verification.json` (`NEEDS_WORK`, gate
@@ -77,7 +77,7 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
 - Conformité OmniBrain : `omnibrain_contract_check.json` (6/6).
 - Fournisseurs live : `providers_live.json` (`live_verified: []`).
 - CI : run `41729820449` ✓ (intégrité 100 profils, dépendances, `pip-audit`,
-  68 tests, catalogue, 5 tests Node, pipeline hors ligne, conformance OmniBrain,
+  71 tests, catalogue, 5 tests Node, pipeline hors ligne, conformance OmniBrain,
   état live des fournisseurs, artefacts).
 
 ## 6. Blocage unique à résoudre
@@ -85,17 +85,22 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
 `gh repo create blassana280-ux/omni-research-100 --private` →
 `GraphQL: Resource not accessible by integration (createRepository)` et
 `POST /user/repos` → `403 Resource not accessible by integration`, **même après
-l'autorisation donnée** : le jeton est une installation GitHub App sans scope de
-création (`X-OAuth-Scopes` vides) et une autorisation écrite ne le modifie pas.
-`OMNIBRAIN.md` du framework confirme que ce token n'a pas le scope
-`Administration`.
+reconnexion GitHub effective le 2026-11-03 à 22:37 UTC**. Diagnostic exact :
+`GET /user/installations` donne `app_slug=arena-ai-coding-agent` avec
+`permissions = actions:write, checks:read, contents:write, issues:write,
+metadata:read, pull_requests:write, repository_hooks:write, statuses:read,
+workflows:write` — **ni `administration`, ni création de dépôt** ; en-têtes
+`X-OAuth-Scopes` vides. Un jeton d'installation GitHub App ne peut pas créer
+un dépôt appartenant à un **utilisateur** : reconnecter l'App ne peut donc pas
+lever ce blocage. La protection de branche renvoie le même 403.
 
-**Intervention demandée (la seule)** : reconnecter GitHub dans Arena avec le
-droit de création de dépôt, **ou** créer manuellement le dépôt privé **vide**
-(sans README automatique) `blassana280-ux/omni-research-100`. Dès sa résolution,
-la procédure de `docs/PROJECT_STATUS.md` §4 est appliquée : initialiser `main`
-sans y travailler, le protéger si les droits le permettent, puis pousser sur des
-branches dédiées avec PR non fusionnées.
+**Intervention demandée (la seule)** : créer **manuellement** le dépôt privé
+**vide** (sans README automatique) `blassana280-ux/omni-research-100`. Puis
+`./scripts/bootstrap_remote.sh` fait le reste automatiquement (testé en
+`--check` : il refuse correctement tant que le dépôt n'existe pas). Pour que
+`main` soit protégeable, accorder en plus `Administration: write` à
+l'installation GitHub App — cette modification de permissions globales reste
+soumise à votre autorisation explicite et ne sera pas contournée.
 
 Aucune donnée supprimée, aucun secret publié, aucune dépense engagée, aucun
 `main` modifié directement, aucune PR fusionnée.
