@@ -27,6 +27,14 @@ Codes de retour : **0 pour les cinq commandes**.
 
 Durée pytest : 16,371 s. Durée Node : 58,1 ms.
 
+**CI GitHub Actions** : PR #2, run `41727343863` → **SUCCÈS** (1 min 03 s) :
+intégrité des 100 profils, analyse locale des dépendances, `pip-audit`,
+68 tests Python, catalogue régénéré, 5 tests Node, vérification hors ligne,
+artefacts conservés. Un premier run (`41727016713`) a échoué sur l'intégrité des
+profils générés car `test-results/agent_results.json` était exclu par la règle
+racine `*_results.json` ; corrigé par une négation dans le `.gitignore` du
+produit (commit `824072f`), puis CI verte.
+
 ## Ventilation par fichier (`test-results/junit.xml`)
 
 | Fichier | Tests | Couverture |
@@ -61,6 +69,7 @@ worker qui ne cache pas `/api/*`, responsive mobile.
 | `verify_offline.txt` | Sortie console de la vérification |
 | `dependency_audit.json` / `.txt` | 11 dépendances épinglées, politique `PASS` |
 | `generated_profiles.txt` | Intégrité des fichiers générés (`--check`) |
+| `live_app_smoke.json` | Application réelle lancée en `uvicorn` : health, UI, login, providers, validation des 100 agents, mission réelle ⇒ `insufficient_evidence` avec 0 source |
 
 ## Bugs découverts et corrigés (avant de déclarer la livraison)
 

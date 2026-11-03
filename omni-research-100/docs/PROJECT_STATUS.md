@@ -23,9 +23,10 @@ Date : 2026-11-03 (UTC). Branche de session :
 - **Tests** : 68 Python + 5 Node + 1 pipeline hors ligne, **0 échec**,
   résultats dans `test-results/` ; 8 bugs découverts et corrigés
   (`docs/TEST_RESULTS.md`).
-- **CI / Docker / docs** : 2 workflows, Dockerfile, docker-compose 5 services,
+- **CI / Docker / docs** : 2 workflows — **CI verte** sur la PR #2 (run `41727343863`, 1 min 03 s) après correction d'un fichier de résultats exclu par le `.gitignore` racine ; Dockerfile, docker-compose 5 services,
   scripts de sauvegarde/restauration, audit des dépendances, 13 documents,
   `.env.example`, `Makefile`.
+- **Application réelle** : `uvicorn` lancé sur `0.0.0.0:8000` (aperçu Arena, aucune infrastructure payante) ; health, UI, login, providers, validation des 100 agents et mission réelle vérifiés par HTTP — sans clé, `insufficient_evidence` avec **0 source** et rapport `NEEDS_WORK` (`test-results/live_app_smoke.json`).
 - **OmniBrain** : contrat réel inspecté en lecture seule, adaptateur versionné,
   export des agents, file JSONL compatible, permissions alignées, 6 tests.
 
@@ -56,7 +57,7 @@ modifié directement.
 5. UI dans un navigateur Android/desktop réel.
 6. Interopérabilité inter-processus avec un orchestrateur OmniBrain externe
    (aucun dépôt OmniBrain cloné ni modifié, par consigne).
-7. Résultat CI GitHub Actions sur le runner (à lire via `gh run list`).
+7. ~~Résultat CI GitHub Actions~~ → **fait** : run `41727343863` vert sur la PR #2.
 
 ## 4. Procédure de reprise (après création du dépôt privé)
 
