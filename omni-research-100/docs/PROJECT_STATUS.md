@@ -7,6 +7,11 @@ Branche de session :
 
 ## 0. Livraison du 2026-11-04 — dépôt privé dédié LIVRÉ
 
+> Les affirmations de cette section proviennent de l'agent de reprise (Mistral).
+> La vérification indépendante réalisable depuis CETTE session est consignée au
+> §0 bis : l'existence du dépôt est confirmée, son contenu et ses PR ne sont pas
+> accessibles au jeton de cette session.
+
 - Le dépôt privé https://github.com/blassana280-ux/omni-research-100 EXISTE
   (créé manuellement par l'utilisateur) et contient l'intégralité du produit :
   124 fichiers produit répliqués depuis cette branche de session via l'API
@@ -33,6 +38,29 @@ Branche de session :
 - Les vérifications §3 (fournisseurs live, Docker, navigateur réel, DNS SSRF,
   interopérabilité inter-processus OmniBrain) restent IMPLÉMENTÉES MAIS NON
   VÉRIFIÉES.
+
+## 0 bis. Vérification croisée du 2026-11-04 (session Arena d'origine)
+
+Contrôle demandé après l'intervention de Mistral. Rapport complet :
+`test-results/cross_check_2026-11-04.json`.
+
+| Point | Résultat vérifié |
+|---|---|
+| Existence du dépôt cible | **Confirmée indirectement** : `git ls-remote` cible → `Write access to repository not granted / 403`, alors qu'un nom inexistant → `Repository not found / 404` ; API avec jeton → `403 Resource not accessible by integration` (avant création : 404) ; sans jeton → 404, normal pour un dépôt privé |
+| Accès au dépôt cible | **BLOQUÉ** pour ce jeton : 403 sur `GET /repos/...`, `/branches`, `/branches/main/protection`, `/actions/runs`, PRs. Droits de l'installation toujours sans `administration` |
+| Commits de l'agent de reprise | `c4bd3d5`, `b3be423` — **1 seul fichier modifié** : `docs/PROJECT_STATUS.md`. Aucun code produit altéré |
+| CI de la branche de session | **Verte** : runs `41749092607`, `41749617698`, `41753670783` |
+| PR #2 | **OPEN, non fusionnée** ; aucune fusion effectuée |
+| Suite de tests rejouée ici | **71 pytest + 5 Node, 0 échec** ; `verify_offline.py`, `verify_omnibrain_contract.py` (6/6) et `gen_profiles.py --check` tous verts |
+| Intégrité de la source locale | 124 fichiers suivis, 13 modules `app/brain`, 3 scripts `.sh` exécutables — conforme à ce qui a dû être répliqué |
+| **Non vérifiable ici** | 124 fichiers répliqués, SHA d'arbres, 4 branches `feat/01..04`, 4 PR #1–#4, CI du dépôt autonome, corrections des modules/permissions, absence de code sur `main` |
+
+**Pour lever ce dernier angle mort** : reconnecter GitHub dans cette session
+Arena (le jeton est antérieur à la création du dépôt), puis relancer
+`gh pr list --repo blassana280-ux/omni-research-100`,
+`gh run list --repo blassana280-ux/omni-research-100` et
+`gh api repos/blassana280-ux/omni-research-100`. Aucune autre intervention
+n'est demandée ; aucune opération sensible n'a été effectuée.
 
 ## 1. Terminé et vérifié
 
@@ -71,10 +99,14 @@ Branche de session :
 | Fusion d'une PR | Interdite sans accord explicite | Autorisation explicite |
 | Déploiement payant | Interdit sans accord | Autorisation explicite |
 
-Le dépôt cible **n'existe pas** : `GET /repos/blassana280-ux/omni-research-100`
-→ 404. Le livrable est donc versionné dans le dépôt de session, sur la branche
-dédiée, avec une PR ouverte non fusionnée. `main`/`master` n'a jamais été
-modifié directement.
+Le dépôt cible **existe désormais** (privé, créé manuellement le 2026-11-04) :
+depuis cette session, `GET /repos/blassana280-ux/omni-research-100` renvoie
+**403 Resource not accessible by integration** (contre 404 avant sa création et
+404 pour un nom de dépôt inexistant). Le jeton d'installation GitHub App de
+cette session n'a donc pas accès au nouveau dépôt : **son contenu, ses 4 PR et
+sa CI ne peuvent pas être vérifiés ici**. La branche de session et la PR #2
+restent la source vérifiable. `main`/`master` n'a jamais été modifié
+directement et aucune PR n'a été fusionnée.
 
 ## 3. Éléments IMPLÉMENTÉS MAIS NON VÉRIFIÉS (à faire après déblocage)
 

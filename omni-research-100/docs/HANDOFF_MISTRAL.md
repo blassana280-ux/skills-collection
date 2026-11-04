@@ -1,4 +1,10 @@
-# Prompt de reprise pour un autre agent (Mistral)
+# Prompt de reprise pour un autre agent (Mistral) — HISTORIQUE
+
+> Ce prompt a été utilisé le 2026-11-03. Le dépôt privé a depuis été créé
+> manuellement (2026-11-04) et un agent de reprise a répliqué le produit.
+> Pour l'état courant et ses limites de vérification, lire
+> `docs/PROJECT_STATUS.md` §0 / §0 bis et `docs/FINAL_DELIVERY.md` §6.
+> Le bloc ci-dessous est conservé tel quel à titre de trace historique.
 
 Copier-coller **tout le bloc ci-dessous** en premier message. Il est autonome :
 il contient l'état vérifié, les règles, le blocage exact et la procédure.

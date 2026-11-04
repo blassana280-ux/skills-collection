@@ -28,7 +28,7 @@ données non fiables (neutralisation des injections, aucune exécution de code).
 | PostgreSQL / Redis / Qdrant | **ADAPTATEURS IMPLÉMENTÉS, NON EXÉCUTÉS ici** (binaires absents) ; SQLite / file en mémoire / index cosinus local **exécutés et testés** |
 | Fournisseurs de modèles (OpenAI-compatible, Anthropic, Ollama) | **IMPLÉMENTÉS MAIS NON VÉRIFIÉS** (sans clé) ; synthèse extractive déterministe **exécutée et testée** |
 | Interface dans un vrai navigateur | **PARTIELLE** : tests statiques Node + tests de ses endpoints ; aucun navigateur dans le sandbox |
-| Dépôt privé `blassana280-ux/omni-research-100` | **BLOQUÉ** : `gh repo create` → `GraphQL: Resource not accessible by integration (createRepository)`. Voir [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) |
+| Dépôt privé `blassana280-ux/omni-research-100` | **CRÉÉ le 2026-11-04** (manuellement) : existence confirmée par contrôle `git ls-remote`/API ; **contenu, 4 PR et CI du dépôt autonome non vérifiables depuis cette session** (403, jeton antérieur à la création). Voir [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) §0 bis |
 | Protection de branche `main` | **BLOQUÉE** (403 + modification de permissions globales soumise à autorisation) |
 | CI GitHub Actions (PR #2, run 41727343863) | **VERTE** : 71 tests Python, 5 tests Node, 100 profils, `pip-audit`, vérification hors ligne |
 | Application réelle en aperçu local | **OPÉRATIONNELLE** : `uvicorn` sur `0.0.0.0:8000`, health/UI/login/agents/providers/mission vérifiés via HTTP (`test-results/live_app_smoke.json`) |
@@ -131,10 +131,12 @@ simultanés sont mis en file ; `mode_summary()` expose
 
 ## 7. Ce qui n'a PAS été fait (et pourquoi)
 
-- **Créer le dépôt privé dédié** : le jeton GitHub connecté n'a pas le scope
-  `Administration / repo creation` (`createRepository` → 403). Création
-  manuelle ou reconnexion GitHub nécessaire. Le travail n'est pas perdu : il
-  est versionné sur la branche de session et prêt à être poussé/mirorré.
+- **Créer le dépôt privé dédié** : impossible avec le jeton d'installation
+  GitHub App de cette session (`createRepository` → 403). Le dépôt a été
+  **créé manuellement le 2026-11-04** et un agent de reprise en a répliqué le
+  contenu ; mais le jeton de cette session reste antérieur à sa création
+  (403 sur toutes ses routes) : les 4 PR et la CI du dépôt autonome annoncées
+  n'ont pas pu être vérifiées ici. Voir `docs/FINAL_DELIVERY.md` §6.
 - **Protéger `main`** : 403 sur l'API de protection + opération classée
   « modification de permissions globales », soumise à autorisation explicite.
 - **Fusionner une PR** : interdit sans accord explicite.

@@ -13,7 +13,7 @@ Date : 2026-11-03 (UTC). Ce document applique la classification demandée à
 | PR **ouverte, non fusionnée** | https://github.com/blassana280-ux/skills-collection/pull/2 |
 | CI verte | tous les runs de la branche : `41727343863`, `41727882197`, `41729820449`, `41730222327`, `41733501383` (15 étapes ✓, job « Tests Python (71) + interface (5) ») |
 | Application | aperçu Arena live sur le port **8000** (`uvicorn`, `0.0.0.0`) ; localement `http://localhost:8000` ; `/docs` pour OpenAPI |
-| Dépôt privé demandé | https://github.com/blassana280-ux/omni-research-100 → **n'existe pas** (404), création **BLOQUÉE** |
+| Dépôt privé demandé | https://github.com/blassana280-ux/omni-research-100 → **existe** (privé, créé manuellement le 2026-11-04) ; existence confirmée par contrôle `git ls-remote`/API, **contenu et PR non vérifiables depuis cette session** (403, jeton antérieur à la création) |
 
 ## 2. Architecture finale
 
@@ -38,7 +38,7 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
 
 | # | Fonctionnalité | État |
 |---|---|---|
-| 1 | Dépôt privé dédié + protection de `main` | **BLOQUÉE** (403 `createRepository` + 403 protection même après reconnexion ; installation GitHub App sans `administration` ni création de dépôt) |
+| 1 | Création du dépôt privé dédié | **PARTIELLE** : existence confirmée (403 vs 404), contenu/PR/CI annoncés par l'agent de reprise mais **non vérifiables** avec le jeton de cette session ; protection de `main` **BLOQUÉE** (pas de droit `administration`) |
 | 2 | Branches dédiées, commits cohérents (6), PR ouverte non fusionnée, `master` intact | **OPÉRATIONNELLE ET TESTÉE** |
 | 3 | 100 profils + exécution réelle + coordination + collecte | **OPÉRATIONNELLE ET TESTÉE** |
 | 4 | Abstraction de modèles interchangeable (4 fournisseurs) | **PARTIELLE** : extractive locale testée ; 3 adaptateurs implémentés mais non vérifiés sans clé |
@@ -80,27 +80,37 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
   71 tests, catalogue, 5 tests Node, pipeline hors ligne, conformance OmniBrain,
   état live des fournisseurs, artefacts).
 
-## 6. Blocage unique à résoudre
+## 6. Blocages restants (mise à jour du 2026-11-04)
 
-`gh repo create blassana280-ux/omni-research-100 --private` →
-`GraphQL: Resource not accessible by integration (createRepository)` et
-`POST /user/repos` → `403 Resource not accessible by integration`, **même après
-reconnexion GitHub effective le 2026-11-03 à 22:37 UTC**. Diagnostic exact :
-`GET /user/installations` donne `app_slug=arena-ai-coding-agent` avec
-`permissions = actions:write, checks:read, contents:write, issues:write,
-metadata:read, pull_requests:write, repository_hooks:write, statuses:read,
-workflows:write` — **ni `administration`, ni création de dépôt** ; en-têtes
-`X-OAuth-Scopes` vides. Un jeton d'installation GitHub App ne peut pas créer
-un dépôt appartenant à un **utilisateur** : reconnecter l'App ne peut donc pas
-lever ce blocage. La protection de branche renvoie le même 403.
+- **Création du dépôt privé : RÉSOLUE.** Le dépôt
+  `blassana280-ux/omni-research-100` existe (privé). Preuve indirecte depuis
+  cette session : `git ls-remote` cible → `Write access to repository not
+  granted / 403` contre `Repository not found / 404` pour un nom inexistant ;
+  l'API avec jeton est passée de 404 à `403 Resource not accessible by
+  integration`. L'agent de reprise (Mistral) annonce 124 fichiers répliqués,
+  4 branches empilées, 4 PR #1–#4 non fusionnées et une CI verte sur la PR #4,
+  ainsi que la correction de 6 modules `app/brain` manquants et des bits
+  exécutables des scripts.
+- **Vérification indépendante du dépôt livré : BLOQUÉE.** Le jeton
+  d'installation GitHub App de CETTE session (`arena-ai-coding-agent`, sans
+  `administration`, `X-OAuth-Scopes` vides) est antérieur à la création du
+  dépôt : toutes les routes du dépôt cible renvoient 403. Les affirmations
+  ci-dessus ne sont donc **ni confirmées ni infirmées** ici. Détail :
+  `test-results/cross_check_2026-11-04.json` et `docs/PROJECT_STATUS.md` §0 bis.
+  Pour vérifier : reconnecter GitHub dans cette session Arena, puis
+  `gh pr list --repo blassana280-ux/omni-research-100` et
+  `gh run list --repo blassana280-ux/omni-research-100`.
+- **Protection de `main` : BLOQUÉE** (403 sur l'API de protection, aucun droit
+  `administration` ; modification de permissions globales soumise à
+  autorisation explicite). Jamais contournée.
+- **Toujours IMPLÉMENTÉ MAIS NON VÉRIFIÉ** : appels live aux 5 fournisseurs,
+  modèles externes, stack Docker/PostgreSQL/Redis/Qdrant, DNS SSRF réel,
+  navigateur Android/desktop, orchestrateur OmniBrain inter-processus.
+- **Aucune fusion de PR**, aucune suppression, aucun force-push, aucune
+  modification directe de `main`, aucun secret publié, aucune dépense, aucun
+  déploiement payant.
 
-**Intervention demandée (la seule)** : créer **manuellement** le dépôt privé
-**vide** (sans README automatique) `blassana280-ux/omni-research-100`. Puis
-`./scripts/bootstrap_remote.sh` fait le reste automatiquement (testé en
-`--check` : il refuse correctement tant que le dépôt n'existe pas). Pour que
-`main` soit protégeable, accorder en plus `Administration: write` à
-l'installation GitHub App — cette modification de permissions globales reste
-soumise à votre autorisation explicite et ne sera pas contournée.
-
-Aucune donnée supprimée, aucun secret publié, aucune dépense engagée, aucun
-`main` modifié directement, aucune PR fusionnée.
+Vérifications rejouées avec succès le 2026-11-04 dans cette session :
+**71 tests Python + 5 tests Node, 0 échec**, pipeline hors ligne, conformité
+OmniBrain 6/6 contre les sources réelles, intégrité des 100 profils, CI verte
+sur la branche de session (runs `41749092607`, `41749617698`, `41753670783`).
