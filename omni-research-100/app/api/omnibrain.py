@@ -61,10 +61,20 @@ def _contract_guard(x_omnibrain_contract: str | None = Header(default=None)) -> 
 
 
 def _mode(value: Any) -> Mode:
+    # Pydantic peut fournir déjà un Mode (str, Enum) : str(Mode.FAST) vaut
+    # "Mode.FAST" en Python 3.11, d'où l'extraction explicite de .value.
+    if isinstance(value, Mode):
+        return value
+    raw = getattr(value, "value", value)
     try:
-        return Mode(str(value or "deep").lower())
+        return Mode(str(raw or "deep").lower())
     except ValueError as exc:
         raise ValidationError(f"Mode inconnu : {value}") from exc
+
+# La garde de version s'applique à TOUTES les routes du routeur, y compris les
+# lectures (/contract, /modes, /missions/...). Un client annonçant une version
+# incompatible doit être refusé avant toute negotiation.
+router.dependencies.append(Depends(_contract_guard))
 
 
 def _evidence_hash(rt: Any, mission_id: str) -> str:
@@ -172,8 +182,7 @@ def modes(actor: Actor = Depends(require("omnibrain:submit")),
             "default": "deep"}
 
 
-@router.post("/missions", status_code=202,
-             dependencies=[Depends(_contract_guard)])
+@router.post("/missions", status_code=202)
 async def submit(payload: OmnibrainSubmit,
                  actor: Actor = Depends(require("omnibrain:submit")),
                  rt=Depends(runtime_of)) -> dict[str, Any]:

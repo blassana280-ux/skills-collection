@@ -1,0 +1,419 @@
+{
+  "status": "OK",
+  "base_url": "http://127.0.0.1:8000",
+  "checks": {
+    "health": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "active_missions",
+        "agents",
+        "database",
+        "default_secret_in_use",
+        "memory",
+        "providers_configured",
+        "status",
+        "time"
+      ]
+    },
+    "login": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "access_token",
+        "expires_in",
+        "role",
+        "token_type"
+      ]
+    },
+    "auth_me": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "role",
+        "subject",
+        "via"
+      ]
+    },
+    "auth_permissions": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "current",
+        "roles"
+      ]
+    },
+    "anonymous_rejected": {
+      "ok": true,
+      "status": 401,
+      "keys": [
+        "detail",
+        "error",
+        "message"
+      ]
+    },
+    "settings": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "modes",
+        "settings",
+        "stored_overrides"
+      ]
+    },
+    "metrics": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "aggregates",
+        "errors",
+        "metrics",
+        "provider_usage"
+      ]
+    },
+    "audit": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "entries"
+      ]
+    },
+    "backup": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "backup",
+        "bytes"
+      ]
+    },
+    "purge_refused": {
+      "ok": true,
+      "status": 422,
+      "keys": [
+        "detail",
+        "error",
+        "message"
+      ]
+    },
+    "/api/agents?limit=100": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "agents",
+        "divisions",
+        "returned",
+        "total"
+      ]
+    },
+    "/api/agents/divisions": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "DATA",
+        "DEEP",
+        "FACT",
+        "NEWS",
+        "OSINT",
+        "SCI",
+        "SOC",
+        "SYN",
+        "TECH",
+        "WEB"
+      ]
+    },
+    "/api/agents/validation": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "agents",
+        "divisions",
+        "handlers",
+        "tools",
+        "valid"
+      ]
+    },
+    "/api/agents/export/omnibrain": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "agents",
+        "dangerous_actions",
+        "description",
+        "gates",
+        "source_of_truth",
+        "version"
+      ]
+    },
+    "/api/agents/WEB-01": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "handler",
+        "handler_callable",
+        "spec"
+      ]
+    },
+    "/api/providers": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "category_priority",
+        "configured",
+        "disabled",
+        "dns_ssrf_check",
+        "providers"
+      ]
+    },
+    "/api/providers/quota": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "quotas",
+        "usage_today"
+      ]
+    },
+    "/api/history": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "missions",
+        "reusable_researches"
+      ]
+    },
+    "provider_test_sans_cle": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "configured",
+        "message",
+        "provider",
+        "real_results",
+        "sources",
+        "status"
+      ]
+    },
+    "mission_create": {
+      "ok": true,
+      "status": 202,
+      "keys": [
+        "links",
+        "mission_id",
+        "mode",
+        "query",
+        "status"
+      ]
+    },
+    "mission_terminal": {
+      "ok": true,
+      "status": "insufficient_evidence",
+      "mission_id": "mission-afcc07caf0ae4c40"
+    },
+    "mission/agents": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "count",
+        "max_parallel_agents",
+        "mission_id",
+        "tasks"
+      ]
+    },
+    "mission/sources": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "count",
+        "mission_id",
+        "sources"
+      ]
+    },
+    "mission/claims": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "claims",
+        "count"
+      ]
+    },
+    "mission/contradictions": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "contradictions",
+        "count"
+      ]
+    },
+    "mission/report": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "available",
+        "citation_count",
+        "created_at",
+        "markdown",
+        "mission_id",
+        "structured",
+        "verdict"
+      ]
+    },
+    "sse_stream": {
+      "ok": true,
+      "status": 200,
+      "sample": [
+        "data: {\"id\": 37, \"ts\": 1793787383.7919483, \"kind\": \"mission_created\", \"stage\": \"queued\", \"payload\": {\"query\": \"Vérification HTTP complète de l API\", \"mode\": \"fa",
+        "data: {\"id\": 38, \"ts\": 1793787383.801379, \"kind\": \"stage_changed\", \"stage\": \"planning\", \"payload\": {\"status\": \"planning\", \"progress\": 0.05}}",
+        "data: {\"id\": 39, \"ts\": 1793787383.8078065, \"kind\": \"mission_planned\", \"stage\": \"planning\", \"payload\": {\"agents\": 3, \"waves\": 1, \"providers\": [], \"max_parallel\":",
+        "data: {\"id\": 40, \"ts\": 1793787383.811681, \"kind\": \"stage_changed\", \"stage\": \"searching\", \"payload\": {\"status\": \"searching\", \"progress\": 0.18}}"
+      ]
+    },
+    "omni_contract": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "agents_exported",
+        "alignment",
+        "callback_policy",
+        "callback_posting",
+        "capabilities",
+        "contract_version",
+        "dangerous_actions_denied",
+        "gates",
+        "no_modification_of_omnibrain_repos",
+        "protocol",
+        "registry_export",
+        "source_of_truth"
+      ]
+    },
+    "omni_modes": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "contract_version",
+        "default",
+        "modes"
+      ]
+    },
+    "omni_bad_version": {
+      "ok": true,
+      "status": 422,
+      "keys": [
+        "detail",
+        "error",
+        "message"
+      ]
+    },
+    "omni_queue_status": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "acked",
+        "contract_version",
+        "pending",
+        "queue_dir",
+        "replies"
+      ]
+    },
+    "omni_queue_process": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "contract_version",
+        "processed",
+        "queue",
+        "replies"
+      ]
+    },
+    "omni_submit": {
+      "ok": true,
+      "status": 202,
+      "keys": [
+        "accepted",
+        "agent",
+        "contract_version",
+        "links",
+        "mission_id",
+        "mode",
+        "skill",
+        "status"
+      ]
+    },
+    "omni_get_status": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "agent",
+        "agents_active",
+        "contract_version",
+        "error",
+        "evidence_hash",
+        "mission_id",
+        "ok",
+        "progress",
+        "result",
+        "stage",
+        "status",
+        "task_summary"
+      ]
+    },
+    "omni_get/results": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "agent",
+        "agent_outputs",
+        "contract_version",
+        "evidence_hash",
+        "mission_id",
+        "ok",
+        "result",
+        "status",
+        "verdict"
+      ]
+    },
+    "omni_get/report": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "agent",
+        "available",
+        "citations",
+        "contract_version",
+        "evidence_hash",
+        "gates",
+        "markdown",
+        "mission_id",
+        "ok",
+        "result",
+        "verdict"
+      ]
+    },
+    "omni_get/evidence": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "agent",
+        "citations",
+        "contract_version",
+        "evidence_hash",
+        "mission_id",
+        "ok",
+        "result",
+        "sources"
+      ]
+    },
+    "omni_cancel": {
+      "ok": true,
+      "status": 200,
+      "keys": [
+        "agent",
+        "cancelled",
+        "contract_version",
+        "mission_id",
+        "ok",
+        "result"
+      ]
+    }
+  },
+  "failures": [],
+  "note": "Application réelle (uvicorn) ; aucun résultat de recherche simulé."
+}

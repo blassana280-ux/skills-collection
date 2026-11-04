@@ -83,7 +83,7 @@ instructions ne sont jamais suivies. Aucune exécution de code n'est possible.
 ```bash
 .venv/bin/python scripts/gen_profiles.py --check   # profils générés synchronisés
 .venv/bin/python -m pytest -q
-node --test tests/test_web_ui.test.js
+node --test tests/test_web_ui.test.js tests/test_web_ui_dom.test.js
 .venv/bin/python scripts/verify_offline.py
 ```
 

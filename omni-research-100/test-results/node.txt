@@ -2,39 +2,106 @@ TAP version 13
 # Subtest: toutes les fonctionnalités demandées ont un contrôle réel
 ok 1 - toutes les fonctionnalités demandées ont un contrôle réel
   ---
-  duration_ms: 0.91168
+  duration_ms: 0.924401
   type: 'test'
   ...
 # Subtest: les trois modes sont présentés et sélectionnables
 ok 2 - les trois modes sont présentés et sélectionnables
   ---
-  duration_ms: 0.153074
+  duration_ms: 0.152386
   type: 'test'
   ...
 # Subtest: le front appelle les vrais endpoints du backend
 ok 3 - le front appelle les vrais endpoints du backend
   ---
-  duration_ms: 0.188309
+  duration_ms: 0.261356
   type: 'test'
   ...
 # Subtest: aucune donnée fictive ni interprétation HTML de contenu non fiable
 ok 4 - aucune donnée fictive ni interprétation HTML de contenu non fiable
   ---
-  duration_ms: 0.397594
+  duration_ms: 0.355388
   type: 'test'
   ...
 # Subtest: interface Android/ordinateur et PWA
 ok 5 - interface Android/ordinateur et PWA
   ---
-  duration_ms: 0.210513
+  duration_ms: 0.228256
   type: 'test'
   ...
-1..5
-# tests 5
+# Subtest: interface réelle exécutée dans un DOM : rendu, API, SSE et contenu non fiable
+    # Subtest:  santé et connexion utilisent les vraies routes
+    ok 1 -  santé et connexion utilisent les vraies routes
+      ---
+      duration_ms: 67.464146
+      type: 'test'
+      ...
+    # Subtest:  les 3 modes affichent les ressources réelles du backend
+    ok 2 -  les 3 modes affichent les ressources réelles du backend
+      ---
+      duration_ms: 32.080799
+      type: 'test'
+      ...
+    # Subtest:  lancer une mission appelle POST /api/missions et active le suivi
+    ok 3 -  lancer une mission appelle POST /api/missions et active le suivi
+      ---
+      duration_ms: 61.418372
+      type: 'test'
+      ...
+    # Subtest:  onglet Mission : agents, vagues, événements et concurrence
+    ok 4 -  onglet Mission : agents, vagues, événements et concurrence
+      ---
+      duration_ms: 53.160509
+      type: 'test'
+      ...
+    # Subtest:  onglet Sources : URL, empreinte et fournisseur réels
+    ok 5 -  onglet Sources : URL, empreinte et fournisseur réels
+      ---
+      duration_ms: 42.966519
+      type: 'test'
+      ...
+    # Subtest:  onglet Contradictions : égalité non tranchée
+    ok 6 -  onglet Contradictions : égalité non tranchée
+      ---
+      duration_ms: 42.074369
+      type: 'test'
+      ...
+    # Subtest:  onglet Rapport : markdown non interprété (anti-XSS) et citations
+    ok 7 -  onglet Rapport : markdown non interprété (anti-XSS) et citations
+      ---
+      duration_ms: 42.444825
+      type: 'test'
+      ...
+    # Subtest:  Historique, Fournisseurs, Paramètres : données API uniquement
+    ok 8 -  Historique, Fournisseurs, Paramètres : données API uniquement
+      ---
+      duration_ms: 130.012043
+      type: 'test'
+      ...
+    # Subtest:  bouton « Tester réellement » : aucune source fictive
+    ok 9 -  bouton « Tester réellement » : aucune source fictive
+      ---
+      duration_ms: 92.96577
+      type: 'test'
+      ...
+    # Subtest:  déconnexion : interface masquée, jeton effacé, flux interrompu
+    ok 10 -  déconnexion : interface masquée, jeton effacé, flux interrompu
+      ---
+      duration_ms: 26.234945
+      type: 'test'
+      ...
+    1..10
+ok 6 - interface réelle exécutée dans un DOM : rendu, API, SSE et contenu non fiable
+  ---
+  duration_ms: 697.457478
+  type: 'test'
+  ...
+1..6
+# tests 16
 # suites 0
-# pass 5
+# pass 16
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 56.698177
+# duration_ms 1098.981756

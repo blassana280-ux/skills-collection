@@ -19,7 +19,7 @@ données non fiables (neutralisation des injections, aucune exécution de code).
 | Élément | État |
 |---|---|
 | Code complet (backend, 100 agents, moteur Internet, cerveau, mémoire, API, UI) | **OPÉRATIONNEL ET TESTÉ** |
-| 100 handlers exécutés individuellement avec sorties distinctes | **OPÉRATIONNEL ET TESTÉ** (71 tests Python + 5 tests Node) |
+| 100 handlers exécutés individuellement avec sorties distinctes | **OPÉRATIONNEL ET TESTÉ** (79 tests Python + 16 tests Node) |
 | Pipeline FAST / DEEP / MAXIMUM de bout en bout | **OPÉRATIONNEL ET TESTÉ** (avec double de test hors ligne déclaré) |
 | Adaptateur OmniBrain v1 (contrat réel inspecté + file JSONL) | **OPÉRATIONNEL ET TESTÉ** |
 | Parseurs des 5 connecteurs (SearXNG, Tavily, Brave, Exa, Firecrawl) | **IMPLÉMENTÉS, PARSING TESTÉ** avec transport HTTP simulé ; `scripts/verify_providers_live.py` permet la vérification live dès qu'une clé/service existe |
@@ -27,10 +27,10 @@ données non fiables (neutralisation des injections, aucune exécution de code).
 | Appels **réels** aux 5 API externes | **IMPLÉMENTÉS MAIS NON VÉRIFIÉS** : `live_verified: []` (`test-results/providers_live.json`), aucune clé API présente et réseau sortant du sandbox limité |
 | PostgreSQL / Redis / Qdrant | **ADAPTATEURS IMPLÉMENTÉS, NON EXÉCUTÉS ici** (binaires absents) ; SQLite / file en mémoire / index cosinus local **exécutés et testés** |
 | Fournisseurs de modèles (OpenAI-compatible, Anthropic, Ollama) | **IMPLÉMENTÉS MAIS NON VÉRIFIÉS** (sans clé) ; synthèse extractive déterministe **exécutée et testée** |
-| Interface dans un vrai navigateur | **PARTIELLE** : tests statiques Node + tests de ses endpoints ; aucun navigateur dans le sandbox |
+| Interface dans un vrai navigateur | **PARTIELLE** : 5 tests statiques + **11 tests DOM jsdom** exécutant le JS réel + 38 contrôles HTTP live ; aucun navigateur Android/desktop dans le sandbox |
 | Dépôt privé `blassana280-ux/omni-research-100` | **CRÉÉ le 2026-11-04** (manuellement) : existence confirmée par contrôle `git ls-remote`/API ; **contenu, 4 PR et CI du dépôt autonome non vérifiables depuis cette session** (403, jeton antérieur à la création). Voir [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) §0 bis |
 | Protection de branche `main` | **BLOQUÉE** (403 + modification de permissions globales soumise à autorisation) |
-| CI GitHub Actions (PR #2, run 41727343863) | **VERTE** : 71 tests Python, 5 tests Node, 100 profils, `pip-audit`, vérification hors ligne |
+| CI GitHub Actions (PR #2, run 41727343863) | **VERTE** : 79 tests Python, 16 tests Node, 100 profils, `pip-audit`, vérification hors ligne |
 | Application réelle en aperçu local | **OPÉRATIONNELLE** : `uvicorn` sur `0.0.0.0:8000`, health/UI/login/agents/providers/mission vérifiés via HTTP (`test-results/live_app_smoke.json`) |
 | Fusion de Pull Request | **NON EFFECTUÉE** (autorisation explicite requise) |
 
@@ -62,7 +62,7 @@ sources ; aucun résultat n'est inventé.
 .venv/bin/python scripts/verify_offline.py
 # Tests
 .venv/bin/python -m pytest -q
-node --test tests/test_web_ui.test.js
+node --test tests/test_web_ui.test.js tests/test_web_ui_dom.test.js
 ```
 
 ---

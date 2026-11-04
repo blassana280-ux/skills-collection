@@ -7,7 +7,8 @@ test:
 	.venv/bin/python -m pytest -q --junitxml=test-results/junit.xml
 
 test-ui:
-	node --test tests/test_web_ui.test.js
+	npm ci --no-audit --no-fund --ignore-scripts
+	node --test tests/test_web_ui.test.js tests/test_web_ui_dom.test.js
 
 audit:
 	.venv/bin/python scripts/audit_dependencies.py

@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   quality:
-    name: Tests Python (71) + interface (5) + intégrité des 100 agents
+    name: Tests Python (79) + interface (16) + intégrité des 100 agents
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -45,10 +45,35 @@ jobs:
         run: python -m pytest -q --junitxml=test-results/junit.xml
       - name: Catalogue des 100 agents (statut après tests)
         run: python scripts/gen_profiles.py
-      - name: Tests de l'interface (Node)
-        run: node --test tests/test_web_ui.test.js
+      - name: Installer jsdom pour les tests DOM
+        run: npm ci --no-audit --no-fund --ignore-scripts
+      - name: Tests de l'interface (Node, 5 statiques + 11 DOM jsdom)
+        run: node --test tests/test_web_ui.test.js tests/test_web_ui_dom.test.js
       - name: Vérification hors ligne de bout en bout
         run: python scripts/verify_offline.py
+      - name: Vérification HTTP de l'application réelle (38 contrôles)
+        env:
+          OR100_BASE_URL: http://127.0.0.1:8000
+          OR100_ADMIN: admin
+          OR100_PASSWORD: ci-local-password
+          OR100_OMNIBRAIN_KEY: ci-local-key
+          OMNI_AUTH_SECRET: ci-local-secret-32-bytes-minimum-here
+          OMNI_ADMIN_PASSWORD: ci-local-password
+          OMNI_USER_PASSWORD: ci-local-user
+          OMNI_OMNIBRAIN_API_KEY: ci-local-key
+          OMNI_DATABASE_URL: sqlite:///./data/ci.db
+          OMNI_SEARXNG_ENABLED: 'false'
+          OMNI_DNS_SSRF_CHECK: 'false'
+        run: |
+          mkdir -p data
+          uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/or100-uvicorn.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/api/health > /dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          python scripts/verify_live_api.py
       - name: Compatibilité OmniBrain contre les sources réelles
         env:
           GH_TOKEN: ${{ github.token }}

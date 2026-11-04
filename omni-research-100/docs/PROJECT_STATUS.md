@@ -51,7 +51,7 @@ Contrôle demandé après l'intervention de Mistral. Rapport complet :
 | Commits de l'agent de reprise | `c4bd3d5`, `b3be423` — **1 seul fichier modifié** : `docs/PROJECT_STATUS.md`. Aucun code produit altéré |
 | CI de la branche de session | **Verte** : runs `41749092607`, `41749617698`, `41753670783` |
 | PR #2 | **OPEN, non fusionnée** ; aucune fusion effectuée |
-| Suite de tests rejouée ici | **71 pytest + 5 Node, 0 échec** ; `verify_offline.py`, `verify_omnibrain_contract.py` (6/6) et `gen_profiles.py --check` tous verts |
+| Suite de tests rejouée ici | **79 pytest + 16 Node, 0 échec** ; `verify_offline.py`, `verify_omnibrain_contract.py` (6/6) et `gen_profiles.py --check` tous verts |
 | Intégrité de la source locale | 124 fichiers suivis, 13 modules `app/brain`, 3 scripts `.sh` exécutables — conforme à ce qui a dû être répliqué |
 | **Non vérifiable ici** | 124 fichiers répliqués, SHA d'arbres, 4 branches `feat/01..04`, 4 PR #1–#4, CI du dépôt autonome, corrections des modules/permissions, absence de code sur `main` |
 
@@ -61,6 +61,29 @@ Arena (le jeton est antérieur à la création du dépôt), puis relancer
 `gh run list --repo blassana280-ux/omni-research-100` et
 `gh api repos/blassana280-ux/omni-research-100`. Aucune autre intervention
 n'est demandée ; aucune opération sensible n'a été effectuée.
+
+## 0 ter. Vérifications complémentaires du 2026-11-04 (session Arena)
+
+- **Application réelle vérifiée en HTTP** : `scripts/verify_live_api.py` →
+  **38/38 contrôles OK** (`test-results/live_api_full.json`) : authentification,
+  refus d'accès anonyme, réglages, métriques, audit, sauvegarde, refus de purge
+  destructive, 100 agents, fournisseurs, cycle de mission complet, **flux SSE
+  avec événements réellement lus**, rapport, contrat/modes/version/queue
+  OmniBrain et cycle de soumission. Cette étape est désormais rejouée en CI.
+- **Interface exécutée dans un vrai DOM** : `tests/test_web_ui_dom.test.js`
+  (11 tests jsdom) exécute le `app/web/app.js` réel : connexion, 3 modes,
+  lancement, SSE authentifié, agents, sources, contradictions, rapport anti-XSS,
+  historique, fournisseurs, paramètres, déconnexion.
+- **Garde DNS SSRF et manifests Docker** : 6 tests
+  (`tests/test_deployment_and_ssrf.py`) avec résolveur contrôlé, validation
+  structurelle de `docker-compose.yml`/`Dockerfile`/SearXNG et `bash -n` des
+  scripts de sauvegarde. La résolution DNS en conditions réelles reste non
+  vérifiée.
+- **3 bugs découverts et corrigés** : `_mode()` rejetait un `mode` racine
+  (`str(Mode.FAST)` → `"Mode.FAST"`) ; la garde de version OmniBrain ne
+  couvrait que `POST /missions` ; le résultat du bouton « Tester réellement »
+  disparaissait au re-rendu. Tests de non-régression ajoutés.
+- Suite portée à **79 tests Python + 16 tests Node, 0 échec**.
 
 ## 1. Terminé et vérifié
 
@@ -78,7 +101,7 @@ n'est demandée ; aucune opération sensible n'a été effectuée.
   réglages, métriques, sauvegarde, rétention, adaptateur OmniBrain v1.
 - **UI** : responsive/PWA, 7 vues réelles, SSE authentifié + polling de repli,
   aucune donnée fictive, aucun `innerHTML`.
-- **Tests** : 71 Python + 5 Node + 1 pipeline hors ligne, **0 échec**,
+- **Tests** : 79 Python + 16 Node + 1 pipeline hors ligne, **0 échec**,
   résultats dans `test-results/` ; 8 bugs découverts et corrigés
   (`docs/TEST_RESULTS.md`).
 - **CI / Docker / docs** : 2 workflows — **CI verte** sur la PR #2 (run `41727343863`, 1 min 03 s) après correction d'un fichier de résultats exclu par le `.gitignore` racine ; Dockerfile, docker-compose 5 services,

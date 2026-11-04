@@ -17,6 +17,7 @@ const state = {
   reportMarkdown: '',
   reportName: 'rapport-or100.md',
   eventAbort: null,
+  providerTestResult: null, // { name, text } conservé across le re-rendu
 };
 
 const $ = (id) => document.getElementById(id);
@@ -479,19 +480,26 @@ async function loadProviders() {
       row.appendChild(toggle);
       const test = el('button', 'Tester réellement', { class: 'btn small', type: 'button' });
       const out = el('div', '', { class: 'muted' });
+      // Le résultat survit au re-rendu de la liste (sinon le bouton ne montre rien).
+      if (state.providerTestResult && state.providerTestResult.name === p.name) {
+        out.textContent = state.providerTestResult.text;
+      }
       test.addEventListener('click', async () => {
         test.disabled = true;
         out.textContent = 'Appel en cours…';
+        let text = '';
         try {
           const r = await api('/api/providers/' + encodeURIComponent(p.name) + '/test', {
             method: 'POST', body: { query: 'open source intelligence' },
           });
-          out.textContent = r.configured
+          text = r.configured
             ? (r.sources.length + ' source(s) réelle(s) · résultats réels : ' +
                r.real_results + ' · ' + Math.round(r.elapsed_ms) + ' ms' +
                (r.errors.length ? ' · erreurs : ' + JSON.stringify(r.errors).slice(0, 180) : ''))
             : 'Non configuré : ' + r.message;
-        } catch (e) { out.textContent = 'Test impossible : ' + e.message; }
+        } catch (e) { text = 'Test impossible : ' + e.message; }
+        state.providerTestResult = { name: p.name, text: text };
+        out.textContent = text;
         test.disabled = false;
         await loadProviders();
       });

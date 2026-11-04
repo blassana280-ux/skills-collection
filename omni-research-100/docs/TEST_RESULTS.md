@@ -8,7 +8,7 @@ temporaire, `httpx.MockTransport` pour les hôtes HTTP externes.
 
 ```bash
 .venv/bin/python -m pytest -q --junitxml=test-results/junit.xml
-node --test tests/test_web_ui.test.js
+node --test tests/test_web_ui.test.js tests/test_web_ui_dom.test.js
 .venv/bin/python scripts/verify_offline.py
 .venv/bin/python scripts/audit_dependencies.py
 .venv/bin/python scripts/gen_profiles.py --check
@@ -23,16 +23,16 @@ supplémentaires produisent des rapports JSON conservés).
 
 | Suite | Tests | Échecs | Erreurs | Ignorés |
 |---|---|---|---|---|
-| `pytest` (Python) | **71** | 0 | 0 | 0 |
-| `node --test` (interface) | **5** | 0 | 0 | 0 |
+| `pytest` (Python) | **79** | 0 | 0 | 0 |
+| `node --test` (interface) | **16** | 0 | 0 | 0 |
 | Vérification hors ligne de bout en bout | 1 pipeline FAST | 0 | — | — |
-| **Total** | **76 tests + 1 pipeline** | **0** | **0** | **0** |
+| **Total** | **95 tests + 1 pipeline** | **0** | **0** | **0** |
 
 Durée pytest : 16,371 s. Durée Node : 58,1 ms.
 
 **CI GitHub Actions** : PR #2, run `41727343863` → **SUCCÈS** (1 min 03 s) :
 intégrité des 100 profils, analyse locale des dépendances, `pip-audit`,
-71 tests Python, catalogue régénéré, 5 tests Node, vérification hors ligne,
+79 tests Python, catalogue régénéré, 16 tests Node, vérification hors ligne,
 artefacts conservés. Un premier run (`41727016713`) a échoué sur l'intégrité des
 profils générés car `test-results/agent_results.json` était exclu par la règle
 racine `*_results.json` ; corrigé par une négation dans le `.gitignore` du
@@ -55,17 +55,24 @@ produit (commit `824072f`), puis CI verte.
 | `tests/test_citations.py` | 3 | table des preuves, citations validées, données web non fiables |
 | `tests/test_bootstrap.py` | 3 | garanties du script de reprise : aucun force-push/fusion/suppression, `main` sans code produit, 4 branches empilées, refus d'écraser un dépôt non vide |
 | `tests/test_api.py` | 7 | cycle de mission complet via HTTP, auth/RBAC, agents/fournisseurs/réglages/métriques, SSE, erreurs |
-| `tests/test_omnibrain.py` | 6 | contrat, clé, version, cycle complet, file JSONL, absence de droits admin |
+| `tests/test_omnibrain.py` | 8 | contrat, clé, version sur TOUTES les routes, cycle complet, `mode` racine (bug corrigé), file JSONL, absence de droits admin |
+| `tests/test_deployment_and_ssrf.py` | 6 | garde DNS SSRF avec résolveur contrôlé (IPv4 privée/publique, échec DNS, mode hors ligne), cohérence Docker/compose/SearXNG, syntaxe et confirmation des scripts de sauvegarde |
 
-Tests de l'interface (`tests/test_web_ui.test.js`) : absence de données
-fictives, absence de `innerHTML`, appels aux vrais endpoints, PWA/service
-worker qui ne cache pas `/api/*`, responsive mobile.
+Tests de l'interface : `tests/test_web_ui.test.js` (5 tests statiques :
+absence de données fictives, absence de `innerHTML`, vrais endpoints,
+PWA/service worker qui ne cache pas `/api/*`, responsive) et
+`tests/test_web_ui_dom.test.js` (**11 tests exécutés dans un vrai DOM jsdom** :
+santé, connexion, 3 modes, lancement de mission, SSE authentifié, agents,
+sources, contradictions, rapport anti-XSS, historique, fournisseurs,
+paramètres, test fournisseur sans clé, déconnexion). Ces tests exécutent le
+`app/web/app.js` réel ; seul `fetch` est remplacé par des réponses de forme
+identique à l'API. Aucun navigateur réel n'est encore utilisé.
 
 ## Fichiers conservés (`test-results/`, versionnés)
 
 | Fichier | Contenu |
 |---|---|
-| `junit.xml` | Rapport JUnit des 71 tests |
+| `junit.xml` | Rapport JUnit des 79 tests |
 | `pytest.txt` | Sortie console pytest |
 | `node.txt` | Sortie console Node |
 | `agent_results.json` | État individuel des 100 agents |
@@ -76,8 +83,21 @@ worker qui ne cache pas `/api/*`, responsive mobile.
 | `omnibrain_contract_check.json` / `.txt` | Compatibilité OmniBrain : **6/6 contrôles vrais** contre les 4 fichiers sources réels relus depuis `omni-agents-framework` |
 | `providers_live.json` / `.txt` | Vérification live des 5 connecteurs : 0 fournisseur vérifié en direct, 0 source simulée, erreurs explicites |
 | `live_app_smoke.json` | Application réelle lancée en `uvicorn` : health, UI, login, providers, validation des 100 agents, mission réelle ⇒ `insufficient_evidence` avec 0 source |
+| `live_api_full.json` / `.txt` | **38/38 contrôles HTTP réels** sur l'application lancée : auth, settings, metrics, audit, backup, refus de purge, 100 agents, fournisseurs, cycle de mission, **SSE avec événements réels lus**, rapport, contrat/modes/version/queue OmniBrain et cycle complet de soumission |
 
 ## Bugs découverts et corrigés (avant de déclarer la livraison)
+
+9-11. Vérification HTTP live du 2026-11-04 (`scripts/verify_live_api.py`) :
+- `omni_submit` renvoyait 422 quand `mode` était fourni au niveau racine :
+  `str(Mode.FAST)` vaut `"Mode.FAST"` en Python 3.11 → `_mode()` extrait
+  désormais `.value` et accepte un `Mode` déjà typé ;
+- la garde `X-OmniBrain-Contract` n'était appliquée qu'à `POST /missions` :
+  elle est maintenant une dépendance du routeur entier (GET inclus), avec
+  2 tests de non-régression ;
+- le résultat du bouton « Tester réellement » disparaissait au re-rendu de la
+  liste des fournisseurs : le résultat est conservé dans l'état de l'UI et
+  réaffiché après re-rendu (détecté par le test DOM).
+
 
 1. `AgentRegistry.validate()` cherchait les handlers par nom de noyau →
    « handler manquant WEB-01 » : passage à un index par identifiant.

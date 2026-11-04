@@ -123,3 +123,23 @@ def test_omnibrain_role_has_no_admin_permissions(client, omnibrain_auth):
     assert client.patch("/api/settings", headers=omnibrain_auth,
                         json={"max_parallel_agents": 2}).status_code == 403
     assert client.get("/api/audit", headers=omnibrain_auth).status_code == 403
+
+
+@pytest.mark.omnibrain
+def test_version_guard_applies_to_every_route(client, omnibrain_auth):
+    for path in ("/contract", "/modes", "/queue/status"):
+        bad = client.get("/api/omnibrain/v1" + path,
+                         headers={**omnibrain_auth, "X-OmniBrain-Contract": "2.0"})
+        assert bad.status_code == 422, (path, bad.text)
+    good = client.get("/api/omnibrain/v1/contract",
+                      headers={**omnibrain_auth, "X-OmniBrain-Contract": "1.0"})
+    assert good.status_code == 200
+
+
+@pytest.mark.omnibrain
+def test_submit_accepts_root_level_mode(client, omnibrain_auth):
+    response = client.post("/api/omnibrain/v1/missions", headers=omnibrain_auth,
+                           json={"request": "Mode explicite au niveau racine",
+                                 "skill": "technology", "mode": "fast"})
+    assert response.status_code == 202, response.text
+    assert response.json()["mode"] == "fast"

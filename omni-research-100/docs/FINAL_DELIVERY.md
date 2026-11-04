@@ -50,16 +50,16 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
 | 10 | Mémoire SQLite + événements + cache + audit + sauvegarde + purge | **OPÉRATIONNELLE ET TESTÉE** |
 | 11 | PostgreSQL / Redis / Qdrant (adapteurs + compose) | **IMPLÉMENTÉE MAIS NON VÉRIFIÉE** : binaires absents du sandbox |
 | 12 | Rétention / suppression confirmée | **OPÉRATIONNELLE ET TESTÉE** |
-| 13 | Adaptateur OmniBrain v1 complet | **OPÉRATIONNELLE ET TESTÉE** (6 tests + conformance 6/6 contre 4 sources réelles relues) |
+| 13 | Adaptateur OmniBrain v1 complet | **OPÉRATIONNELLE ET TESTÉE** (8 tests + conformance 6/6 + cycle complet vérifié en HTTP live, 2 bugs corrigés) |
 | 14 | Orchestrateur OmniBrain externe inter-processus | **IMPLÉMENTÉE MAIS NON VÉRIFIÉE** (dépôts non clonés/modifiés par consigne) |
 | 15 | API sécurisée (JWT, RBAC, rate-limit, validation, SSE, erreurs) | **OPÉRATIONNELLE ET TESTÉE** |
 | 16 | Anti-injection, données non fiables, pas d'exécution de code, rédaction | **OPÉRATIONNELLE ET TESTÉE** |
-| 17 | Garde SSRF syntaxique + plages IP | **OPÉRATIONNELLE ET TESTÉE** ; résolution DNS en conditions réelles **IMPLÉMENTÉE MAIS NON VÉRIFIÉE** |
-| 18 | UI responsive/PWA, 7 vues réelles, SSE + polling, aucune donnée fictive | **PARTIELLE** : 5 tests statiques + endpoints éprouvés en HTTP ; aucun navigateur réel disponible |
+| 17 | Garde SSRF | **OPÉRATIONNELLE ET TESTÉE** (syntaxe, plages IP, logique DNS avec résolveur contrôlé) ; résolution DNS en conditions réelles **IMPLÉMENTÉE MAIS NON VÉRIFIÉE** |
+| 18 | UI responsive/PWA, 7 vues réelles, SSE + polling, aucune donnée fictive | **PARTIELLE** (améliorée) : 5 tests statiques + **11 tests DOM jsdom exécutant le JS réel** + 38 contrôles HTTP live ; navigateur Android/desktop réel toujours non vérifié |
 | 19 | Logging, audit, métriques, monitoring, gestion d'erreurs | **OPÉRATIONNELLE ET TESTÉE** |
 | 20 | Sauvegardes / reprise après incident | **PARTIELLE** : `/api/backup` testé ; scripts `pg_dump`/restore fournis mais non exécutés ici |
 | 21 | Analyse des dépendances (pins + `pip-audit` en CI) | **OPÉRATIONNELLE ET TESTÉE** (11 pins, `PASS`) |
-| 22 | Docker / docker-compose reproductible | **IMPLÉMENTÉE MAIS NON VÉRIFIÉE** (docker absent) |
+| 22 | Docker / docker-compose reproductible | **IMPLÉMENTÉE MAIS NON VÉRIFIÉE** pour l'exécution (docker absent) ; manifests, healthchecks, volumes, non-root et scripts de sauvegarde **validés par 6 tests** |
 | 23 | CI GitHub Actions | **OPÉRATIONNELLE ET TESTÉE** : 3 runs verts, 15 étapes |
 | 24 | Documentation (13 guides + README + `.env.example`) | **OPÉRATIONNELLE ET TESTÉE** (présents et cohérents) |
 | 25 | Déploiement sur infrastructure payante | **BLOQUÉE** (autorisation requise, non demandée) |
@@ -67,7 +67,7 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
 
 ## 5. Tests et CI
 
-- 71 tests Python, 5 tests Node, **0 échec** ; `test-results/junit.xml`,
+- 79 tests Python, 16 tests Node, **0 échec** ; `test-results/junit.xml`,
   `pytest.txt`, `node.txt`.
 - 100 handlers : `agent_results.json` (100/100 verts).
 - Pipeline hors ligne : `offline_verification.json` (`NEEDS_WORK`, gate
@@ -77,7 +77,7 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
 - Conformité OmniBrain : `omnibrain_contract_check.json` (6/6).
 - Fournisseurs live : `providers_live.json` (`live_verified: []`).
 - CI : runs verts ✓ (dernier vérifié `41733501383`) (intégrité 100 profils, dépendances, `pip-audit`,
-  71 tests, catalogue, 5 tests Node, pipeline hors ligne, conformance OmniBrain,
+  79 tests, catalogue, 16 tests Node, pipeline hors ligne, conformance OmniBrain,
   état live des fournisseurs, artefacts).
 
 ## 6. Blocages restants (mise à jour du 2026-11-04)
@@ -111,6 +111,8 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
   déploiement payant.
 
 Vérifications rejouées avec succès le 2026-11-04 dans cette session :
-**71 tests Python + 5 tests Node, 0 échec**, pipeline hors ligne, conformité
-OmniBrain 6/6 contre les sources réelles, intégrité des 100 profils, CI verte
-sur la branche de session (runs `41749092607`, `41749617698`, `41753670783`).
+**79 tests Python + 16 tests Node, 0 échec**, pipeline hors ligne, conformité
+OmniBrain 6/6 contre les sources réelles, intégrité des 100 profils,
+**38/38 contrôles HTTP sur l'application réellement lancée** (dont SSE),
+CI verte sur la branche de session (runs `41749092607`, `41749617698`,
+`41753670783`). Trois bugs découverts par ces vérifications ont été corrigés.
