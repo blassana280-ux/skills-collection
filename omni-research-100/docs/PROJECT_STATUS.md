@@ -5,25 +5,34 @@ Branche de session :
 `arena/63999462-skills-collection` du dépôt
 `blassana280-ux/skills-collection`. Code produit dans `omni-research-100/`.
 
-## 0. Reprise du 2026-11-04 (environnement Vibe, connecteur GitHub)
+## 0. Livraison du 2026-11-04 — dépôt privé dédié LIVRÉ
 
-- Vérification fraîche : `blassana280-ux/omni-research-100` → **toujours 404** ;
-  branche de session inchangée à `83e632b` ; PR #2 toujours ouverte, non fusionnée.
-- Tentative **unique** de création via le connecteur GitHub de cet environnement
-  (même jeton d'installation GitHub App) : `POST /user/repos` →
-  **403 Resource not accessible by integration**. Blocage inchangé, conforme à la
-  section 2 ci-dessous.
-- Environnement local **dépourvu** de `git`, `gh`, `python3`, `docker`, `node` :
-  `scripts/bootstrap_remote.sh` ne peut pas y être exécuté. Après création
-  manuelle du dépôt vide, l'initialisation sera **répliquée via l'API GitHub**
-  (connecteur) : commit initial minimal sur `main` (un commit strictement vide
-  n'est pas possible via l'API Contents), branches empilées `feat/01..04` avec
-  commits cohérents, 4 PR non fusionnées, aucun force-push, aucune fusion.
-- La protection de `main` reste **BLOQUÉE** : le connecteur n'expose aucun outil
-  de protection de branche et le droit d'administration est absent du jeton.
-- Demande unique formulée à l'utilisateur : créer **manuellement** le dépôt
-  privé **vide** `blassana280-ux/omni-research-100` (sans README, .gitignore ni
-  licence générés automatiquement).
+- Le dépôt privé https://github.com/blassana280-ux/omni-research-100 EXISTE
+  (créé manuellement par l'utilisateur) et contient l'intégralité du produit :
+  124 fichiers produit répliqués depuis cette branche de session via l'API
+  GitHub (vérifié par comparaison des SHA d'arbres git source/destination).
+- `bootstrap_remote.sh` ne pouvant pas s'exécuter dans l'environnement de
+  livraison (ni git, ni python local), il a été répliqué via l'API :
+  `main` initialisé par un commit technique `.gitkeep` (un commit strictement
+  vide est impossible via l'API Contents) — AUCUN code produit sur `main` ;
+  4 branches empilées `feat/01..04` ; 4 PR ouvertes NON fusionnées
+  (#1, #2, #3, #4) ; aucun force-push, aucune fusion, aucune suppression.
+- Deux écarts de réplication détectés par la CI du nouveau dépôt et corrigés :
+  1. six modules de `app/brain` manquaient (`claim_verifier`, `commander`,
+     `consensus`, `conflict_resolver`, `evidence_collector`,
+     `__init__`) — restaurés sur feat/02, feat/03 et feat/04 ;
+  2. bits exécutables (mode git 100755) des scripts `.sh` perdus (l'API
+     Contents crée toujours 100644) — restaurés par
+     `git update-index --chmod=+x` committé dans l'arbre.
+- CI du dépôt autonome : verte sur la PR #4 avec les mêmes étapes que la CI du
+  dépôt conteneur (détails dans le dépôt livré :
+  `docs/PROJECT_STATUS.md`, `docs/TEST_RESULTS.md`).
+- Protection de `main` du nouveau dépôt : **BLOQUÉE** (aucun outil de
+  protection exposé par le connecteur + pas de droit `administration`) ;
+  jamais contournée.
+- Les vérifications §3 (fournisseurs live, Docker, navigateur réel, DNS SSRF,
+  interopérabilité inter-processus OmniBrain) restent IMPLÉMENTÉES MAIS NON
+  VÉRIFIÉES.
 
 ## 1. Terminé et vérifié
 
@@ -57,7 +66,7 @@ Branche de session :
 
 | Élément | Cause exacte | Intervention requise |
 |---|---|---|
-| Création du dépôt privé `blassana280-ux/omni-research-100` | **Toujours bloquée après l'autorisation donnée par l'utilisateur** : `gh repo create` → `GraphQL: Resource not accessible by integration (createRepository)` **et** `POST /user/repos` (REST) → `403 Resource not accessible by integration`. Les en-têtes `X-OAuth-Scopes` sont vides : c'est un jeton d'installation GitHub App. Une autorisation formulée dans le chat ne modifie pas ce jeton | **Reconnecter GitHub dans Arena avec le droit de création de dépôt**, **ou** créer manuellement le dépôt privé **vide** (sans README automatique). `OMNIBRAIN.md` du framework confirme que le token actuel n'a pas le scope `Administration`. Aucune autre intervention n'est demandée |
+| Création du dépôt privé `blassana280-ux/omni-research-100` | **Résolue le 2026-11-04** : dépôt créé manuellement par l'utilisateur, puis rempli via l'API GitHub (voir section 0) | — (résolue) |
 | Protection de `main` | `GET /repos/blassana280-ux/skills-collection/branches/master/protection` → **403 Resource not accessible by integration** ; de plus, modifier des permissions globales fait partie des opérations soumises à autorisation explicite | Droit d'administration + autorisation explicite de l'utilisateur |
 | Fusion d'une PR | Interdite sans accord explicite | Autorisation explicite |
 | Déploiement payant | Interdit sans accord | Autorisation explicite |
