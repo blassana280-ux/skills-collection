@@ -80,7 +80,6 @@ identique à l'API. Aucun navigateur réel n'est encore utilisé.
 | `verify_offline.txt` | Sortie console de la vérification |
 | `dependency_audit.json` / `.txt` | 11 dépendances épinglées, politique `PASS` |
 | `generated_profiles.txt` | Intégrité des fichiers générés (`--check`) |
-| `live_api_full.json` / `.txt` | 38/38 contrôles HTTP réels sur l'application lancée (dont SSE) |
 | `delivery_repo_check.json` / `.txt` | État du dépôt privé livré : `BLOQUÉ` (403 au jeton de cette session), champs non vérifiés listés |
 | `omnibrain_contract_check.json` / `.txt` | Compatibilité OmniBrain : **6/6 contrôles vrais** contre les 4 fichiers sources réels relus depuis `omni-agents-framework` |
 | `providers_live.json` / `.txt` | Vérification live des 5 connecteurs : 0 fournisseur vérifié en direct, 0 source simulée, erreurs explicites |
