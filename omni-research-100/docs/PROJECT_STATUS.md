@@ -55,6 +55,12 @@ Contrôle demandé après l'intervention de Mistral. Rapport complet :
 | Intégrité de la source locale | 124 fichiers suivis, 13 modules `app/brain`, 3 scripts `.sh` exécutables — conforme à ce qui a dû être répliqué |
 | **Non vérifiable ici** | 124 fichiers répliqués, SHA d'arbres, 4 branches `feat/01..04`, 4 PR #1–#4, CI du dépôt autonome, corrections des modules/permissions, absence de code sur `main` |
 
+`scripts/verify_delivery_repo.py` a été ajouté : il consigne
+`test-results/delivery_repo_check.json` (`status: BLOQUÉ`, 6 champs non
+vérifiés) et, dès que le jeton aura accès au dépôt, listera branches, 4 PR,
+CI, protection de `main` et SHA de l'arbre. Une seule commande suffira :
+`make verify-delivery`.
+
 **Pour lever ce dernier angle mort** : reconnecter GitHub dans cette session
 Arena (le jeton est antérieur à la création du dépôt), puis relancer
 `gh pr list --repo blassana280-ux/omni-research-100`,

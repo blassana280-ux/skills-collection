@@ -1,4 +1,4 @@
-.PHONY: install test test-ui audit generate run verify verify-omnibrain verify-live bootstrap docker clean
+.PHONY: install test test-ui audit generate run verify verify-omnibrain verify-live verify-http verify-delivery bootstrap docker clean
 
 install:
 	python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
@@ -24,6 +24,12 @@ verify-omnibrain:
 
 verify-live:
 	.venv/bin/python scripts/verify_providers_live.py
+
+verify-http:
+	.venv/bin/python scripts/verify_live_api.py
+
+verify-delivery:
+	.venv/bin/python scripts/verify_delivery_repo.py
 
 bootstrap:
 	./scripts/bootstrap_remote.sh --check

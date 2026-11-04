@@ -97,9 +97,10 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
   dépôt : toutes les routes du dépôt cible renvoient 403. Les affirmations
   ci-dessus ne sont donc **ni confirmées ni infirmées** ici. Détail :
   `test-results/cross_check_2026-11-04.json` et `docs/PROJECT_STATUS.md` §0 bis.
-  Pour vérifier : reconnecter GitHub dans cette session Arena, puis
-  `gh pr list --repo blassana280-ux/omni-research-100` et
-  `gh run list --repo blassana280-ux/omni-research-100`.
+  Pour vérifier : reconnecter GitHub dans cette session Arena, puis lancer
+  `python scripts/verify_delivery_repo.py` (ou `make verify-delivery`), qui
+  consignera branches, PR, CI, protection de `main` et SHA de l'arbre dans
+  `test-results/delivery_repo_check.json`.
 - **Protection de `main` : BLOQUÉE** (403 sur l'API de protection, aucun droit
   `administration` ; modification de permissions globales soumise à
   autorisation explicite). Jamais contournée.
