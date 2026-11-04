@@ -5,6 +5,26 @@ Branche de session :
 `arena/63999462-skills-collection` du dépôt
 `blassana280-ux/skills-collection`. Code produit dans `omni-research-100/`.
 
+## 0. Reprise du 2026-11-04 (environnement Vibe, connecteur GitHub)
+
+- Vérification fraîche : `blassana280-ux/omni-research-100` → **toujours 404** ;
+  branche de session inchangée à `83e632b` ; PR #2 toujours ouverte, non fusionnée.
+- Tentative **unique** de création via le connecteur GitHub de cet environnement
+  (même jeton d'installation GitHub App) : `POST /user/repos` →
+  **403 Resource not accessible by integration**. Blocage inchangé, conforme à la
+  section 2 ci-dessous.
+- Environnement local **dépourvu** de `git`, `gh`, `python3`, `docker`, `node` :
+  `scripts/bootstrap_remote.sh` ne peut pas y être exécuté. Après création
+  manuelle du dépôt vide, l'initialisation sera **répliquée via l'API GitHub**
+  (connecteur) : commit initial minimal sur `main` (un commit strictement vide
+  n'est pas possible via l'API Contents), branches empilées `feat/01..04` avec
+  commits cohérents, 4 PR non fusionnées, aucun force-push, aucune fusion.
+- La protection de `main` reste **BLOQUÉE** : le connecteur n'expose aucun outil
+  de protection de branche et le droit d'administration est absent du jeton.
+- Demande unique formulée à l'utilisateur : créer **manuellement** le dépôt
+  privé **vide** `blassana280-ux/omni-research-100` (sans README, .gitignore ni
+  licence générés automatiquement).
+
 ## 1. Terminé et vérifié
 
 - **100 agents** / 10 divisions / 100 handlers / 31 noyaux, générés de façon
@@ -105,6 +125,12 @@ git push origin feat/core-and-agents ; gh pr create --base main --head feat/core
 Le dossier `.github/workflows/ci.yml` du produit est déjà prévu pour fonctionner
 à la racine du dépôt autonome ; le workflow du dépôt conteneur utilise
 `working-directory: omni-research-100`.
+
+**Variante API (environnement sans git)** : si l'environnement de reprise ne
+dispose pas de `git`, répliquer `bootstrap_remote.sh` via l'API GitHub
+(connecteur) — commit initial minimal sur `main`, branches empilées
+`feat/01..04`, 4 PR non fusionnées — et consigner les écarts (commit vide
+impossible via l'API Contents, protection `main` BLOQUÉE).
 
 ## 5. Règles à ne pas oublier
 
