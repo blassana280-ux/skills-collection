@@ -98,6 +98,8 @@ Documentation : `docs/V4.md` §4, `omni/telemetry/README.md`.
 (01:59:09Z → 01:59:31Z). 14 étapes vertes dont *Verify generated catalog matches
 sources*, *Run full test suite*, *Benchmarks*, *GEPA prompt loop*, *Runtime
 service mode*, **No drift on tracked files**. Aucune étape rouge.
+Runs `pull_request` **41952254874** et **41952350194** également `success`
+(3 checks `pass` chacun) → PR `skills-collection#3` = `MERGEABLE` / `CLEAN`.
 
 **Local** (sorties brutes : `omni-agents-framework/docs/CI-EVIDENCE.md`) :
 
@@ -124,7 +126,7 @@ dans `tests/test_v4_integration.py`).
 
 | Dépôt | PR | État | Objet |
 | --- | --- | --- | --- |
-| `skills-collection` | **#3** *(ouverte par cette mission)* | OPEN, CI verte | OmniBrain v4 — branche `arena/2644be5c-skills-collection` → `master`. **Décision de fusion : Lassana.** |
+| `skills-collection` | **#3** *(ouverte par cette mission)* | OPEN, **CLEAN**, 3/3 checks `pass` | OmniBrain v4 — branche `arena/2644be5c-skills-collection` → `master`. **Décision de fusion : Lassana.** |
 | `skills-collection` | #2 | OPEN (préexistante) | OMNI-RESEARCH 100, branche Arena distincte — hors périmètre v4. |
 | `agentskills` | #2 | OPEN / **CLEAN** / CI 6/6 | Framework v3 à fusionner en premier (§2). |
 | `agentskills` | #4 | OPEN / CLEAN, **conflit `AGENTS.md` avec #2** | Restauration upstream + orchestrateur 69 tests. |
