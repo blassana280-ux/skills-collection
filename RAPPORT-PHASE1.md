@@ -137,11 +137,15 @@ basse. Ne pas réouvrir ni fusionner en force.
 
 ## 1.4 — Dépôt profil `.github` (routage au niveau du compte)
 
-**Résultat API :**
+**Résultat API (5 voies testées le 2026-11-05) :**
 
 ```
-POST /user/repos {"name":".github"} → 403 Resource not accessible by integration
-GET  /repos/blassana280-ux/.github  → 404 Not Found
+POST /user/repos {name:.github}                       → 403 Resource not accessible by integration
+gh repo create blassana280-ux/.github --public        → 403 GraphQL createRepository
+POST /repos/skills-collection/forks {name:.github}    → 403
+PATCH /repos/Qwen3.8 {is_template:true}               → 403
+POST /repos/Qwen3.8/generate {name:.github}           → 404 (template non créé)
+GET  /repos/blassana280-ux/.github                    → 404 Not Found
 ```
 
 **Cause** : jeton d'installation GitHub App (`X-Oauth-Scopes` vide), permissions
@@ -184,11 +188,12 @@ Trois 403 **distincts** (détail complet : `omni-agents-framework/docs/PROMOTION
 | Cible | Historique | État 2026-11-05 |
 | --- | --- | --- |
 | `optimiser-mes-agents-IA` (lecture) | `403 Resource not accessible by integration` cité dans PR #2 / #4 | **Toujours 403** → référence à ne plus citer. |
-| `omni-agents-framework` (écriture) | PR #2 : « token sans accès en écriture (403) » ; PR #4 : sonde sur 41 dépôts, 40 × 403, seul `agentskills` writable | **LEVÉ** : `permissions {admin,maintain,push,pull,triage} = true`, `pushed_at=2026-11-05T01:33:48Z`, PR #3 et #10 fusionnées. |
+| `omni-agents-framework` (écriture) | PR #2 : « token sans accès en écriture (403) » ; PR #4 : sonde sur 41 dépôts, 40 × 403 | **CORRIGÉ — toujours 403 pour le jeton actuel** : l'objet `permissions` annonce `push/admin=true`, mais `git push --dry-run` → `403 Permission denied`, `POST /pulls` → 403, `POST /releases` → 403. Les PR #3/#10 ont été fusionnées par une **autre identité/session**, pas par ce jeton. |
 | `.github` (création de dépôt) | n/a | **Toujours 403** → §1.4. |
 
-**Plan de promotion** (accès désormais accordé, mais **non exécuté** ici pour
-respecter la branche de session et la règle « aucune fusion forcée ») :
+**Plan de promotion** (**accès en écriture NON accordé au jeton d'intégration
+actuel**, et non exécuté ici pour respecter la branche de session et la règle
+« aucune fusion forcée ») :
 `omnibrain/promote-v4` sur le dépôt dédié → copie de `omni/`, `omnibrain/`,
 `tools/`, `tests/`, `specialized/`, `catalog/`, `matrix.toml`, `docs/` →
 résolution des collisions (`AGENTS.md` à conserver, `omni/__init__.py` à
@@ -215,3 +220,31 @@ Machine-readable : `omni-agents-framework/docs/PHASE1-EVIDENCE.json`.
 **Verdict Phase 1 : PR #2 fusionnable (CLEAN, CI 6/6), 0 conflit avec les 37
 PRs, 37/37 déjà closes, 2 actions manuelles pour Lassana (profil `.github`,
 promotion) — aucune fusion effectuée.**
+
+
+---
+
+## Addendum — exécution du 2026-11-05 (« fait le toi-même »)
+
+Actions **réellement tentées** par l'agent après délégation explicite, sans forçage :
+
+| Action | Tentatives | Résultat |
+| --- | --- | --- |
+| Fusion `agentskills#2` | `gh pr merge --merge`, `--squash`, REST `PUT /pulls/2/merge` (`merge`, `rebase`), `--rebase` sur #3 | **403** `Resource not accessible by integration` sur toutes les voies ; `GET /branches/main/protection` → 403. PR toujours `OPEN/CLEAN`. |
+| Création dépôt `.github` | 5 méthodes (§1.4) | **403** ; `GET` → 404. |
+| Promotion vers `omni-agents-framework` | `POST /pulls` (cross-repo depuis la branche Arena), `POST /releases`, `git push --dry-run` | **403** ; lecture `git ls-remote` OK. |
+| Fusion `skills-collection#3` | `gh pr merge 3 -R ... --merge` | ✅ **MERGED** le 2026-11-05T02:11:54Z, merge commit `6c234d7`. |
+| Automatisation du reste | `scripts/finalize_actions.py --apply --confirm-lassana` | 5 sondes sur 6 bloquées ; `executed: []`, `no_forced_merge: true`. Journal : `docs/FINALIZE-ACTIONS-EVIDENCE.md`. |
+
+**Correction de revue adverse (A06)** : ce rapport affirmait initialement « 403 levé »
+sur `omni-agents-framework` en s'appuyant sur l'objet `permissions` de l'API.
+Le test d'écriture réel prouve le contraire pour le jeton d'intégration courant :
+**l'écriture reste bloquée**. L'objet `permissions` reflète les droits de
+l'utilisateur, pas ceux effectivement délégués à l'installation GitHub App.
+`docs/PHASE1-EVIDENCE.json` et `docs/PROMOTION-403.md` sont corrigés en conséquence.
+
+**Conclusion** : seule l'action réalisable dans le périmètre du jeton (fusion de la
+PR de session) a été exécutée. Les autres exigent un PAT avec scope `repo` ou
+l'ajout des dépôts à l'installation GitHub App ; le script
+`scripts/finalize_actions.py` les enchaîne dès que les sondes passent, toujours
+par branche + PR, jamais par écriture directe sur `main`.

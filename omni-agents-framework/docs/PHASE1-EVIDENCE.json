@@ -457,9 +457,18 @@
   "api_403": {
     "create-profile-repo": "403 Resource not accessible by integration (POST /user/repos name=.github)",
     "get-profile-repo": "404 Not Found",
-    "omni-agents-framework-write": "403 historique (PR #2 / #4), LEVÉ : permissions push/admin=true",
+    "omni-agents-framework-write": "403 toujours actif pour le jeton actuel (correction A06 : permissions.push=true mais git push --dry-run -> 403)",
     "optimiser-mes-agents-IA": "403 Resource not accessible by integration (lecture, toujours)",
+    "profile_repo_methods_tried": 5,
     "x_oauth_scopes": ""
+  },
+  "execution_2026_11_05": {
+    "agentskills_merges": "403 sur --merge/--squash/--rebase/REST merge+rebase",
+    "finalize_script": "scripts/finalize_actions.py --apply --confirm-lassana -> executed: [] ; blocked_403: 5 ; no_forced_merge: true",
+    "no_forced_merge": true,
+    "profile_repo_creation": "403 sur 5 méthodes",
+    "promotion": "403 (POST pulls cross-repo, releases, git push --dry-run)",
+    "skills_collection_pr3": "MERGED 2026-11-05T02:11:54Z merge commit 6c234d7"
   },
   "generated_at": "2026-11-05T01:58:07+00:00",
   "merge_tree": {
@@ -538,5 +547,14 @@
   },
   "session_base": "9d91dad0279c41d60fdb944f4fa09da3c40decc3",
   "session_branch": "arena/2644be5c-skills-collection",
-  "workspace_repo": "blassana280-ux/skills-collection"
+  "workspace_repo": "blassana280-ux/skills-collection",
+  "write_probes_2026_11_05": {
+    "branch_protection_read_agentskills": "403",
+    "git_ls_remote_target": "OK (lecture)",
+    "git_push_dry_run_agentskills": "403 Permission denied",
+    "git_push_dry_run_session_branch": "OK (Everything up-to-date)",
+    "git_push_dry_run_target": "403 Permission denied",
+    "post_pulls_target": "403 Resource not accessible by integration",
+    "post_releases_target": "403 Resource not accessible by integration"
+  }
 }
