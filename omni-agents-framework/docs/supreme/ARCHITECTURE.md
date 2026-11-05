@@ -1,4 +1,8 @@
-# Architecture OMNIBRAIN SUPREME 1000
+# Architecture OMNIBRAIN SUPREME 1000 — version 1.2.1
+
+Racine dépôt : `skills-collection/`. Framework : `skills-collection/omni-agents-framework/`.
+Dans les tableaux ci-dessous, `supreme/...` signifie
+`skills-collection/omni-agents-framework/supreme/...`.
 
 ## Principe
 SUPREME est une couche multi-agents **au-dessus** du framework OmniBrain V4 existant
@@ -30,9 +34,9 @@ télémétrie V4 plutôt que de les réécrire. Python 3.11+ **stdlib uniquement
 | 18 | Evaluation Engine | `supreme/evaluation.py` (7 tests/profil) | Implémenté, testé |
 | 19 | Learning Engine | `supreme/learning.py` | Implémenté, testé |
 | 20 | Self-Improvement Engine | `supreme/learning.py` (gain mesuré + rollback) | Implémenté, testé |
-| 21 | Failure Recovery Engine | `orchestrator.recover` + retries bornés | Implémenté, testé |
-| 22 | Resource Manager | `runtime` (concurrence, backpressure) + `budget` | Implémenté, testé |
-| 23 | Cost Controller | `supreme/budget.py` | Implémenté, testé |
+| 21 | Failure Recovery Engine | `supreme/leases.py` + `orchestrator.recover` + retries bornés | Implémenté, testé multi-processus/crash |
+| 22 | Resource Manager | `runtime` (pool borné) + `worker`/`leases` (baux, heartbeat, fencing) + `budget` | Implémenté, testé |
+| 23 | Cost Controller | `supreme/budget.py` (réservations atomiques, exposition, quotas) | Implémenté, testé |
 | 24 | Observability Engine | `supreme/observability.py` (KPIs réels) | Implémenté, testé |
 | 25 | Mission History | tables `missions`/`tasks` + `reporting` | Implémenté, testé |
 | 26 | Version Manager | `factory` versions + catalogue versionné | Implémenté, testé |
@@ -61,19 +65,30 @@ Aucun processus permanent par agent ; activation à la demande, concurrence born
 - `validated` : 7 contrôles offline OK (mission représentative réussie ou différée).
 - `operational` : mission représentative **réellement exécutée avec succès**.
 - `monitored` : operational + performances suivies.
-Au démarrage : **1000 spécialistes registered → 1000 validated → 40 operational/monitored**
-(2 par division, outils déterministes) + **20 chefs monitored**. Les 960 autres ont une
-mission représentative LLM **différée** (aucun fournisseur configuré) — jamais comptés opérationnels.
+État réel 1.2.1 : **1020 profils enregistrés** ; statuts SQLite `registered=0`,
+`validated=960`, `monitored=60`, `operational=0`. Les **60 agents locaux** (40 spécialistes
+outil + 20 chefs) sont réellement opérationnels en local sur preuve et marqués `monitored`.
+Les 960 autres ont une mission représentative LLM **différée** (aucun fournisseur réel connecté)
+— jamais comptés opérationnels. Le statut `operational` strict n'est pas utilisé comme substitut
+à une preuve fournisseur ; `monitored` signifie preuve locale + suivi.
 
 ## Dépendances entre modules (pas de cycle)
 `config` ← `db` ← `security` ← {`registry`, `bus`, `memory`, `budget`, `policy`}
 ← `planner` ← `orchestrator` ← {`api`, `__main__`}. `tools` est autonome.
 `router`/`council`/`evaluation`/`learning`/`observability`/`reporting`/`backup` au-dessus.
 
-## Compléments v1.1–1.2
+## Compléments v1.1–1.2.1
 - `supreme/providers.py` : client HTTP multi-fournisseurs réel (composant Model Router étendu).
-- `supreme/worker.py` : processus worker séparé, claim atomique de la file (Resource Manager / Execution Runtime).
-- `supreme/audit.py` : audit exécutable avec preuves (Observability / Reporting).
-- Orchestrateur : arbitrage `Council` intégré aux missions complexes ; plans explicables (`explanation` + `why`).
+- `supreme/worker.py` + `supreme/leases.py` : workers séparés, file SQLite, propriétaire,
+  bail expirant, heartbeat, fencing, récupération exclusive, idempotence `task_executions`.
+- `supreme/audit.py` : audit exécutable avec preuves (catalogue, sécurité, schéma, baux,
+  apprentissage, réservations/quotas, tests découverts).
+- Orchestrateur : arbitrage `Council` intégré aux missions complexes ; plans explicables
+  (`explanation` + `why`) ; writes fenced par bail.
 - Evaluation : représentatifs LLM tentés réellement si fournisseur configuré (activation sur preuve).
-- Learning : `run_cycle()` — cycle permanent observé→proposé→comparé→rapporté, PR = porte humaine.
+- Learning : `run_cycle()` persistant + `LearningScheduler` périodique, verrou unique,
+  heartbeat, erreurs surveillées, arrêt/reprise ; PR/fusion = porte humaine.
+- Budget/Router/Council : réservation avant appel, solde réel, quotas centraux, limites
+  tokens/contexte, plafond collectif conservateur ; aucun contournement du routeur par le conseil.
+- Schéma SQLite v2 additif : `workers`, `task_executions`, `budget_reservations`,
+  `budget_reservation_scopes`, `learning_schedulers`, `learning_runs`, colonnes de bail/fencing.

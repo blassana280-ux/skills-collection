@@ -1,134 +1,146 @@
-# Rapport d'exécution OMNIBRAIN SUPREME 1000
+# Rapport d'exécution OMNIBRAIN SUPREME 1000 — livraison 1.2.1
 
-**Date : 2026-11-05** · Branche : `arena/ffc77bf1-skills-collection` · Version SUPREME 1.0.0
-Règle appliquée : aucune donnée inventée, aucun test fictif, aucune connexion simulée,
-aucune écriture sur `master`, aucune fusion automatique.
+**Date : 2026-11-05** · **Version SUPREME : 1.2.1** · Branche : `arena/ffc77bf1-skills-collection` · PR #5 ouverte, non fusionnée.
+Racine dépôt : `skills-collection/`. Framework : `skills-collection/omni-agents-framework/`.
+Règles appliquées : aucune écriture directe sur `master`, aucune fusion de PR, aucune suppression
+de travail existant, aucun fournisseur connecté fictivement, aucune dépense, aucun déploiement public.
 
-## A. Audit
-- **46 dépôts** inspectés via `gh repo list`/`gh api` : 1 créé par le compte (`omni-agents-framework`),
-  45 forks. `skills-collection` (fork, MIT) = dépôt de travail.
-- Framework V4 existant réutilisé : **105 tests verts** vérifiés avant construction.
-- Ressources réutilisées : mémoire SQLite V4, RBAC, sandbox, télémétrie, 860 skills documentaires.
-- Problèmes détectés : 14 lacunes (voir `AUDIT.md`), toutes adressées ou documentées.
-- Accès refusés documentés : push `omni-agents-framework` (403), `optimiser-mes-agents-IA` (403),
-  création de dépôt (403). Aucune clé IA dans l'environnement ; réseau sandbox limité.
+## 1. Dépôts et branches inspectés
+- Dépôt de travail : `blassana280-ux/skills-collection`, branche fixe de session
+  `arena/ffc77bf1-skills-collection`.
+- `master` distant inspecté puis synchronisé par merge propre : `af4b951 chore: update star history chart`.
+  Merge commit : `b8b3978`. Aucun force-push, aucune réécriture risquée, `master` non modifié directement.
+- PR #5 : ouverte vers `master`, non fusionnée. PR #2 `omni-research-100` : inspectée, non modifiée.
+- historical : 46 dépôts inspectés lors de l'audit initial ; accès refusés documentés
+  (push dépôt autonome 403, lecture `optimiser-mes-agents-IA` 403, création dépôt 403).
 
-## B. Architecture
-- **30 composants** implémentés (voir `ARCHITECTURE.md`), Python stdlib + SQLite, couche au-dessus de V4.
-- Modules créés : `supreme/` (config, db, security, profiles, divisions×20, catalog, registry,
-  factory, tools, skills_registry, policy, bus, memory, budget, router, council, evaluation,
-  learning, planner, runtime, orchestrator, observability, backup, reporting, api, dashboard, cli).
-- Interfaces documentées (`API.md`), pas de dépendance circulaire.
+## 2. Commits principaux de cette livraison
+- `b8b3978` : merge propre de `master` `af4b951` dans la branche de travail.
+- `df0c471` : durcissement 1.2.1 (baux workers, apprentissage périodique, budget strict, audit, tests).
+- Commit final de documentation/CI : voir `HEAD` de la branche et la PR #5.
+- Aucun commit sur `master`, aucune fusion.
 
-## C. Armée
-| Mesure | Valeur réelle |
+## 3. Fichiers modifiés / ajoutés (chemins réels)
+- `omni-agents-framework/supreme/leases.py` (**nouveau**) : baux, heartbeat, fencing, reprise exclusive.
+- `omni-agents-framework/supreme/worker.py` : worker à bail, arrêt propre, erreurs expurgées.
+- `omni-agents-framework/supreme/orchestrator.py` : exécution fenced, idempotence `task_executions`,
+  reprise sûre, annulation, conseil intégré.
+- `omni-agents-framework/supreme/db.py` : schéma v2 additif, transactions réentrantes/IMMEDIATE,
+  tables workers/baux/réservations/apprentissage.
+- `omni-agents-framework/supreme/learning.py` : cycles persistants, verrou unique, `LearningScheduler`.
+- `omni-agents-framework/supreme/__main__.py` : CLI worker/learn périodique, signaux, audit code retour.
+- `omni-agents-framework/supreme/budget.py`, `router.py`, `council.py`, `providers.py` :
+  réservation avant appel, solde réel, quotas centraux, limites tokens, conseil sans contournement.
+- `omni-agents-framework/supreme/audit.py`, `api.py`, `__init__.py` : audit fiabilité/budget, version 1.2.1,
+  conflit de bail HTTP 409.
+- `omni-agents-framework/tests/test_supreme_hardening.py` (**nouveau**, 20 tests),
+  `omni-agents-framework/tests/test_supreme_docs_coherence.py` (**nouveau**, 2 tests) et
+  `omni-agents-framework/tests/_supreme_worker_helper.py` (**nouveau**, helper subprocess local).
+- Documentation : `omni-agents-framework/docs/supreme/` et `OMNIBRAIN-SUPREME.md`, `AGENTS.md`.
+- CI : `.github/workflows/omnibrain-supreme.yml` (smoke worker/learn/audit ajouté).
+
+## 4. Composants fonctionnels vérifiés
+- Registre/catalogue : 1000 spécialistes + 20 chefs, 20 divisions, 0 doublon.
+- Orchestrateur DAG : missions locales réelles, parallélisme, dépendances, idempotence, annulation.
+- Workers séparés : file SQLite WAL, propriétaire + bail + heartbeat + fencing, reprise après crash.
+- Apprentissage : ponctuel ou périodique, rapports persistés, erreurs surveillées, arrêt/reprise.
+- Budget : réservations atomiques, exposition soldée + réservée, quotas mission/agent/division/fournisseur/global.
+- Conseil : appels via routeur, plafond collectif conservateur, indisponibilité honnête sans fournisseur.
+- Mémoire : FTS5 + TF-IDF local ; embeddings neuronaux non activés sans fournisseur.
+- API/dashboard : données réelles, sécurité jeton, endpoints existants préservés.
+- Audit exécutable : catalogue, sécurité, schéma, workers, apprentissage, budget, tests découverts.
+
+## 5. Agents : enregistrés, surveillés, opérationnels
+Mesure réelle après audit CLI 1.2.1 (`omni-agents-framework/var/supreme/validation/status-cli.json`) :
+| Mesure | Valeur |
 | --- | --- |
-| Divisions | **20** |
-| Agents enregistrés (spécialistes) | **1000** (50 par division) |
-| Chefs de division | **20** |
-| Profils validés | **1020** (1000 + 20) |
-| Agents opérationnels/surveillés | **60** (40 spécialistes + 20 chefs) — preuve d'exécution réelle |
-| Missions représentatives différées (LLM) | **960** — aucun fournisseur configuré |
-| Doublons / clones | **0** (contrôles automatiques) |
+| Profils enregistrés au catalogue/registre | **1020** = 1000 spécialistes + 20 chefs |
+| Statut `registered` restant | **0** |
+| Statut `validated` (LLM en attente) | **960** |
+| Statut `monitored` (preuve locale réelle) | **60** |
+| Statut `operational` strict | **0** |
+| Agents réellement opérationnels en local | **60** (outils déterministes, marqués `monitored`) |
+| Agents LLM réellement opérationnels | **0** tant qu'aucun fournisseur réel n'est connecté |
+| Fournisseurs IA réellement connectés | **0** |
+| Cloud déployé | **0** |
 
-> 1000 agents **enregistrés et validés** ≠ 1000 opérationnels. Seuls 60 ont exécuté réellement
-> leur mission représentative (outils déterministes). Les 960 autres attendent un fournisseur IA.
+> Ne pas confondre : profil enregistré ≠ agent opérationnel ; `monitored` sur preuve locale ≠
+> fournisseur IA connecté ; serveur local ≠ déploiement cloud. Les 960 agents dépendants des LLM
+> restent en attente d'un fournisseur réel et d'un appel API réussi.
 
-## D. Intelligence
-- Fournisseurs connectés : **0** (Mistral/Vide, Groq, DeepSeek, OpenAI, OpenRouter, Gemini,
-  Anthropic, Ollama tous `not_configured`, vérifié par détection réelle). Aucune clé, egress limité.
-- **Client multi-modèles RÉEL** (`supreme/providers.py`) : vrai appel HTTP pour openai-compatible,
-  Anthropic, Gemini, Ollama. **Mistral/Vide prioritaire**. Fallback multi-fournisseurs + budget réel.
-- **Agents LLM exécutables** : la branche LLM de l'orchestrateur appelle réellement le routeur ;
-  les 960 agents LLM s'exécutent dès qu'un fournisseur est configuré (prouvé par test bout-en-bout
-  contre stub HTTP local). Sans fournisseur → blocage honnête.
-- Conseil multi-modèles : produit de **vraies analyses indépendantes** via fournisseurs configurés
-  (budget borné, fournisseurs distincts), décision par preuves + indépendance (≠ majorité).
-- **23 tests fournisseurs** : mode sans fournisseur (local réel), client contre **stub HTTP local**
-  (vrai aller-retour, PAS un fournisseur IA réel), fallback, budget, priorité, conseil, sécurité.
-- **Limite honnête** : aucun fournisseur IA réel connecté tant qu'aucune clé n'est fournie.
-  Mistral/Vide ne sera opérationnel qu'après un appel API réel réussi. Voir `PROVIDERS.md`.
+## 6. Tests exécutés et résultats
+Dernière exécution locale complète : **340 tests verts** = **105 V4/non-SUPREME + 235 SUPREME**.
+Journaux gitignorés : `omni-agents-framework/var/supreme/validation/`.
+| Validation | Résultat local | Preuve |
+| --- | --- | --- |
+| 105 tests V4/non-SUPREME | **105 OK** | `validation/v4-full.log` |
+| Tous les tests SUPREME | **235 OK** | `validation/supreme.log` |
+| Suite complète non-régression | **340 OK** | `validation/full-suite-final.log` |
+| Concurrence multi-processus + crash | **9 OK** (sélection ciblée) | `validation/concurrency-crash.log` |
+| Récupération après crash / SIGTERM / fencing | inclus ci-dessus + `test_supreme_hardening.py` | `validation/hardening.log` |
+| Cycle périodique d'apprentissage | **17 OK** (sélection ciblée) | `validation/learning-periodic.log` |
+| Budget conseil / routeur / fournisseurs | **44 OK** (sélection ciblée) | `validation/council-budget.log` |
+| Sécurité | **57 OK** (sélection ciblée) | `validation/security.log` |
+| Durcissement 1.2.1 complet | **20 OK** | `validation/hardening.log` |
+| Cohérence documentaire automatique | **2 OK** | inclus dans `validation/full-suite-final.log` |
+| Audit exécutable complet | **ok=true**, version 1.2.1, **340 tests découverts** | `validation/audit-cli.json` |
+| Contrôles CI GitHub | relancés sur la branche après synchronisation ; résultat consigné dans PR #5 | GitHub Actions / `gh pr checks 5` |
 
-## E. Mémoire
-- Stockage SQLite 4 niveaux / 8 types ; **15 entrées collectives** réelles après 5 missions.
-- Recherche FTS5 réelle ; graphe de connaissances ; provenance + confiance ; versionnement ; TTL ;
-  contradictions ; ACL ; rédaction secrets ; anti-injection ; suppression contrôlée. **13 tests**.
-- Recherche sémantique par embeddings : interface présente, inactive sans fournisseur (documenté).
+Catégories séparées : les 340 tests sont locaux (SQLite, subprocess, signaux, outils, HTTP stub).
+**0 appel fournisseur IA réel**, **0 test cloud réel**. Un stub HTTP local n'est pas un fournisseur réel.
 
-## F. Infrastructure
-- Cloud utilisé : **aucun** (démarrage gratuit local/SQLite). GitHub = code + CI + PR.
-- Workflows : `omnibrain-supreme.yml` (3.11/3.12/3.13) + V4 existant conservé.
-- Workers : pool borné (4), backpressure, timeouts, annulation, reprise. Pas de processus par agent.
-- Quotas : par fournisseur/agent/division/mission ; coupure + alertes ; **coût réel 0.0 USD**.
-- Sauvegarde initiale créée : `bk-20261105T031627-535efe`, intégrité `ok`.
+## 7. Sécurité
+- Anti-fuite dépôt, fichiers secrets non suivis/ignorés, jeton API 0600 jamais affiché,
+  journal d'accès expurgé, ACL bus/mémoire, anti-injection, actions protégées, RBAC V4.
+- Budget : aucune réservation ne dépasse les quotas ; les appels interrompus incertains
+  conservent une réservation prudente ; les erreurs sont expurgées.
+- Workers : un ancien propriétaire ne peut pas committer après perte de bail ; un appel LLM
+  interrompu n'est pas rejoué aveuglément.
+- Audit sécurité local : `ok=true` dans `validation/audit-cli.json`.
 
-## G. Sécurité
-- Contrôles : moindre privilège, anti-usurpation bus, ACL bus/mémoire, rédaction secrets,
-  anti-injection, gouvernance 4 niveaux, approbations humaines, RBAC V4, noyau protégé.
-- Tests sécurité dédiés (bus, mémoire, policy, tools, observability) : **verts**.
-- Risques restants : fournisseurs à tester à la connexion ; sandbox non câblé à l'orchestrateur
-  (aucun outil actuel ne requiert de code arbitraire) ; embeddings inactifs.
+## 8. Problèmes corrigés pendant ce durcissement
+1. `recover()` réinitialisait toutes les missions `running`, y compris celles d'un worker actif.
+   Corrigé par baux expirants + heartbeat + détection worker arrêté/silencieux + fencing.
+2. Risque de double commit après crash/reprise. Corrigé par `task_executions` et écritures gardées.
+3. `learn` n'était qu'un cycle ponctuel non ordonnancé. Corrigé par scheduler périodique,
+   persistance, verrou unique, arrêt propre, surveillance d'erreurs et reprise.
+4. Le conseil appelait directement le client HTTP et comptabilisait après coup. Corrigé par
+   passage obligatoire via `router.complete`, réservation avant appel et plafond collectif.
+5. Quotas vérifiés après dépense dans certains chemins. Corrigé par `BEGIN IMMEDIATE`,
+   réservations multi-scopes et exposition incluant les réservations ouvertes.
+6. Migration schéma : index créé avant ajout de colonne sur base existante. Corrigé et testé
+   par migration v1→v2 additive.
+7. Documentation/PR obsolètes (version/tests/chemins). Synchronisées en 1.2.1.
 
-## H. Qualité
-- **318 tests exécutés, tous verts** : 105 V4 + 213 SUPREME (`python3 -m unittest discover -s tests`).
-- 5 missions réelles exécutées : **15 tâches `done`**, 0 échec, coût 0.0.
-- KPIs réels : agent_success_rate 1.0, mission_success_rate 1.0, avg_mission_duration ~12.8 ms,
-  duplicate_agent_rate 0.0, agent_evaluation_score 1.0 ; 6 KPIs `null` (indisponibles, non fabriqués).
-- Durcissement concurrence : défaut `database is locked` (workers/API partageant une connexion)
-  détecté par stress puis corrigé (connexion SQLite par thread, WAL) ; 2 tests de régression ajoutés.
-- Erreurs restantes : aucune dans le périmètre livré ; limites documentées.
+## 9. GitHub / CI
+- `master` distant : `af4b951`, intégré par merge `b8b3978` sans modification directe.
+- Branche : `arena/ffc77bf1-skills-collection`, poussée sur `origin`.
+- PR #5 : ouverte, non fusionnée ; corps mis à jour pour 1.2.1 et 340 tests.
+- PR #2 : non modifiée.
+- CI : workflows Supreme et V4, Python 3.11/3.12/3.13 ; smoke CLI sync/mission/worker/learn/audit.
+  Les checks du dernier commit sont visibles dans la PR #5.
 
-## I. GitHub
-- Dépôt modifié : `blassana280-ux/skills-collection` (branche Arena de session).
-- Branche : `arena/ffc77bf1-skills-collection` (nom fixe ; équivalent `feature/omnibrain-supreme-core`).
-- Commits : voir historique git. PR ouverte vers `master` (lien dans le message de livraison).
-- Aucune écriture sur `master`, aucune fusion, aucun force-push, aucun secret commité.
-- Promotion vers `omni-agents-framework` autonome : bloquée 403, documentée, non contournée.
+## 10. Limites restantes et autorisations requises
+- **Fournisseurs IA** : 0 connecté. Clés absentes et egress sandbox limité. Mistral/Vide ne sera
+  déclaré opérationnel qu'après un appel API réel réussi. Aucun secret demandé dans le dépôt/chat.
+- **Cloud** : aucun déploiement. Architecture locale multi-workers prête, mais exposition publique,
+  dépense ou déploiement production exigent autorisation humaine.
+- **LLM interrompus** : réconciliation humaine requise avant nouvelle tentative si une réservation
+  incertaine existe ; c'est un choix prudent contre la double facturation.
+- **Dépôt autonome** : promotion vers `omni-agents-framework` bloquée 403, non contournée.
+- **PR #2 vs #5** : convergence conceptuelle à arbitrer humainement ; aucun fichier de #2 modifié.
+- **Fusion** : aucune PR fusionnée sans autorisation explicite.
 
-## Finalisation v1.2 (2026-11-05)
-- **Explicabilité** : chaque plan porte `explanation` + `why` par tâche (agent/outil/stratégie),
-  visible via `/api/missions/{id}` et le bouton « Pourquoi ? » du dashboard.
-- **Arbitrage intégré** : missions complexes → conseil multi-modèles sur preuves réelles ;
-  décision mémorisée ; `unavailable` honnête sans fournisseur. Testé (décidé via stub local).
-- **Évaluation LLM réelle** : activation `monitored` sur appel réel réussi (testé stub) ;
-  échec réel ≠ différé ; sans fournisseur → différé honnête.
-- **Workers séparés (Phase G)** : file persistante + claim atomique + vrai subprocess testé.
-  `python3 -m supreme worker` — montée en charge horizontale locale réelle ; cloud non déployé.
-- **Audit exécutable (Phase I)** : `python3 -m supreme audit` — preuves JSON horodatées.
-- **Cycle d'amélioration (Phase 13)** : `run_cycle()` observé→proposé→comparé→rapporté ;
-  acceptation sur gain mesuré uniquement ; PR/fusion = porte humaine ; noyau intact.
-- **Historique par agent** : `/api/agents/{id}/history` (missions, KPIs, évaluations, supervision).
-- **318 tests verts** (105 V4 + 213 SUPREME).
-
-## J. État final par fonctionnalité
-| Fonctionnalité | État |
-| --- | --- |
-| Cerveau central exécutable | **Terminé et testé** |
-| Registre 1000 agents / 20×50 | **Terminé et testé** |
-| Identités/spécialités distinctes | **Terminé et testé** (0 doublon) |
-| Orchestration DAG, parallélisme, reprises | **Terminé et testé** |
-| Communication inter-agents | **Terminé et testé** |
-| Mémoire 4 niveaux + recherche | **Terminé et testé** |
-| Client multi-modèles réel (HTTP) | **Terminé et testé (stub local réel) ; prêt pour clés** |
-| Routage multi-modèles + fallback + budget | **Terminé et testé ; bloqué sans clés** |
-| Exécution réelle des agents LLM | **Terminé et testé (bout-en-bout stub) ; actif si fournisseur configuré** |
-| Conseil multi-modèles (analyses réelles) | **Terminé et testé ; actif si fournisseur configuré** |
-| Sécurité/gouvernance + audit anti-fuite | **Terminé et testé** |
-| API + tableau de bord mobile (coûts/sécurité/contrôle) | **Terminé et testé (données réelles, live)** |
-| Apprentissage/auto-amélioration + cycle permanent | **Terminé et testé (gain mesuré, PR = humain)** |
-| Explicabilité des choix (agent/modèle/stratégie) | **Terminé et testé** |
-| Arbitrage conseil sur missions complexes | **Terminé et testé (stub) ; réel si fournisseur** |
-| Workers séparés + file persistante (local) | **Terminé et testé (vrai subprocess)** |
-| Audit exécutable | **Terminé et testé** |
-| Workflows CI | **Terminé (CI verte attendue sur PR)** |
-| Fournisseurs IA réellement connectés | **En attente d'autorisation (clés humaines) — 0 connecté** |
-| Recherche sémantique embeddings | **En développement (interface prête)** |
-| Déploiement cloud / promotion dépôt autonome | **En attente d'autorisation / bloqué 403** |
+## 11. Prochaines étapes
+1. Humain : connecter un fournisseur réel via env/secrets hors dépôt, puis `providers --check`
+   et `evaluate --activate` sur preuve réelle.
+2. Humain : décider fusion PR #5, convergence PR #2, cloud/exposition publique, promotion dépôt autonome.
+3. Technique optionnel après accord : réconcilier les réservations LLM interrompues avec preuves
+   fournisseur ; ajouter embeddings si fournisseur réel disponible ; étendre outils locaux sûrs.
 
 ## Conclusion
-L'écosystème est **réellement construit et exécutable** : un cerveau central orchestre 1000
-spécialistes enregistrés/validés (20 divisions), 60 opérationnels sur preuve, avec mémoire,
-bus, sécurité, budget, observabilité, API et tableau de bord mobile — le tout gratuit, testé
-(318 tests) et documenté. L'intelligence multi-modèles est implémentée mais reste indisponible
-tant qu'aucune clé de fournisseur n'est fournie (action humaine). Aucun chiffre marketing :
-les 1000 agents ne sont pas présentés comme 1000 opérationnels.
+SUPREME 1.2.1 est livré sur la branche de travail avec corrections réelles et tests reproductibles :
+workers fiables à plusieurs processus, apprentissage périodique contrôlé, budget/conseil financièrement
+bornés, documentation synchronisée et GitHub resynchronisé proprement. Le système reste local et
+honnête : 1020 profils enregistrés, 60 agents locaux surveillés/opérationnels sur preuve, 960 agents LLM
+en attente, 0 fournisseur réel connecté, 0 cloud déployé, aucune fusion de PR.

@@ -1,6 +1,6 @@
 # OMNIBRAIN SUPREME 1000 — Phase 1 : Audit réel de l'écosystème
 
-**Date :** 2026-11-05 · **Branche de travail :** `arena/ffc77bf1-skills-collection` (base `4500e93`, `master`)
+**Date :** 2026-11-05 · **Branche de travail :** `arena/ffc77bf1-skills-collection` (base initiale `4500e93` ; `master` synchronisé ensuite à `af4b951` en 1.2.1)
 **Méthode :** `gh auth status`, `gh repo list`, `gh api`, `gh pr list/view/diff`, lecture des fichiers locaux, exécution de la suite de tests existante. Aucune donnée inventée ; les accès refusés sont listés tels quels.
 
 ---

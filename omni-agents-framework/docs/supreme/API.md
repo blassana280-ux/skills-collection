@@ -1,4 +1,4 @@
-# API OMNIBRAIN SUPREME
+# API OMNIBRAIN SUPREME 1.2.1
 
 Base : `http://<hôte>:8765`. Auth : en-tête `X-API-Token: <jeton>` (ou `Authorization: Bearer`).
 Lecture anonyme si `SUPREME_ALLOW_ANON_READ=1`. Écritures : jeton admin obligatoire.
@@ -48,7 +48,8 @@ Réponse : `{submitted:{mission_id,plan}, result:{state:"completed",tasks:{done:
 ## Formats
 - Mission : `objective` (str ≤4000), `priority` (int), `budget_usd` (float ≥0),
   `tasks` optionnel `[{agent_id, tool?, input?, depends_on?}]`.
-- Erreurs : `{error: "..."}` avec code HTTP 400/401/403/404/500.
+- Erreurs : `{error: "..."}` avec code HTTP 400/401/403/404/409/500.
+  `409` : conflit de bail/mission déjà détenue par un autre worker (`LeaseLostError`).
 
 ## Endpoints ajoutés (v1.1–1.2)
 | Route | Auth | Description |
@@ -67,3 +68,12 @@ Réponse : `{submitted:{mission_id,plan}, result:{state:"completed",tasks:{done:
 - Chaque tâche contient `why` : pourquoi cet agent et cet outil.
 - Les missions `complexe` produisent `result.council` : décision du conseil multi-modèles
   fondée sur les preuves (sorties de tâches réelles), ou `unavailable` honnête sans fournisseur.
+
+## Durcissement 1.2.1 visible via l'API
+- `/api/health` retourne la version SUPREME courante (`1.2.1`).
+- `/api/missions` / `/api/missions/{id}` exposent les champs de bail/fencing persistés
+  (`owner_worker_id`, `lease_expires_at`, `fencing_token`, `run_attempts`) lorsqu'ils existent.
+- Une exécution concurrente conflictuelle renvoie `409` au lieu d'écraser le travail d'un worker.
+- Le conseil inclut `budget_max_usd`, `budget_spent_usd`, `budget_reserved_bound_usd`,
+  `attempts`, `errors`, `models` ; aucun appel ne contourne le routeur/budget.
+- Les réservations budgétaires interrompues restent visibles en base pour réconciliation humaine.

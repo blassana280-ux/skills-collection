@@ -33,9 +33,10 @@ existante.
 6. **Respect de l'upstream** — `CONTRIBUTING.md` du dépôt prévaut, y compris
    pour la déclaration d'assistance IA.
 
-## Couche OMNIBRAIN SUPREME 1000 (2026-11-05)
+## Couche OMNIBRAIN SUPREME 1000 (2026-11-05, version 1.2.1)
 
-> Source de vérité : `omni-agents-framework/supreme/` + `omni-agents-framework/docs/supreme/`.
+> Source de vérité : `skills-collection/omni-agents-framework/supreme/` +
+> `skills-collection/omni-agents-framework/docs/supreme/`.
 > Point d'entrée : [`OMNIBRAIN-SUPREME.md`](OMNIBRAIN-SUPREME.md).
 
 - 20 divisions × 50 spécialistes = **1000 profils** + 20 chefs ; registre SQLite, orchestrateur
@@ -44,4 +45,6 @@ existante.
   Ne jamais présenter 1000 agents enregistrés comme 1000 opérationnels.
 - **Aucun fournisseur IA supposé connecté** ; détection réelle, aucune connexion simulée.
 - Reprise du travail : `omni-agents-framework/docs/supreme/CONTINUITY.md`.
-- Tests : `cd omni-agents-framework && python3 -m unittest discover -s tests` (318 verts).
+- Tests : `cd omni-agents-framework && python3 -m unittest discover -s tests` (**340 verts = 105 V4 + 235 SUPREME**).
+- Durcissement 1.2.1 : workers à baux/heartbeat/fencing, apprentissage périodique persistant,
+  budget réservé avant appel, conseil sans contournement du routeur. Aucune fusion de PR sans accord.

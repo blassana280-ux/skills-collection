@@ -67,3 +67,18 @@ python3 -m supreme serve --port 8765
 - Un fournisseur IA configuré plus tard devra être testé (auth, quotas, coût) avant usage.
 - La recherche sémantique par embeddings n'est pas active (pas de fournisseur) ; FTS5 lexical réel.
 - Le conseil multi-modèles nécessite des appels API réels pour produire ses analyses.
+
+## Durcissement 1.2.1 — intégrité d'exécution et financière
+- **Workers** : chaque mission a un propriétaire, un bail expirant, un heartbeat et un jeton
+  de fencing. Un worker qui démarre ne réinitialise pas les missions actives. Les écritures
+  d'un ancien propriétaire sont refusées ; les résultats sont dédupliqués (`task_executions`).
+- **Crash/reprise** : récupération exclusive des baux expirés dont le worker est arrêté ou
+  silencieux. `SIGTERM` replanifie proprement ; `SIGKILL` est repris après expiration.
+- **LLM interrompu** : si une réservation d'appel est incertaine, la tâche est bloquée pour
+  réconciliation humaine avant nouvelle tentative payante. Aucune double facturation aveugle.
+- **Budget** : réservation atomique avant appel (`BEGIN IMMEDIATE`), exposition = soldé +
+  réservé/interrupté incertain ; quotas mission/agent/division/fournisseur/global ; limites
+  tokens/contexte ; erreurs expurgées. Le conseil passe par le routeur, jamais par le client
+  HTTP direct.
+- **Apprentissage** : un seul cycle actif, rapports persistés 0600, erreurs surveillées ;
+  aucune auto-modification du noyau, des permissions ou des règles de sécurité.

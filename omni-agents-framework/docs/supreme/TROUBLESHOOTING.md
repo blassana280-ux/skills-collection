@@ -16,3 +16,13 @@
 ## Journalisation
 Événements structurés dans la table `events` (+ export `var/supreme/events.jsonl`),
 corrélés aux missions. Secrets rédigés. `/api/trace/{id}` pour la trace complète.
+
+## 1.2.1 — workers, baux, apprentissage, budget
+| Symptôme | Cause probable | Action sûre |
+| --- | --- | --- |
+| HTTP 409 sur `/api/missions/{id}/run` | mission déjà détenue par un worker actif | attendre le worker ou inspecter le bail ; ne pas forcer |
+| mission `running` après crash | bail pas encore expiré / worker silencieux | attendre expiration + heartbeat stale ; `worker --once` récupère exclusivement |
+| tâche LLM `blocked` après crash | réservation incertaine, risque de double facturation | réconciliation humaine avec preuve fournisseur avant nouvelle tentative |
+| `learn` retourne `skipped` | un cycle est déjà actif | inspecter `learn --status` ; ne pas lancer deux ordonnanceurs |
+| conseil `unavailable` avec erreurs budget | borne de coût > budget restant / quota central | augmenter quota uniquement avec autorisation, ou réduire modèles/tokens |
+| audit exit 1 | catalogue/sécurité/schéma/budget incohérent | lire le JSON sauvegardé, corriger sur branche + tests + PR |

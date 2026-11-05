@@ -1,4 +1,6 @@
-# Guide de déploiement OMNIBRAIN SUPREME
+# Guide de déploiement OMNIBRAIN SUPREME 1.2.1
+
+Racine dépôt : `skills-collection/`. Framework : `skills-collection/omni-agents-framework/`.
 
 ## Démarrage gratuit (local / sandbox)
 ```bash
@@ -11,9 +13,10 @@ python3 -m supreme serve --port 8765     # API + tableau de bord
 Aucune dépendance externe, aucun compte, aucun abonnement. SQLite local (`var/supreme/`).
 
 ## Preview navigateur (Android compatible)
-Le serveur bind `0.0.0.0`. Dashboard mobile-first sur `/`. Jeton admin affiché au démarrage
-et stocké dans `var/supreme/api_token.txt`. Pour la lecture anonyme en preview :
-`SUPREME_ALLOW_ANON_READ=1`. Les écritures exigent le jeton.
+Le serveur bind `0.0.0.0`. Dashboard mobile-first sur `/`. Jeton admin **jamais affiché** ;
+stocké dans `omni-agents-framework/var/supreme/api_token.txt` (`0600`, gitignoré).
+Pour la lecture anonyme en preview : `SUPREME_ALLOW_ANON_READ=1`. Les écritures exigent le jeton.
+Une preview navigateur locale n'est pas un déploiement cloud public.
 
 ## GitHub
 - Code, profils, compétences, configurations versionnés dans le dépôt.
@@ -35,15 +38,19 @@ actuellement. Toute dépense nécessite une approbation humaine explicite (nivea
 | `SUPREME_ALLOW_ANON_READ` | `1` = lecture anonyme (preview) |
 | `OPENAI_API_KEY` / `MISTRAL_API_KEY` / … | Fournisseurs IA (optionnels, non configurés) |
 
-## Montée en charge horizontale réelle (v1.2, locale)
-La file de missions est persistante (SQLite WAL) et les workers sont des processus séparés :
+## Montée en charge horizontale réelle (v1.2.1, locale)
+La file de missions est persistante (SQLite WAL) et les workers sont des processus séparés
+avec propriétaire, bail expirant, heartbeat et fencing :
 ```bash
 # Terminal 1 : API
-python3 -m supreme serve --port 8765
-# Terminal 2..N : workers (claim atomique, pas de double exécution)
-python3 -m supreme worker --interval 1
+python3 -m supreme serve --port 8765 --host 0.0.0.0
+# Terminal 2..N : workers (pas de double commit ; reprise exclusive après crash)
+python3 -m supreme worker --interval 1 --lease-seconds 30 --heartbeat-seconds 5
+# Apprentissage périodique contrôlé
+python3 -m supreme learn --periodic --interval 300 --lease-seconds 30 --heartbeat-seconds 5
 ```
 - Soumettre avec `run: false` (API) pour mettre en file ; les workers consomment.
-- Testé en vrai processus séparé (`test_worker_real_subprocess`).
+- Arrêt propre : `SIGINT`/`SIGTERM`. Reprise après `SIGKILL` testée en vrais processus
+  (`omni-agents-framework/tests/test_supreme_hardening.py`).
 - **Cloud non déployé** : cette architecture est prête à être répliquée (workers en conteneurs),
   mais aucun déploiement cloud n'existe tant qu'il n'est pas autorisé et effectué.

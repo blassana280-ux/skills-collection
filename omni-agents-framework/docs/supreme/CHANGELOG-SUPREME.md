@@ -1,109 +1,89 @@
 # Changelog OMNIBRAIN SUPREME
 
+Version de livraison courante : **SUPREME 1.2.1**. Le paquet V4 historique
+`omnibrain-framework` reste à `1.0.0` dans `omni-agents-framework/pyproject.toml` ;
+il ne faut pas confondre cette version V4 avec la version de la couche SUPREME.
+Racine dépôt : `skills-collection/`. Chemins ci-dessous relatifs à
+`skills-collection/omni-agents-framework/` sauf mention contraire.
+
+## 1.2.1 — 2026-11-05 (durcissement final : workers, apprentissage, budget, cohérence)
+### Corrigé / durci
+- **Concurrence workers** : `recover()` ne réinitialise plus toutes les missions `running`.
+  Ajout de `omni-agents-framework/supreme/leases.py` : worker_id unique, propriétaire,
+  bail expirant, heartbeat, jeton de fencing, récupération exclusive des missions
+  abandonnées (bail expiré + worker arrêté/silencieux), arrêt propre et reprise après crash.
+- **Idempotence de commit** : table `task_executions` ; un résultat de tâche n'est commité
+  qu'une fois. Les écritures de l'ancien propriétaire sont refusées après perte du bail.
+  Un appel LLM interrompu avec réservation incertaine est bloqué pour réconciliation
+  humaine avant nouvelle tentative, afin d'éviter une double facturation aveugle.
+- **Schéma SQLite v2 additif** : migration sans suppression de données ; sauvegarde
+  préalable créée (`bk-20261105T163835-22f858`, intégrité `ok`). Test de migration v1→v2.
+- **Apprentissage continu** : `LearningEngine.run_cycle()` persiste chaque rapport
+  (`learning_runs` + `omni-agents-framework/var/supreme/learning/`), protégé par un index
+  unique contre deux cycles simultanés, heartbeat de cycle, erreurs surveillées,
+  interruption propre et reprise après bail expiré. Ajout `LearningScheduler` et
+  `python3 -m supreme learn --periodic --interval N [--max-cycles N] [--status]`.
+- **Budget strict** : `BudgetController.reserve/settle/release` avec transaction
+  `BEGIN IMMEDIATE`, exposition = dépenses soldées + réservations ouvertes/interrompues.
+  Le routeur réserve une borne supérieure avant chaque appel, solde sur l'usage réel,
+  trace fournisseur/modèle/statut/réservation, bloque les dépassements individuels et
+  collectifs, respecte les quotas centraux et les limites de tokens/contexte.
+- **Conseil multi-modèles** : ne contourne plus le routeur via `router.client.complete`.
+  Chaque analyse passe par `router.complete`, sans fallback interne au conseil, avec
+  plafond collectif conservateur fondé sur les bornes de coût, pas seulement le coût réel.
+- **Audit exécutable** : version, schéma, workers/baux, tâches orphelines, cycles
+  d'apprentissage, réservations et violations de quotas ; code de sortie non nul si échec.
+- **Synchronisation GitHub** : merge propre de `master` `af4b951` dans la branche de
+  travail, sans réécriture d'historique, sans modification directe de `master`, sans fusion de PR.
+### Tests
+- Suite complète réelle : **340 tests verts** = **105 V4/non-SUPREME + 235 SUPREME**.
+- Ajout `omni-agents-framework/tests/test_supreme_hardening.py` : 20 tests locaux réels
+  (multi-processus, SIGKILL/SIGTERM, fencing, migration, apprentissage périodique,
+  budget/conseil, quotas concurrents). Aucun fournisseur IA réel, aucun cloud.
+
 ## 1.2.0 — 2026-11-05 (intelligence, opérations, audit — finalisation A→J)
 ### Ajouté
-- **Explicabilité OmniBrain** : chaque plan porte `explanation` (classification, escouade,
-  stratégie, vérification, arbitrage) et chaque tâche un champ `why` (sélection agent/outil).
+- **Explicabilité OmniBrain** : chaque plan porte `explanation` et chaque tâche `why`.
   Exposé via `/api/missions/{id}` et le bouton « Pourquoi ? » du dashboard.
-- **Arbitrage intégré** : les missions `complexe` passent au conseil multi-modèles en fin
-  d'exécution (preuves = sorties de tâches réelles) ; décision mémorisée au niveau central ;
-  sans fournisseur → statut `unavailable` honnête, jamais de décision fabriquée.
-- **Évaluation LLM réelle** : `EvaluationEngine(router=...)` tente un VRAI appel pour le
-  représentatif LLM ; succès → activation `monitored` sur preuve ; échec → échec (pas différé) ;
-  sans fournisseur → différé honnête. Fin du différage inconditionnel.
-- **Worker séparé (Phase G)** : `supreme/worker.py` + `python3 -m supreme worker [--once]`.
-  File persistante SQLite, **claim atomique** (pas de double exécution), N workers possibles,
-  reprise des tâches abandonnées. Testé en VRAI processus séparé (subprocess).
-- **Audit exécutable (Phase I)** : `supreme/audit.py` + `python3 -m supreme audit` — catalogue
-  (1020, 20×50), sécurité (permissions, gitignore, non-affichage), sauvegardes, KPIs, tests
-  découverts ; rapport JSON horodaté archivé (gitignoré).
-- **Cycle d'amélioration (Phase 13)** : `LearningEngine.run_cycle()` + `python3 -m supreme learn` —
-  observer→identifier→proposer→versionner→évaluer→comparer→accepter sur gain→rapport ;
-  étape PR = porte humaine ; noyau/permissions/sécurité intacts.
-- **Historique par agent** : `/api/agents/{id}/history` (missions, KPIs, 7 dernières évaluations,
-  supervision). Détail mission `/api/missions/{id}`.
-### Tests
-- +9 intelligence, +9 opérations, +2 API → **318 tests verts** (105 V4 + 213 SUPREME).
+- **Arbitrage intégré** : missions complexes → conseil multi-modèles sur preuves réelles ;
+  sans fournisseur → statut `unavailable` honnête.
+- **Évaluation LLM réelle** : `EvaluationEngine(router=...)` tente un vrai appel ;
+  activation sur preuve, échec réel non différé, différé honnête sans fournisseur.
+- **Worker séparé (première version)** : file persistante + claim atomique + subprocess.
+  Durci en 1.2.1 par baux/heartbeat/fencing.
+- **Audit exécutable** : `python3 -m supreme audit`, rapport JSON archivé.
+- **Cycle d'amélioration ponctuel** : `run_cycle()` ; rendu périodique et persistant en 1.2.1.
+- **Historique par agent** : `/api/agents/{id}/history`, détail `/api/missions/{id}`.
+### Tests à cette livraison
+- **318 tests verts** (105 V4 + 213 SUPREME).
 
 ## 1.1.0 — 2026-11-05 (multi-modèles réel, sécurité, dashboard)
 ### Ajouté
-- **Intégration multi-modèles RÉELLE** (`supreme/providers.py`) : client HTTP stdlib pour
-  openai-compatible (OpenAI, **Mistral/Vide**, DeepSeek, Groq, OpenRouter, compatible personnalisé),
-  Anthropic, Gemini, Ollama. `complete()` = vrai appel HTTP, aucune réponse simulée.
-- **Mistral/Vide prioritaire** (`priority=1`) ; ajout Groq + compatible OpenAI personnalisé.
-- Routeur `complete()` avec **fallback multi-fournisseurs + budget réel** ; `configured_models()`
-  (le routage cible les fournisseurs configurés, l'appel réel sert de preuve de disponibilité).
-- Orchestrateur : les **agents LLM s'exécutent réellement** via le routeur si fournisseur configuré ;
-  bloqués honnêtement sinon. Conseil : **vraies analyses indépendantes** (budget borné).
-- **Sécurité des clés** : env ou fichier gitignoré `0600` ; jamais journalisées, expurgées des
-  erreurs, jamais dans l'URL. CLI `providers` (`--check`, `--init-secrets`).
-- **Audit sécurité** (`test_supreme_security_audit.py`) : anti-fuite dépôt, isolation 1020 profils,
-  anti-injection, actions protégées, stdlib only, validation entrées.
-- **Dashboard mobile** : onglets Coûts + Sécurité, fournisseurs enrichis (configuré ≠ opérationnel),
-  contrôle des missions (relancer/annuler). API `/api/providers`, `/api/alerts`, `/api/security`.
-- Documentation `PROVIDERS.md` (connexion sécurisée sans exposer de secret).
-- **Mémoire (Phase F)** : recherche contextuelle **TF-IDF cosinus locale réelle** (`mode='tfidf'`),
-  sans fournisseur — rappel large par tokens + re-ranking cosinus. Embeddings neuronaux toujours
-  signalés indisponibles sans fournisseur (honnête).
-- Documentation `ECOSYSTEM.md` (organisation dépôts/PR #5 vs #2, infrastructure hybride honnête).
-### Tests
-- +23 fournisseurs, +15 audit sécurité, +12 API observabilité, +3 TF-IDF → **318 tests verts** (105 V4 + 213 SUPREME).
+- Client multi-fournisseurs HTTP réel (`supreme/providers.py`), Mistral/Vide prioritaire,
+  fallback, clés via env/fichier gitignoré 0600, jamais journalisées.
+- Agents LLM exécutables via routeur si fournisseur configuré ; blocage honnête sinon.
+- Audit sécurité, dashboard coûts/sécurité, API providers/alerts/security.
+- Mémoire TF-IDF cosinus locale réelle (`mode='tfidf'`) ; embeddings neuronaux indisponibles
+  sans fournisseur, signalés honnêtement.
+- Documentation PROVIDERS/ECOSYSTEM.
+### Tests à cette livraison
+- **298 tests verts** (105 V4 + 193 SUPREME) après ajout du mode TF-IDF API/dashboard.
+  Étapes intermédiaires : 267 (162 SUPREME), 294 (189), 297 (192), 298 (193).
 ### Honnêteté
-- **0 fournisseur IA réel connecté** à ce stade (aucune clé, egress sandbox limité). Les tests
-  fournisseurs utilisent un **stub HTTP local** (local réel, PAS un fournisseur IA réel).
-  Mistral/Vide ne sera déclaré opérationnel qu'après un appel API réel réussi.
-
-## 1.0.0 — 2026-11-05
-### Ajouté
-- Couche SUPREME complète au-dessus d'OmniBrain V4 (stdlib, SQLite).
-- 20 divisions × 50 spécialistes = **1000 profils complets** + 20 chefs de division.
-- 27 champs obligatoires + 7 évaluations par profil ; contrôles anti-doublons/clones.
-- Agent Registry SQLite, Agent Factory (création/version/rollback/suppression contrôlée).
-- Mission Planner + Task Decomposer (DAG), orchestrateur (états, idempotence, reprises,
-  annulation, parallélisme, backpressure).
-- Communication Bus (ACL, anti-usurpation, dédup, ack, file morte, historique).
-- Memory Engine 4 niveaux / 8 types (FTS5, graphe, provenance, confiance, versions, TTL,
-  contradictions, ACL, rédaction secrets, anti-injection, suppression contrôlée).
-- Model Router (détection réelle, routage, fallback, confidentialité) + Multi-Model Council
-  (décision par preuves, budget borné). 0 fournisseur configuré → indisponible honnête.
-- Policy Engine (4 niveaux de risque, approbations humaines, RBAC V4 réutilisé).
-- Security Supervisor (moindre privilège, anti-injection, rédaction, validation entrées).
-- Evaluation Engine (7 tests/profil, activation sur preuve réelle).
-- Learning + Self-Improvement (stratégies versionnées, gain mesuré, rollback, noyau protégé).
-- Cost Controller (quotas provider/agent/division/mission, alertes, coupure, historique).
-- Observability (logs structurés, métriques, 15 KPIs réels, null si indisponible).
-- Backup & Recovery (SQLite à chaud, intégrité, restauration).
-- API Gateway (auth par jeton, rôles) + tableau de bord mobile (données réelles).
-- Reporting Engine (missions, divisions, global, markdown).
-- 41 outils déterministes réels + Skill Registry (860 skills documentaires indexés).
-- **213 tests SUPREME** (+ 105 V4 = 318 verts). CI dédiée Python 3.11/3.12/3.13.
-- Documentation complète + suivi durable (CONTINUITY.md).
-
-### Réutilisé (V4, non réécrit)
-- `omni/memory/store.py` (rédaction secrets), `omni/sandbox/runtime.py` (RBAC),
-  `omni/sandbox/e2b_hook.py` (sandbox), `omni/telemetry` (patron), `tools/optimize_prompts.py` (patron).
-
-### Limites documentées
-- Aucun fournisseur IA connecté (clés absentes, réseau sandbox limité).
-- Recherche sémantique par embeddings inactive (FTS5 lexical réel).
-- Promotion vers `omni-agents-framework` autonome bloquée (403 jeton GitHub App).
-
-## 1.0.1 — 2026-11-05 (durcissement concurrence)
-- **Correctif thread-safety** : workers DAG et requêtes API utilisent désormais une connexion
-  SQLite par thread (WAL) au lieu de partager la connexion principale. Élimine les erreurs
-  `database is locked` sous charge multi-missions / API multi-thread.
-- 2 tests de régression ajoutés (missions parallèles, API concurrente) → **126 tests SUPREME / 231 total**.
-- Documentation : décomptes réels (41 outils, 231 tests) corrigés.
+- 0 fournisseur IA réel connecté ; tests HTTP contre stub local = local réel, pas fournisseur réel.
 
 ## 1.0.2 — 2026-11-05 (sécurité : jeton API + journal d'accès)
-- **Rotation de jeton sûre** : `python3 -m supreme rotate-token` / `api.rotate_token()` génère un
-  jeton 256 bits (`secrets.token_urlsafe(32)`), l'écrit en `0600` (atomique), ne renvoie jamais le
-  secret (métadonnées + empreinte SHA-256 tronquée uniquement).
-- **Jeton jamais affiché** : suppression de tout `print` du jeton au démarrage (`api.py` + CLI) ;
-  seul le chemin du fichier est imprimé.
-- **Journal d'accès expurgé** : `var/supreme/access.log` (`0600`, gitignoré) — méthode, chemin,
-  statut, IP ; `?token=…` → `REDACTED` ; ni jeton, ni en-têtes, ni corps journalisés.
-- Permissions `0600` renforcées à chaque chargement du jeton.
-- 13 tests de sécurité API ajoutés (journal expurgé, rotation, révocation, permissions, non-affichage)
-  → **213 tests SUPREME / 318 total**.
-- Procédure de rotation/révocation documentée dans `SECURITY.md`.
+- Rotation de jeton sûre 256 bits, fichier 0600, ancien jeton révoqué sur disque,
+  jamais affiché ; journal d'accès expurgé ; tests anti-fuite.
+- **244 tests verts** (105 V4 + 139 SUPREME).
+
+## 1.0.1 — 2026-11-05 (durcissement concurrence thread)
+- Connexion SQLite par thread (WAL) pour workers DAG/API ; correction `database is locked`.
+- **231 tests verts** (105 V4 + 126 SUPREME).
+
+## 1.0.0 — 2026-11-05
+- Couche SUPREME complète au-dessus d'OmniBrain V4 : 20 divisions × 50 spécialistes
+  + 20 chefs, registre, DAG, bus, mémoire 4 niveaux, routeur/conseil, policy, évaluation,
+  apprentissage, budget, observabilité, backup, API/dashboard, reporting, outils déterministes.
+- **221 tests verts** (105 V4 + 116 SUPREME).
+- Limites : aucun fournisseur IA connecté, embeddings inactifs, promotion dépôt autonome 403.

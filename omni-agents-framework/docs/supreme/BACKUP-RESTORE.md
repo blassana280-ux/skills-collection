@@ -22,3 +22,9 @@ BackupManager().restore("<backup_id>")   # écrase la base courante
 - Sauvegarder avant toute migration ou modification de masse.
 - Les sauvegardes contiennent des données runtime ; ne pas les commiter (`var/` ignoré).
 - Tester la restauration périodiquement (test `test_supreme_backup`).
+
+## Migration 1.2.1 (schéma v2 additif)
+- Avant durcissement : sauvegarde `bk-20261105T163835-22f858`, intégrité `ok`.
+- La migration ajoute colonnes/tables sans supprimer les données existantes.
+- Test de non-régression : `omni-agents-framework/tests/test_supreme_hardening.py::TestSchemaMigration`.
+- Toujours exécuter `python3 -m supreme backup` avant une migration ou restauration.

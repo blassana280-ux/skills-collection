@@ -38,3 +38,13 @@ HTTP (voir `PROVIDERS.md`), avec fallback multi-fournisseurs, budget réel et pr
 Les agents LLM et le conseil s'exécutent réellement dès qu'un fournisseur est configuré et
 répond ; sans fournisseur, tout est bloqué/indisponible honnêtement. `configured != available` :
 seul un appel réussi prouve la disponibilité.
+
+## Budget strict 1.2.1
+- `ModelRouter.complete` réserve une borne supérieure de coût avant chaque tentative,
+  puis solde sur l'usage réel. Les tentatives sont tracées (fournisseur, modèle, statut,
+  coût, réservation). Les dépassements individuels sont bloqués avant HTTP.
+- `Council.deliberate` utilise `router.complete` avec un plafond collectif conservateur
+  fondé sur les bornes de coût et sans fallback interne ; il ne contourne pas les quotas centraux.
+- Les erreurs réseau/5xx incertaines conservent une réservation `interrupted` par prudence ;
+  les rejets explicites avant traitement (ex. 401) libèrent la réservation.
+- `max_tokens` doit être positif et tenir dans le contexte ; sinon l'appel est bloqué avant HTTP.
