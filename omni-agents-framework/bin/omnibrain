@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Lanceur OmniBrain : fonctionne depuis n'importe quel répertoire,
+# sans installation pip. Pour une commande globale : pip install -e .
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m omnibrain "$@"

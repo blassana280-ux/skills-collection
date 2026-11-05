@@ -1,0 +1,1135 @@
+# Catalogue des 103 agents spécialisés — GÉNÉRÉ par tools/generate_agents.py.
+# Ne pas éditer à la main : modifier tools/catalog_*.py puis régénérer.
+
+[[agents]]
+id = "mobile-ios"
+name = "iOS Mobile Agent"
+file = "specialized/specialized-mobile-ios-agent.md"
+squad = "engineering"
+domains = ["mobile", "ios"]
+keywords = ["ios", "swift", "swiftui", "uikit", "iphone", "ipad", "app store", "testflight"]
+artifacts = ["ios-module", "testflight-build"]
+emoji = "📱"
+risk = false
+
+[[agents]]
+id = "mobile-android"
+name = "Android Mobile Agent"
+file = "specialized/specialized-mobile-android-agent.md"
+squad = "engineering"
+domains = ["mobile", "android"]
+keywords = ["android", "kotlin", "jetpack compose", "play store", "aab", "apk", "gradle"]
+artifacts = ["android-module", "play-release-bundle"]
+emoji = "🤖"
+risk = false
+
+[[agents]]
+id = "mobile-crossplatform"
+name = "Cross-Platform Mobile Agent"
+file = "specialized/specialized-mobile-crossplatform-agent.md"
+squad = "engineering"
+domains = ["mobile", "crossplatform"]
+keywords = ["flutter", "react native", "expo", "dart", "cross-platform", "multiplateforme", "kmp"]
+artifacts = ["crossplatform-app", "shared-core"]
+emoji = "🔀"
+risk = false
+
+[[agents]]
+id = "ussd-sms"
+name = "USSD & SMS Agent"
+file = "specialized/specialized-ussd-sms-agent.md"
+squad = "engineering"
+domains = ["mobile", "ussd", "africa"]
+keywords = ["ussd", "sms", "short code", "code court", "menu ussd", "sim", "sans connexion", "moov", "orange money", "wave"]
+artifacts = ["ussd-flow", "sms-gateway-config"]
+emoji = "📶"
+risk = false
+
+[[agents]]
+id = "microservices-architect"
+name = "Microservices Architect"
+file = "specialized/specialized-microservices-architect-agent.md"
+squad = "engineering"
+domains = ["backend", "architecture"]
+keywords = ["microservice", "microservices", "architecture distribuée", "event-driven", "kafka", "bus", "ddd", "bounded context"]
+artifacts = ["architecture-decision-record", "service-boundary-map"]
+emoji = "🕸️"
+risk = false
+
+[[agents]]
+id = "graphql-specialist"
+name = "GraphQL Specialist"
+file = "specialized/specialized-graphql-specialist-agent.md"
+squad = "engineering"
+domains = ["backend", "api"]
+keywords = ["graphql", "apollo", "federation", "schema", "resolver", "subscription", "query", "mutation"]
+artifacts = ["graphql-schema", "federation-plan"]
+emoji = "◈"
+risk = false
+
+[[agents]]
+id = "database-administrator"
+name = "Database Administrator"
+file = "specialized/specialized-database-administrator-agent.md"
+squad = "engineering"
+domains = ["data", "database"]
+keywords = ["dba", "base de données", "postgresql", "mysql", "index", "requête lente", "réplication", "sauvegarde", "sql"]
+artifacts = ["database-runbook", "performance-baseline"]
+emoji = "🗄️"
+risk = false
+
+[[agents]]
+id = "database-migration"
+name = "Database Migration Agent"
+file = "specialized/specialized-database-migration-agent.md"
+squad = "engineering"
+domains = ["data", "database", "migration"]
+keywords = ["migration", "migration de données", "etl", "changement de sgbd", "postgresql", "mysql", "oracle", "sql server", "cutover"]
+artifacts = ["migration-runbook", "data-reconciliation-report"]
+emoji = "🔁"
+risk = false
+
+[[agents]]
+id = "systems-rust"
+name = "Rust Systems Agent"
+file = "specialized/specialized-systems-rust-agent.md"
+squad = "engineering"
+domains = ["backend", "systems"]
+keywords = ["rust", "cargo", "ownership", "borrow checker", "wasm", "cli", "système", "zero-cost"]
+artifacts = ["rust-crate", "safety-analysis"]
+emoji = "🦀"
+risk = false
+
+[[agents]]
+id = "golang-services"
+name = "Go Services Agent"
+file = "specialized/specialized-golang-services-agent.md"
+squad = "engineering"
+domains = ["backend", "systems"]
+keywords = ["golang", "langage go", "grpc", "goroutine", "microservice go", "docker", "kubernetes client"]
+artifacts = ["go-service", "grpc-contract"]
+emoji = "🐹"
+risk = false
+
+[[agents]]
+id = "python-backend"
+name = "Python Backend Agent"
+file = "specialized/specialized-python-backend-agent.md"
+squad = "engineering"
+domains = ["backend", "python"]
+keywords = ["python", "django", "fastapi", "flask", "celery", "pydantic", "asyncio", "poetry"]
+artifacts = ["python-service", "async-task-design"]
+emoji = "🐍"
+risk = false
+
+[[agents]]
+id = "java-spring"
+name = "Java Spring Agent"
+file = "specialized/specialized-java-spring-agent.md"
+squad = "engineering"
+domains = ["backend", "java"]
+keywords = ["java", "spring", "spring boot", "jvm", "maven", "gradle", "jpa", "hibernate", "kafka"]
+artifacts = ["spring-service", "jvm-tuning-report"]
+emoji = "☕"
+risk = false
+
+[[agents]]
+id = "php-laravel"
+name = "PHP Laravel Agent"
+file = "specialized/specialized-php-laravel-agent.md"
+squad = "engineering"
+domains = ["backend", "php"]
+keywords = ["php", "laravel", "eloquent", "artisan", "composer", "livewire", "filament", "symfony"]
+artifacts = ["laravel-app", "queue-design"]
+emoji = "🎯"
+risk = false
+
+[[agents]]
+id = "dotnet-engineer"
+name = ".NET Engineer Agent"
+file = "specialized/specialized-dotnet-engineer-agent.md"
+squad = "engineering"
+domains = ["backend", "dotnet"]
+keywords = ["dotnet", ".net", "c#", "asp.net", "entity framework", "azure", "blazor", "nuget"]
+artifacts = ["dotnet-service", "ef-migration-set"]
+emoji = "🟣"
+risk = false
+
+[[agents]]
+id = "legacy-modernization"
+name = "Legacy Modernization Agent"
+file = "specialized/specialized-legacy-modernization-agent.md"
+squad = "engineering"
+domains = ["architecture", "modernization"]
+keywords = ["legacy", "modernisation", "strangler fig", "monolithe", "dette technique", "réécriture", "coexistence", "obsolescence"]
+artifacts = ["modernization-roadmap", "risk-register"]
+emoji = "🏛️"
+risk = false
+
+[[agents]]
+id = "api-integration"
+name = "API Integration Agent"
+file = "specialized/specialized-api-integration-agent.md"
+squad = "engineering"
+domains = ["backend", "integration"]
+keywords = ["intégration", "webhook", "connecteur", "api tierce", "synchronisation", "oauth", "edi", "saga", "sap"]
+artifacts = ["integration-connector", "webhook-contract"]
+emoji = "🔌"
+risk = false
+
+[[agents]]
+id = "observability-telemetry"
+name = "Observability & Telemetry Agent"
+file = "specialized/specialized-observability-telemetry-agent.md"
+squad = "engineering"
+domains = ["observability", "telemetry"]
+keywords = ["observabilité", "opentelemetry", "traces distribuées", "instrumentation des vagues", "télémétrie json", "rapport de mission"]
+artifacts = ["telemetry-json", "mission-report-md"]
+emoji = "📈"
+risk = false
+
+[[agents]]
+id = "ml-engineer"
+name = "ML Engineer Agent"
+file = "specialized/specialized-ml-engineer-agent.md"
+squad = "data-ai"
+domains = ["ai", "ml"]
+keywords = ["machine learning", "modèle prédictif", "scikit", "xgboost", "feature engineering", "entraînement de modèle", "inférence ml"]
+artifacts = ["model-package", "training-pipeline"]
+emoji = "🤖"
+risk = false
+
+[[agents]]
+id = "mlops"
+name = "MLOps Agent"
+file = "specialized/specialized-mlops-agent.md"
+squad = "data-ai"
+domains = ["ai", "devops", "mlops"]
+keywords = ["mlops", "mlflow", "registry de modèles", "feature store", "déploiement ml", "drift", "kubeflow", "orchestration ml"]
+artifacts = ["ml-pipeline", "model-registry-config"]
+emoji = "🔄"
+risk = false
+
+[[agents]]
+id = "nlp-engineer"
+name = "NLP Engineer Agent"
+file = "specialized/specialized-nlp-engineer-agent.md"
+squad = "data-ai"
+domains = ["ai", "nlp"]
+keywords = ["nlp", "traitement du langage", "texte", "classification de texte", "entités nommées", "ner", "sentiment", "tokenisation", "chatbot"]
+artifacts = ["nlp-pipeline", "annotation-guideline"]
+emoji = "🗣️"
+risk = false
+
+[[agents]]
+id = "computer-vision"
+name = "Computer Vision Agent"
+file = "specialized/specialized-computer-vision-agent.md"
+squad = "data-ai"
+domains = ["ai", "cv"]
+keywords = ["vision par ordinateur", "computer vision", "ocr", "image", "détection d'objet", "yolo", "reconnaissance faciale", "vidéo"]
+artifacts = ["vision-model", "image-augmentation-set"]
+emoji = "👁️"
+risk = false
+
+[[agents]]
+id = "recommender-systems"
+name = "Recommender Systems Agent"
+file = "specialized/specialized-recommender-systems-agent.md"
+squad = "data-ai"
+domains = ["ai", "recommendation"]
+keywords = ["système de recommandation", "recommandation", "filtrage collaboratif", "cold start", "ranking", "personnalisation", "embedding"]
+artifacts = ["recommender-design", "offline-online-eval"]
+emoji = "🧲"
+risk = false
+
+[[agents]]
+id = "time-series-forecaster"
+name = "Time Series Forecaster Agent"
+file = "specialized/specialized-time-series-forecaster-agent.md"
+squad = "data-ai"
+domains = ["ai", "forecasting"]
+keywords = ["série temporelle", "prévision", "forecast", "saisonnalité", "gestion de stock", "prévision de la demande", "prophet", "arima"]
+artifacts = ["forecast-model", "uncertainty-bands"]
+emoji = "📈"
+risk = false
+
+[[agents]]
+id = "rag-engineer"
+name = "RAG Engineer Agent"
+file = "specialized/specialized-rag-engineer-agent.md"
+squad = "data-ai"
+domains = ["ai", "rag"]
+keywords = ["rag", "retrieval augmented generation", "recherche vectorielle", "chunking", "embedding", "base de connaissances", "génération augmentée"]
+artifacts = ["rag-architecture", "retrieval-eval-report"]
+emoji = "📚"
+risk = false
+
+[[agents]]
+id = "llm-ops"
+name = "LLM Ops Agent"
+file = "specialized/specialized-llm-ops-agent.md"
+squad = "data-ai"
+domains = ["ai", "llm"]
+keywords = ["llm", "grand modèle de langage", "prompt en production", "garde-fou", "coût de tokens", "latence llm", "évaluation llm", "modèle de langage"]
+artifacts = ["llm-observability", "guardrail-suite"]
+emoji = "⛓️"
+risk = false
+
+[[agents]]
+id = "prompt-engineer"
+name = "Prompt Engineer Agent"
+file = "specialized/specialized-prompt-engineer-agent.md"
+squad = "data-ai"
+domains = ["ai", "prompting"]
+keywords = ["prompt engineering", "ingénierie de prompt", "prompt", "few-shot", "chain-of-thought", "instruction", "template de prompt"]
+artifacts = ["prompt-library", "prompt-eval-matrix"]
+emoji = "✍️"
+risk = false
+
+[[agents]]
+id = "vector-db"
+name = "Vector Database Agent"
+file = "specialized/specialized-vector-db-agent.md"
+squad = "data-ai"
+domains = ["ai", "data"]
+keywords = ["base vectorielle", "vector db", "pgvector", "qdrant", "weaviate", "milvus", "index vectoriel", "embedding store"]
+artifacts = ["vector-schema", "indexing-strategy"]
+emoji = "🧬"
+risk = false
+
+[[agents]]
+id = "bi-analyst"
+name = "BI Analyst Agent"
+file = "specialized/specialized-bi-analyst-agent.md"
+squad = "data-ai"
+domains = ["data", "bi"]
+keywords = ["business intelligence", "outils bi", "tableau de bord", "power bi", "looker", "metabase", "indicateur", "kpi", "reporting"]
+artifacts = ["dashboard", "kpi-definition-sheet"]
+emoji = "📊"
+risk = false
+
+[[agents]]
+id = "data-visualization"
+name = "Data Visualization Agent"
+file = "specialized/specialized-data-visualization-agent.md"
+squad = "data-ai"
+domains = ["data", "dataviz"]
+keywords = ["visualisation de données", "dataviz", "graphique", "chart", "storytelling data", "design de l'information", "dashboard design"]
+artifacts = ["chart-system", "data-story"]
+emoji = "🎴"
+risk = false
+
+[[agents]]
+id = "memory-sqlite"
+name = "Persistent Memory Engineer"
+file = "specialized/specialized-memory-sqlite-agent.md"
+squad = "data-ai"
+domains = ["memory", "storage"]
+keywords = ["mémoire sqlite", "store sqlite", "recettes par projet", "historique des missions", "base d'orchestration"]
+artifacts = ["sqlite-schema", "memory-api"]
+emoji = "🗄️"
+risk = false
+
+[[agents]]
+id = "aws-specialist"
+name = "AWS Specialist Agent"
+file = "specialized/specialized-aws-specialist-agent.md"
+squad = "cloud-infra"
+domains = ["cloud", "aws"]
+keywords = ["aws", "amazon web services", "ec2", "s3", "lambda", "rds", "cloudformation", "cdk", "vpc"]
+artifacts = ["aws-architecture", "well-architected-review"]
+emoji = "🟠"
+risk = false
+
+[[agents]]
+id = "gcp-specialist"
+name = "GCP Specialist Agent"
+file = "specialized/specialized-gcp-specialist-agent.md"
+squad = "cloud-infra"
+domains = ["cloud", "gcp"]
+keywords = ["gcp", "google cloud", "bigquery", "gke", "cloud run", "vertex ai", "terraform gcp", "pub/sub"]
+artifacts = ["gcp-architecture", "data-platform-design"]
+emoji = "🟢"
+risk = false
+
+[[agents]]
+id = "azure-specialist"
+name = "Azure Specialist Agent"
+file = "specialized/specialized-azure-specialist-agent.md"
+squad = "cloud-infra"
+domains = ["cloud", "azure"]
+keywords = ["azure", "microsoft azure", "entra id", "aks", "functions", "sql azure", "bicep", "arm template"]
+artifacts = ["azure-architecture", "entra-id-design"]
+emoji = "🔵"
+risk = false
+
+[[agents]]
+id = "kubernetes-specialist"
+name = "Kubernetes Specialist Agent"
+file = "specialized/specialized-kubernetes-specialist-agent.md"
+squad = "cloud-infra"
+domains = ["devops", "kubernetes"]
+keywords = ["kubernetes", "k8s", "helm", "ingress", "service mesh", "hpa", "opérateur k8s", "pod", "cluster"]
+artifacts = ["k8s-manifests", "cluster-hardening-report"]
+emoji = "☸️"
+risk = false
+
+[[agents]]
+id = "terraform-iac"
+name = "Terraform & IaC Agent"
+file = "specialized/specialized-terraform-iac-agent.md"
+squad = "cloud-infra"
+domains = ["devops", "iac"]
+keywords = ["terraform", "iac", "infrastructure as code", "opentofu", "terraform state", "module terraform", "pulumi", "plan terraform"]
+artifacts = ["terraform-modules", "state-strategy"]
+emoji = "🧱"
+risk = false
+
+[[agents]]
+id = "network-engineer"
+name = "Network Engineer Agent"
+file = "specialized/specialized-network-engineer-agent.md"
+squad = "cloud-infra"
+domains = ["infra", "network"]
+keywords = ["réseau", "network", "vpn", "dns", "tcp/ip", "pare-feu", "firewall", "load balancer", "bgp", "zero trust"]
+artifacts = ["network-diagram", "firewall-rule-set"]
+emoji = "🌐"
+risk = false
+
+[[agents]]
+id = "observability-sre"
+name = "Observability & SRE Agent"
+file = "specialized/specialized-observability-sre-agent.md"
+squad = "cloud-infra"
+domains = ["devops", "sre", "observability"]
+keywords = ["observabilité", "monitoring", "prometheus", "grafana", "logs", "traces", "slo", "sli", "open telemetry", "alerting"]
+artifacts = ["slo-framework", "alerting-policy"]
+emoji = "📡"
+risk = false
+
+[[agents]]
+id = "incident-commander"
+name = "Incident Commander Agent"
+file = "specialized/specialized-incident-commander-agent.md"
+squad = "cloud-infra"
+domains = ["sre", "incident"]
+keywords = ["incident", "gestion de crise", "post-mortem", "on-call", "escalade", "cellule de crise", "rétrospective", "incident p1"]
+artifacts = ["incident-timeline", "blameless-postmortem"]
+emoji = "🚨"
+risk = false
+
+[[agents]]
+id = "finops-cost"
+name = "FinOps & Cloud Cost Agent"
+file = "specialized/specialized-finops-cost-agent.md"
+squad = "cloud-infra"
+domains = ["finops", "cloud"]
+keywords = ["finops", "coût cloud", "optimisation", "réservation", "spot", "facturation", "showback", "chargeback", "budget cloud"]
+artifacts = ["cost-baseline", "savings-plan"]
+emoji = "💰"
+risk = false
+
+[[agents]]
+id = "platform-engineer"
+name = "Platform Engineer Agent"
+file = "specialized/specialized-platform-engineer-agent.md"
+squad = "cloud-infra"
+domains = ["devops", "platform"]
+keywords = ["plateforme interne", "developer platform", "golden path", "self-service", "idp", "internal developer platform", "portail développeur"]
+artifacts = ["golden-path", "platform-roadmap"]
+emoji = "🧩"
+risk = false
+
+[[agents]]
+id = "pentester"
+name = "Pentester Agent"
+file = "specialized/specialized-pentester-agent.md"
+squad = "security"
+domains = ["security", "pentest"]
+keywords = ["pentest", "test d'intrusion", "intrusion", "exploitation", "burp", "metasploit", "red team", "failles"]
+artifacts = ["pentest-report", "remediation-roadmap"]
+emoji = "🥷"
+risk = true
+
+[[agents]]
+id = "appsec-engineer"
+name = "AppSec Engineer Agent"
+file = "specialized/specialized-appsec-engineer-agent.md"
+squad = "security"
+domains = ["security", "appsec"]
+keywords = ["sécurité applicative", "appsec", "owasp", "revue de code sécurité", "sast", "dast", "secure by design", "menaces"]
+artifacts = ["threat-model", "secure-code-review"]
+emoji = "🔐"
+risk = true
+
+[[agents]]
+id = "cloud-security"
+name = "Cloud Security Agent"
+file = "specialized/specialized-cloud-security-agent.md"
+squad = "security"
+domains = ["security", "cloud"]
+keywords = ["sécurité cloud", "cnapp", "cspm", "cwpp", "configuration cloud", "iam cloud", "durcissement cloud", "buckets"]
+artifacts = ["cloud-posture-report", "iam-policy-set"]
+emoji = "☁️"
+risk = true
+
+[[agents]]
+id = "devsecops"
+name = "DevSecOps Agent"
+file = "specialized/specialized-devsecops-agent.md"
+squad = "security"
+domains = ["security", "devops"]
+keywords = ["devsecops", "sécurité ci/cd", "scan de dépendances", "sbom", "signature d'artefacts", "supply chain", "secrets dans le code"]
+artifacts = ["secure-pipeline", "sbom"]
+emoji = "🛠️"
+risk = true
+
+[[agents]]
+id = "threat-intelligence"
+name = "Threat Intelligence Agent"
+file = "specialized/specialized-threat-intelligence-agent.md"
+squad = "security"
+domains = ["security", "intel"]
+keywords = ["veille de menaces", "threat intel", "ioc", "indicators of compromise", "cti", "acteurs menaçants", "vulnérabilités émergentes", "mitre att&ck"]
+artifacts = ["intel-briefing", "ioc-watchlist"]
+emoji = "🛰️"
+risk = true
+
+[[agents]]
+id = "incident-response-forensics"
+name = "Incident Response & Forensics Agent"
+file = "specialized/specialized-incident-response-forensics-agent.md"
+squad = "security"
+domains = ["security", "forensics"]
+keywords = ["réponse à incident", "forensic", "informatique judiciaire", "investigation numérique", "compromission", "dfir", "analyse de logs", "préservation de preuves"]
+artifacts = ["forensic-timeline", "ir-playbook"]
+emoji = "🔬"
+risk = true
+
+[[agents]]
+id = "iam-specialist"
+name = "IAM Specialist Agent"
+file = "specialized/specialized-iam-specialist-agent.md"
+squad = "security"
+domains = ["security", "iam"]
+keywords = ["iam", "gestion des accès", "moindre privilège", "sso", "mfa", "rbac", "abac", "séparation des tâches", "identité"]
+artifacts = ["access-model", "entitlement-review"]
+emoji = "🪪"
+risk = true
+
+[[agents]]
+id = "cryptography"
+name = "Cryptography Agent"
+file = "specialized/specialized-cryptography-agent.md"
+squad = "security"
+domains = ["security", "crypto"]
+keywords = ["cryptographie", "chiffrement", "gestion de clés", "clé de chiffrement", "rsa", "aes", "tls", "hsm", "signature", "hash"]
+artifacts = ["crypto-inventory", "key-management-policy"]
+emoji = "🔑"
+risk = true
+
+[[agents]]
+id = "grc-compliance"
+name = "GRC & Compliance Agent"
+file = "specialized/specialized-grc-compliance-agent.md"
+squad = "security"
+domains = ["security", "compliance"]
+keywords = ["grc", "conformité", "iso 27001", "soc 2", "rgpd", "audit de conformité", "audit iso", "politique de sécurité", "gouvernance risque", "certification sécurité"]
+artifacts = ["control-framework", "risk-register"]
+emoji = "📐"
+risk = true
+
+[[agents]]
+id = "malware-analyst"
+name = "Malware Analyst Agent"
+file = "specialized/specialized-malware-analyst-agent.md"
+squad = "security"
+domains = ["security", "malware"]
+keywords = ["malware", "analyse de malware", "ransomware", "reverse engineering", "sandbox", "cheval de troie", "indicators", "désassemblage"]
+artifacts = ["malware-analysis-report", "detection-rules"]
+emoji = "🧫"
+risk = true
+
+[[agents]]
+id = "bug-bounty"
+name = "Bug Bounty Hunter Agent"
+file = "specialized/specialized-bug-bounty-agent.md"
+squad = "security"
+domains = ["security", "bugbounty"]
+keywords = ["bug bounty", "chasse aux bugs", "vulnérabilité", "rapport de vulnérabilité", "scope", "récompense", "divulgation responsable"]
+artifacts = ["vulnerability-report", "reproduction-script"]
+emoji = "🐛"
+risk = true
+
+[[agents]]
+id = "test-automation"
+name = "Test Automation Agent"
+file = "specialized/specialized-test-automation-agent.md"
+squad = "qa-testing"
+domains = ["qa", "automation"]
+keywords = ["automatisation de tests", "test automatisé", "playwright", "cypress", "selenium", "page object", "ci tests", "framework de test"]
+artifacts = ["automation-suite", "test-pyramid-map"]
+emoji = "🤖"
+risk = false
+
+[[agents]]
+id = "performance-testing"
+name = "Performance Testing Agent"
+file = "specialized/specialized-performance-testing-agent.md"
+squad = "qa-testing"
+domains = ["qa", "performance"]
+keywords = ["test de charge", "performance", "k6", "jmeter", "locust", "stress test", "latence", "montée en charge", "goulot"]
+artifacts = ["load-test-plan", "performance-baseline"]
+emoji = "⏱️"
+risk = false
+
+[[agents]]
+id = "security-testing"
+name = "Security Testing Agent"
+file = "specialized/specialized-security-testing-agent.md"
+squad = "qa-testing"
+domains = ["qa", "security"]
+keywords = ["test de sécurité", "dast", "scan dynamique", "owasp testing", "fuzzing", "test d'authentification", "entrées malveillantes"]
+artifacts = ["security-test-suite", "fuzzing-report"]
+emoji = "🧯"
+risk = false
+
+[[agents]]
+id = "accessibility-testing"
+name = "Accessibility Testing Agent"
+file = "specialized/specialized-accessibility-testing-agent.md"
+squad = "qa-testing"
+domains = ["qa", "accessibility"]
+keywords = ["accessibilité", "wcag", "rgaa", "test d'accessibilité", "lecteur d'écran", "naviguation clavier", "contraste", "a11y"]
+artifacts = ["a11y-audit", "remediation-checklist"]
+emoji = "♿"
+risk = false
+
+[[agents]]
+id = "mobile-testing"
+name = "Mobile Testing Agent"
+file = "specialized/specialized-mobile-testing-agent.md"
+squad = "qa-testing"
+domains = ["qa", "mobile"]
+keywords = ["test mobile", "test ios", "test android", "ferme de devices", "appium", "maestro", "interruption", "réseau mobile", "batterie"]
+artifacts = ["mobile-test-matrix", "device-farm-report"]
+emoji = "📲"
+risk = false
+
+[[agents]]
+id = "ux-researcher"
+name = "UX Researcher Agent"
+file = "specialized/specialized-ux-researcher-agent.md"
+squad = "design-ux"
+domains = ["design", "research"]
+keywords = ["recherche utilisateur", "ux research", "entretien", "persona", "parcours utilisateur", "test utilisateur", "besoin", "observance"]
+artifacts = ["research-synthesis", "persona-journey-set"]
+emoji = "🔬"
+risk = false
+
+[[agents]]
+id = "product-designer"
+name = "Product Designer Agent"
+file = "specialized/specialized-product-designer-agent.md"
+squad = "design-ux"
+domains = ["design", "product"]
+keywords = ["product design", "ui design", "wireframe", "maquette", "figma", "prototypage", "flux utilisateur", "interaction"]
+artifacts = ["prototype", "interaction-spec"]
+emoji = "🎨"
+risk = false
+
+[[agents]]
+id = "design-system-specialist"
+name = "Design System Specialist Agent"
+file = "specialized/specialized-design-system-specialist-agent.md"
+squad = "design-ux"
+domains = ["design", "design-system"]
+keywords = ["design system", "composants", "tokens", "bibliothèque de composants", "storybook", "charte", "pattern library"]
+artifacts = ["component-library", "design-tokens-spec"]
+emoji = "🧱"
+risk = false
+
+[[agents]]
+id = "ux-writer"
+name = "UX Writer Agent"
+file = "specialized/specialized-ux-writer-agent.md"
+squad = "design-ux"
+domains = ["design", "content"]
+keywords = ["ux writing", "microcopie", "contenu d'interface", "ton de voix", "messages d'erreur", "onboarding", "formulaire"]
+artifacts = ["content-guidelines", "microcopy-set"]
+emoji = "✒️"
+risk = false
+
+[[agents]]
+id = "motion-designer"
+name = "Motion Designer Agent"
+file = "specialized/specialized-motion-designer-agent.md"
+squad = "design-ux"
+domains = ["design", "motion"]
+keywords = ["motion design", "animation", "micro-interaction", "transition", "lottie", "vidéo produit", "prototype animé"]
+artifacts = ["motion-guidelines", "animation-assets"]
+emoji = "🎞️"
+risk = false
+
+[[agents]]
+id = "brand-identity"
+name = "Brand Identity Agent"
+file = "specialized/specialized-brand-identity-agent.md"
+squad = "design-ux"
+domains = ["design", "brand"]
+keywords = ["identité de marque", "logo", "charte graphique", "brand book", "typographie", "couleur", "système visuel"]
+artifacts = ["brand-book", "logo-system"]
+emoji = "🏷️"
+risk = false
+
+[[agents]]
+id = "illustration-agent"
+name = "Illustration Agent"
+file = "specialized/specialized-illustration-agent-agent.md"
+squad = "design-ux"
+domains = ["design", "illustration"]
+keywords = ["illustration", "pictogramme", "icône", "style graphique", "visuel", "banque d'images", "storyboard"]
+artifacts = ["illustration-set", "icon-system"]
+emoji = "🖌️"
+risk = false
+
+[[agents]]
+id = "accessibility-advocate"
+name = "Accessibility Advocate Agent"
+file = "specialized/specialized-accessibility-advocate-agent.md"
+squad = "design-ux"
+domains = ["design", "accessibility"]
+keywords = ["accessibilité", "inclusion", "design accessible", "wcag", "handicap", "conception universelle", "inclusive design"]
+artifacts = ["inclusive-design-review", "a11y-design-checklist"]
+emoji = "🤝"
+risk = false
+
+[[agents]]
+id = "risk-gate-keeper"
+name = "Human Gate & Risk Officer"
+file = "specialized/specialized-risk-gate-keeper-agent.md"
+squad = "qa-testing"
+domains = ["risk", "governance"]
+keywords = ["revue de risque", "gate humaine", "escalade lassana", "plan de fusion", "registre des risques"]
+artifacts = ["risk-register", "escalation-record"]
+emoji = "🚦"
+risk = true
+
+[[agents]]
+id = "business-analyst"
+name = "Business Analyst Agent"
+file = "specialized/specialized-business-analyst-agent.md"
+squad = "product-delivery"
+domains = ["product", "analysis"]
+keywords = ["business analyst", "analyse métier", "exigences", "bpmn", "processus métier", "cahier des charges", "user story mapping"]
+artifacts = ["requirements-doc", "process-map"]
+emoji = "📋"
+risk = false
+
+[[agents]]
+id = "project-manager"
+name = "Project Manager Agent"
+file = "specialized/specialized-project-manager-agent.md"
+squad = "product-delivery"
+domains = ["delivery", "project"]
+keywords = ["gestion de projet", "project management", "planning", "gantt", "jalon", "risque projet", "budget projet", "suivi"]
+artifacts = ["project-plan", "risk-log"]
+emoji = "📆"
+risk = false
+
+[[agents]]
+id = "scrum-master"
+name = "Scrum Master Agent"
+file = "specialized/specialized-scrum-master-agent.md"
+squad = "product-delivery"
+domains = ["delivery", "agile"]
+keywords = ["scrum", "scrum master", "agile", "sprint", "rétrospective", "daily", "backlog refinement", "facilitation"]
+artifacts = ["team-health-report", "retro-action-plan"]
+emoji = "🔄"
+risk = false
+
+[[agents]]
+id = "program-manager"
+name = "Program Manager Agent"
+file = "specialized/specialized-program-manager-agent.md"
+squad = "product-delivery"
+domains = ["delivery", "program"]
+keywords = ["programme", "program management", "multi-projets", "dépendances", "portfolio", "gouvernance", "coordination"]
+artifacts = ["program-roadmap", "dependency-map"]
+emoji = "🗂️"
+risk = false
+
+[[agents]]
+id = "product-analyst"
+name = "Product Analyst Agent"
+file = "specialized/specialized-product-analyst-agent.md"
+squad = "product-delivery"
+domains = ["product", "analytics"]
+keywords = ["analyse produit", "product analytics", "entonnoir", "rétention", "cohortes", "a/b test", "mixpanel", "amplitude", "north star"]
+artifacts = ["metric-tree", "experiment-report"]
+emoji = "🧮"
+risk = false
+
+[[agents]]
+id = "pricing-strategist"
+name = "Pricing Strategist Agent"
+file = "specialized/specialized-pricing-strategist-agent.md"
+squad = "product-delivery"
+domains = ["product", "pricing"]
+keywords = ["tarification", "pricing", "stratégie de prix", "monétisation", "abonnement", "willingness to pay", "packaging", "niveaux de prix"]
+artifacts = ["pricing-model", "willingness-to-pay-study"]
+emoji = "🏷️"
+risk = false
+
+[[agents]]
+id = "customer-success"
+name = "Customer Success Agent"
+file = "specialized/specialized-customer-success-agent.md"
+squad = "product-delivery"
+domains = ["customer", "success"]
+keywords = ["customer success", "succès client", "onboarding client", "rétention", "churn", "satisfaction", "account management", "nps"]
+artifacts = ["success-plan", "churn-risk-model"]
+emoji = "🤗"
+risk = false
+
+[[agents]]
+id = "sales-enablement"
+name = "Sales Enablement Agent"
+file = "specialized/specialized-sales-enablement-agent.md"
+squad = "product-delivery"
+domains = ["sales", "enablement"]
+keywords = ["sales enablement", "aide à la vente", "argumentaire", "pitch", "sales deck", "objection", "crm", "formation commerciale"]
+artifacts = ["sales-playbook", "objection-handling-kit"]
+emoji = "🎯"
+risk = false
+
+[[agents]]
+id = "change-manager"
+name = "Change Manager Agent"
+file = "specialized/specialized-change-manager-agent.md"
+squad = "product-delivery"
+domains = ["change", "adoption"]
+keywords = ["conduite du changement", "change management", "adoption", "résistance au changement", "formation au changement", "adoption utilisateur", "kotter", "adkar"]
+artifacts = ["change-plan", "adoption-dashboard"]
+emoji = "🔀"
+risk = false
+
+[[agents]]
+id = "seo-specialist"
+name = "SEO Specialist Agent"
+file = "specialized/specialized-seo-specialist-agent.md"
+squad = "marketing-growth"
+domains = ["marketing", "seo"]
+keywords = ["seo", "référencement naturel", "mots-clés", "backlinks", "search console", "référencement local", "seo technique", "contenu seo"]
+artifacts = ["seo-audit", "keyword-strategy"]
+emoji = "🔎"
+risk = false
+
+[[agents]]
+id = "content-marketer"
+name = "Content Marketer Agent"
+file = "specialized/specialized-content-marketer-agent.md"
+squad = "marketing-growth"
+domains = ["marketing", "content"]
+keywords = ["content marketing", "marketing de contenu", "article", "blog", "livre blanc", "calendrier éditorial", "storytelling", "lead magnet"]
+artifacts = ["editorial-calendar", "content-brief"]
+emoji = "📝"
+risk = false
+
+[[agents]]
+id = "social-media"
+name = "Social Media Agent"
+file = "specialized/specialized-social-media-agent.md"
+squad = "marketing-growth"
+domains = ["marketing", "social"]
+keywords = ["réseaux sociaux", "community", "linkedin", "facebook", "instagram", "tiktok", "twitter", "calendrier social", "engagement"]
+artifacts = ["social-calendar", "engagement-report"]
+emoji = "📱"
+risk = false
+
+[[agents]]
+id = "email-marketing"
+name = "Email Marketing Agent"
+file = "specialized/specialized-email-marketing-agent.md"
+squad = "marketing-growth"
+domains = ["marketing", "email"]
+keywords = ["email marketing", "newsletter", "automation", "délivrabilité", "segmentation", "taux d'ouverture", "campagne email", "lead nurturing"]
+artifacts = ["email-flow-map", "deliverability-audit"]
+emoji = "📧"
+risk = false
+
+[[agents]]
+id = "paid-ads"
+name = "Paid Ads Agent"
+file = "specialized/specialized-paid-ads-agent.md"
+squad = "marketing-growth"
+domains = ["marketing", "ads"]
+keywords = ["publicité payante", "sea", "google ads", "meta ads", "campagne payante", "cpc", "roas", "acquisition payante", "tiktok ads"]
+artifacts = ["ads-strategy", "roas-report"]
+emoji = "🎰"
+risk = false
+
+[[agents]]
+id = "community-builder"
+name = "Community Builder Agent"
+file = "specialized/specialized-community-builder-agent.md"
+squad = "marketing-growth"
+domains = ["marketing", "community"]
+keywords = ["communauté", "community building", "groupe", "ambassadeur", "engagement", "modération", "discord", "whatsapp", "telegram"]
+artifacts = ["community-charter", "ambassador-program"]
+emoji = "👥"
+risk = false
+
+[[agents]]
+id = "influencer-partnerships"
+name = "Influencer Partnerships Agent"
+file = "specialized/specialized-influencer-partnerships-agent.md"
+squad = "marketing-growth"
+domains = ["marketing", "partnerships"]
+keywords = ["influence", "influenceur", "partenariat", "créateur", "ambassadeur de marque", "nano-influenceur", "campagne influence", "ugc"]
+artifacts = ["influencer-roster", "partnership-contract"]
+emoji = "🌟"
+risk = false
+
+[[agents]]
+id = "brand-strategist"
+name = "Brand Strategist Agent"
+file = "specialized/specialized-brand-strategist-agent.md"
+squad = "marketing-growth"
+domains = ["marketing", "brand"]
+keywords = ["stratégie de marque", "positionnement", "brand", "plateforme de marque", "différenciation", "valeurs", "architecture de marque"]
+artifacts = ["brand-platform", "positioning-statement"]
+emoji = "🧭"
+risk = false
+
+[[agents]]
+id = "growth-analyst"
+name = "Growth Analyst Agent"
+file = "specialized/specialized-growth-analyst-agent.md"
+squad = "marketing-growth"
+domains = ["marketing", "growth"]
+keywords = ["growth hacking", "croissance", "funnel", "aarrr", "expérimentation", "taux de conversion", "rétention", "boucle de croissance"]
+artifacts = ["growth-backlog", "experiment-log"]
+emoji = "🚀"
+risk = false
+
+[[agents]]
+id = "pr-communications"
+name = "PR & Communications Agent"
+file = "specialized/specialized-pr-communications-agent.md"
+squad = "marketing-growth"
+domains = ["marketing", "pr"]
+keywords = ["relations presse", "relations publiques", "communication", "communiqué de presse", "médias", "relations médias", "crise médiatique", "prise de parole"]
+artifacts = ["press-kit", "crisis-comms-playbook"]
+emoji = "📰"
+risk = false
+
+[[agents]]
+id = "accountant"
+name = "General Accountant Agent"
+file = "specialized/specialized-accountant-agent.md"
+squad = "finance-legal"
+domains = ["finance", "accounting"]
+keywords = ["comptabilité", "comptable", "écriture comptable", "grand livre", "rapprochement", "bilan", "compte de résultat", "clôture"]
+artifacts = ["closing-pack", "reconciliation-file"]
+emoji = "🧾"
+risk = false
+
+[[agents]]
+id = "tax-planner"
+name = "Tax Planner Agent"
+file = "specialized/specialized-tax-planner-agent.md"
+squad = "finance-legal"
+domains = ["finance", "tax"]
+keywords = ["fiscalité", "optimisation fiscale", "impôt", "tva", "prix de transfert", "déclaration fiscale", "exonération", "beps"]
+artifacts = ["tax-memo", "filing-position"]
+emoji = "📑"
+risk = true
+
+[[agents]]
+id = "external-auditor"
+name = "External Auditor Agent"
+file = "specialized/specialized-external-auditor-agent.md"
+squad = "finance-legal"
+domains = ["finance", "audit"]
+keywords = ["audit légal", "audit externe", "auditeur externe", "audit des comptes", "contrôle des comptes", "matérialité", "sondages d'audit", "opinion d'audit", "anomalies comptables", "due diligence comptable"]
+artifacts = ["audit-program", "management-letter"]
+emoji = "🧑‍⚖️"
+risk = true
+
+[[agents]]
+id = "payroll-specialist"
+name = "Payroll Specialist Agent"
+file = "specialized/specialized-payroll-specialist-agent.md"
+squad = "finance-legal"
+domains = ["finance", "payroll"]
+keywords = ["paie", "payroll", "bulletin de salaire", "cotisations", "cnss", "taxe sur les salaires", "solde de tout compte", "déclaration sociale"]
+artifacts = ["payroll-control", "social-calendar"]
+emoji = "👥"
+risk = false
+
+[[agents]]
+id = "financial-controller"
+name = "Financial Controller Agent"
+file = "specialized/specialized-financial-controller-agent.md"
+squad = "finance-legal"
+domains = ["finance", "controling"]
+keywords = ["contrôle de gestion", "controlling", "budget", "coûts", "écarts", "prix de revient", "marge", "reporting interne"]
+artifacts = ["budget-vs-actual", "cost-model"]
+emoji = "🎛️"
+risk = false
+
+[[agents]]
+id = "fpa-analyst"
+name = "FP&A Analyst Agent"
+file = "specialized/specialized-fpa-analyst-agent.md"
+squad = "finance-legal"
+domains = ["finance", "fpa"]
+keywords = ["fp&a", "planification financière", "forecast", "scenarios", "modèle financier", "trésorerie prévisionnelle", "valuation", "business plan"]
+artifacts = ["financial-model", "scenario-pack"]
+emoji = "🔮"
+risk = false
+
+[[agents]]
+id = "treasury-cash"
+name = "Treasury & Cash Agent"
+file = "specialized/specialized-treasury-cash-agent.md"
+squad = "finance-legal"
+domains = ["finance", "treasury"]
+keywords = ["trésorerie", "cash", "liquidité", "bfr", "encaissement", "recouvrement", "placements", "risque de change", "mobil money"]
+artifacts = ["cash-forecast", "collection-strategy"]
+emoji = "💵"
+risk = false
+
+[[agents]]
+id = "corporate-lawyer"
+name = "Corporate Lawyer Agent"
+file = "specialized/specialized-corporate-lawyer-agent.md"
+squad = "finance-legal"
+domains = ["legal", "corporate"]
+keywords = ["droit des sociétés", "création de société", "statuts", "gouvernance", "assemblée générale", "cession de parts", "fusion", "secrétariat juridique"]
+artifacts = ["corporate-opinion", "governance-pack"]
+emoji = "🏛️"
+risk = false
+
+[[agents]]
+id = "contract-lawyer"
+name = "Contract Lawyer Agent"
+file = "specialized/specialized-contract-lawyer-agent.md"
+squad = "finance-legal"
+domains = ["legal", "contracts"]
+keywords = ["droit des contrats", "rédaction contractuelle", "cgv", "nda", "prestation de service", "bail commercial", "clause contractuelle", "négociation contractuelle", "responsabilité contractuelle"]
+artifacts = ["contract-review", "clause-library"]
+emoji = "📜"
+risk = false
+
+[[agents]]
+id = "ip-lawyer"
+name = "IP Lawyer Agent"
+file = "specialized/specialized-ip-lawyer-agent.md"
+squad = "finance-legal"
+domains = ["legal", "ip"]
+keywords = ["propriété intellectuelle", "marque", "brevet", "droit d'auteur", "dépôt oapi", "logo", "contrefaçon", "licence"]
+artifacts = ["ip-strategy", "filing-matrix"]
+emoji = "©️"
+risk = false
+
+[[agents]]
+id = "data-protection-lawyer"
+name = "Data Protection Lawyer Agent"
+file = "specialized/specialized-data-protection-lawyer-agent.md"
+squad = "finance-legal"
+domains = ["legal", "privacy"]
+keywords = ["rgpd", "données personnelles", "protection des données", "vie privée", "consentement", "dpo", "transfert de données", "autorité de protection"]
+artifacts = ["roa-register", "dpa-review"]
+emoji = "🛡️"
+risk = true
+
+[[agents]]
+id = "procurement"
+name = "Procurement Agent"
+file = "specialized/specialized-procurement-agent.md"
+squad = "finance-legal"
+domains = ["operations", "procurement"]
+keywords = ["achats", "procurement", "appel d'offres", "fournisseur", "négociation achats", "bon de commande", "sourcing", "évaluation fournisseur"]
+artifacts = ["sourcing-matrix", "supplier-scorecard"]
+emoji = "🛒"
+risk = false
+
+[[agents]]
+id = "mobile-money-fintech"
+name = "Mobile Money & Fintech Agent"
+file = "specialized/specialized-mobile-money-fintech-agent.md"
+squad = "west-africa-sectors"
+domains = ["fintech", "mobile-money", "africa"]
+keywords = ["mobile money", "orange money", "wave", "mtn momo", "moov money", "fintech", "agrégateur de paiement", "portefeuille électronique", "psp"]
+artifacts = ["payment-flow-design", "fintech-compliance-memo"]
+emoji = "📲"
+risk = true
+
+[[agents]]
+id = "remittance-compliance"
+name = "Remittance Compliance Agent"
+file = "specialized/specialized-remittance-compliance-agent.md"
+squad = "west-africa-sectors"
+domains = ["compliance", "remittance", "africa"]
+keywords = ["transfert d'argent", "remittance", "lcb/ft", "blanchiment", "financement du terrorisme", "vigilance", "déclaration de soupçon", "change manuel"]
+artifacts = ["aml-framework", "suspicious-activity-procedure"]
+emoji = "🌍"
+risk = true
+
+[[agents]]
+id = "agritech-value-chain"
+name = "AgriTech Value Chain Agent"
+file = "specialized/specialized-agritech-value-chain-agent.md"
+squad = "west-africa-sectors"
+domains = ["agritech", "agriculture", "africa"]
+keywords = ["agritech", "agriculture", "chaîne de valeur", "coopérative", "paysan", "récolte", "stockage", "logistique agricole", "irrigation"]
+artifacts = ["value-chain-map", "cooperative-digital-plan"]
+emoji = "🌾"
+risk = false
+
+[[agents]]
+id = "solar-energy"
+name = "Solar & Energy Agent"
+file = "specialized/specialized-solar-energy-agent.md"
+squad = "west-africa-sectors"
+domains = ["energy", "solar", "africa"]
+keywords = ["solaire", "énergie solaire", "photovoltaïque", "mini-grid", "stockage batterie", "pay-as-you-go", "accès à l'énergie", "onduleur"]
+artifacts = ["solar-sizing-model", "paygo-business-model"]
+emoji = "☀️"
+risk = false
+
+[[agents]]
+id = "health-tech"
+name = "Health Tech Agent"
+file = "specialized/specialized-health-tech-agent.md"
+squad = "west-africa-sectors"
+domains = ["healthtech", "health", "africa"]
+keywords = ["health tech", "santé numérique", "télémédecine", "dossier patient", "données de santé", "pharmacie", "système de santé", "mhealth"]
+artifacts = ["healthtech-risk-map", "clinical-workflow-design"]
+emoji = "🏥"
+risk = false
+
+[[agents]]
+id = "localization-bambara"
+name = "Localization Bambara & FR-Afrique Agent"
+file = "specialized/specialized-localization-bambara-agent.md"
+squad = "west-africa-sectors"
+domains = ["localization", "language", "africa"]
+keywords = ["bambara", "bamanankan", "localisation", "traduction", "français africain", "langue locale", "wolof", "malinké", "transcréation"]
+artifacts = ["localization-glossary", "transcreation-guide"]
+emoji = "🗣️"
+risk = false
+
+[[agents]]
+id = "edtech-specialist"
+name = "EdTech Specialist Agent"
+file = "specialized/specialized-edtech-specialist-agent.md"
+squad = "west-africa-sectors"
+domains = ["edtech", "education", "africa"]
+keywords = ["edtech", "éducation", "formation en ligne", "apprentissage", "mooc", "pédagogie", "connexion faible", "alphanétisation", "classe numérique"]
+artifacts = ["learning-path", "low-bandwidth-delivery-plan"]
+emoji = "🎓"
+risk = false

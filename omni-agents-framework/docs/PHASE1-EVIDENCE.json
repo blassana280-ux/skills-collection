@@ -1,0 +1,542 @@
+{
+  "agents_md_closed_unmerged": [
+    "omni-agents-framework#4"
+  ],
+  "agents_md_distinct_repos": 37,
+  "agents_md_file_sets": [
+    "AGENTS.md"
+  ],
+  "agents_md_merged": 36,
+  "agents_md_prs": [
+    {
+      "closed_at": "2026-11-04T20:04:03Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469343",
+      "merge_commit_sha": "d0f6e7ad8d689a0c403a098af2b67f02369e02e8",
+      "merged_at": "2026-11-04T20:04:03Z",
+      "number": 3,
+      "repo": "agency-agents",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:04:09Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469843",
+      "merge_commit_sha": "70eae60cc71adff57de1601607b266d6d933908d",
+      "merged_at": "2026-11-04T20:04:09Z",
+      "number": 1,
+      "repo": "awesome-agent-skills",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:04:15Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469905",
+      "merge_commit_sha": "056fbe1ceb23934f6b359a5e0a6062ace34c3fe3",
+      "merged_at": "2026-11-04T20:04:15Z",
+      "number": 1,
+      "repo": "awesome-claude-code",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:04:22Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469674",
+      "merge_commit_sha": "5e687a01d096db3e790d5f1297182ce6e0193970",
+      "merged_at": "2026-11-04T20:04:22Z",
+      "number": 1,
+      "repo": "awesome-gamedev-agent-skills",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:04:29Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469593",
+      "merge_commit_sha": "19ae0c3d5f68fccea521ef4746eda148594e78ff",
+      "merged_at": "2026-11-04T20:04:29Z",
+      "number": 1,
+      "repo": "designer-skills",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:04:35Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469778",
+      "merge_commit_sha": "339d0aa19336fe0e06e89824b191b21bf2a06946",
+      "merged_at": "2026-11-04T20:04:35Z",
+      "number": 1,
+      "repo": "cc-skills-golang",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:04:41Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469516",
+      "merge_commit_sha": "c297ec0d0cfb4a8948e85c43f7ed4550e4178398",
+      "merged_at": "2026-11-04T20:04:41Z",
+      "number": 1,
+      "repo": "ResumeSkills",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:04:48Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469343",
+      "merge_commit_sha": "25154784936045793bbd87a0352a359657d631c5",
+      "merged_at": "2026-11-04T20:04:48Z",
+      "number": 1,
+      "repo": "awesome-claude-code-toolkit",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:04:54Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469516",
+      "merge_commit_sha": "de97974c798dd7d2d0408ea4796ba94b83d489d2",
+      "merged_at": "2026-11-04T20:04:54Z",
+      "number": 1,
+      "repo": "ai-agent-skills-collection",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:05:28Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793468685",
+      "merge_commit_sha": "900c52c7cc007c7bdb6925316afc97a1136f860d",
+      "merged_at": "2026-11-04T20:05:28Z",
+      "number": 1,
+      "repo": "xquads-squads",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:05:38Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469719",
+      "merge_commit_sha": "88918bca2daa746a7595c42a7151f61109193a55",
+      "merged_at": "2026-11-04T20:05:38Z",
+      "number": 1,
+      "repo": "agent-skills",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:05:44Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469778",
+      "merge_commit_sha": "69a2742eff6313cd6aea992f8b8f90d10619608b",
+      "merged_at": "2026-11-04T20:05:44Z",
+      "number": 1,
+      "repo": "agent-skills-index",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:05:50Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469343",
+      "merge_commit_sha": "c60b57b94580a65fb9463d5b1c477747a1751634",
+      "merged_at": "2026-11-04T20:05:50Z",
+      "number": 1,
+      "repo": "antigravity-skills",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:05:57Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469905",
+      "merge_commit_sha": "56e2b186aa54927375ecd04538709558294aa425",
+      "merged_at": "2026-11-04T20:05:57Z",
+      "number": 1,
+      "repo": "skills",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:06:03Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469843",
+      "merge_commit_sha": "9d91dad0279c41d60fdb944f4fa09da3c40decc3",
+      "merged_at": "2026-11-04T20:06:03Z",
+      "number": 1,
+      "repo": "skills-collection",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:06:10Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469778",
+      "merge_commit_sha": "31f4777e5674908467254c09a1f19baf5a613b39",
+      "merged_at": "2026-11-04T20:06:10Z",
+      "number": 1,
+      "repo": "skills-",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:06:16Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793468685",
+      "merge_commit_sha": "3a1ac98720b619fc995a2344722b69e41f4fc357",
+      "merged_at": "2026-11-04T20:06:16Z",
+      "number": 1,
+      "repo": "agent-skills-3",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:06:23Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469593",
+      "merge_commit_sha": "b5d6e9d556c70ebf0c926a794eb85f351ad35621",
+      "merged_at": "2026-11-04T20:06:23Z",
+      "number": 1,
+      "repo": "ai-engineering-hub",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:06:37Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469719",
+      "merge_commit_sha": "6da81cc944cb36473562363f4f320aefdc3c65c5",
+      "merged_at": "2026-11-04T20:06:37Z",
+      "number": 1,
+      "repo": "awesome-llm-apps",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:06:49Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793468819",
+      "merge_commit_sha": "077d2b73939bebbf5bb117d967fd8f25d521b2bb",
+      "merged_at": "2026-11-04T20:06:49Z",
+      "number": 1,
+      "repo": "kilocode",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:06:56Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469719",
+      "merge_commit_sha": "6c012fc74f34fdc4f17816e0e0fc5796802e1bf2",
+      "merged_at": "2026-11-04T20:06:55Z",
+      "number": 1,
+      "repo": "builder",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:07:02Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469843",
+      "merge_commit_sha": "5d2108670e005e6b909428cb958f361b2b53341c",
+      "merged_at": "2026-11-04T20:07:02Z",
+      "number": 1,
+      "repo": "video-use",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:07:08Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469593",
+      "merge_commit_sha": "ebb695a975f6bdb7e91050250104ddc238f74916",
+      "merged_at": "2026-11-04T20:07:08Z",
+      "number": 1,
+      "repo": "Red-DiscordBot",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:07:14Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469516",
+      "merge_commit_sha": "1804ff32526ea31f6c32778c7c5e70194ae04696",
+      "merged_at": "2026-11-04T20:07:14Z",
+      "number": 1,
+      "repo": "Qwen3.8",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:07:21Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469593",
+      "merge_commit_sha": "dd00af89db8dc27c5f27851516b24b0e322fcde9",
+      "merged_at": "2026-11-04T20:07:21Z",
+      "number": 1,
+      "repo": "LLMLingua",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:07:28Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469674",
+      "merge_commit_sha": "29c3fb2649bca4db34f2baece6b8e160127c0a65",
+      "merged_at": "2026-11-04T20:07:28Z",
+      "number": 1,
+      "repo": "GPTCache",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:07:34Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793468685",
+      "merge_commit_sha": "25cbc16e180f6978b73646ec13bc71367f7a6fa2",
+      "merged_at": "2026-11-04T20:07:34Z",
+      "number": 1,
+      "repo": "mem0",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:07:40Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793468819",
+      "merge_commit_sha": "293beb26610708aaeff273dd4d61ae27246add98",
+      "merged_at": "2026-11-04T20:07:40Z",
+      "number": 1,
+      "repo": "cognee",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:07:53Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469297",
+      "merge_commit_sha": "d3c701ca8a75faf0674dee2b569e9bebf9a90a5c",
+      "merged_at": "2026-11-04T20:07:53Z",
+      "number": 1,
+      "repo": "Open-Agents",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:08:03Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793468819",
+      "merge_commit_sha": "78a34c02d1b0008b64d3bc2fc56117f4a25b8175",
+      "merged_at": "2026-11-04T20:08:03Z",
+      "number": 1,
+      "repo": "LMCache",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:08:11Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793468685",
+      "merge_commit_sha": "13194b829125414957af30442ce519de65821c8b",
+      "merged_at": "2026-11-04T20:08:11Z",
+      "number": 1,
+      "repo": "hindsight",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:08:19Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469343",
+      "merge_commit_sha": "0880edc3b1bbd761ad6ef9b036d2e1e6841c7c8f",
+      "merged_at": "2026-11-04T20:08:18Z",
+      "number": 1,
+      "repo": "Prompt-Engineering-Guide",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:08:26Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469343",
+      "merge_commit_sha": "4dff21f92ce31256d238210549d982279905f047",
+      "merged_at": "2026-11-04T20:08:26Z",
+      "number": 1,
+      "repo": "Context-Engineering",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:08:32Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469343",
+      "merge_commit_sha": "e4adc8af46a0fa11f71948ae454199ad75bb24e0",
+      "merged_at": "2026-11-04T20:08:32Z",
+      "number": 1,
+      "repo": "Awesome-Context-Engineering",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:08:38Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469516",
+      "merge_commit_sha": "68493b0761d84b09e0067476de968ccb784d04c5",
+      "merged_at": "2026-11-04T20:08:38Z",
+      "number": 1,
+      "repo": "how-claude-code-works",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:08:45Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793468884",
+      "merge_commit_sha": "8f47f562af36d95cefd6c13275dac54bfe0ddfc1",
+      "merged_at": "2026-11-04T20:08:45Z",
+      "number": 1,
+      "repo": "OmniRoute",
+      "state": "closed"
+    },
+    {
+      "closed_at": "2026-11-04T20:03:52Z",
+      "files": [
+        "AGENTS.md"
+      ],
+      "head": "omnibrain/agents-md-1793469343",
+      "merge_commit_sha": "fed7fdefe558d784f8b0b84860061bdd198956ed",
+      "merged_at": null,
+      "number": 4,
+      "repo": "omni-agents-framework",
+      "state": "closed"
+    }
+  ],
+  "agents_md_prs_count": 37,
+  "api_403": {
+    "create-profile-repo": "403 Resource not accessible by integration (POST /user/repos name=.github)",
+    "get-profile-repo": "404 Not Found",
+    "omni-agents-framework-write": "403 historique (PR #2 / #4), LEVÉ : permissions push/admin=true",
+    "optimiser-mes-agents-IA": "403 Resource not accessible by integration (lecture, toujours)",
+    "x_oauth_scopes": ""
+  },
+  "generated_at": "2026-11-05T01:58:07+00:00",
+  "merge_tree": {
+    "main_plus_pr2": {
+      "conflict": false,
+      "tree": "cfa05f3bae2093fdfcfc667236a5c7e2d4b0bf0e"
+    },
+    "pr2_plus_pr3": {
+      "conflict": false,
+      "tree": "c90845f23b757f322851aa0de79910618ade6212"
+    },
+    "pr2_plus_pr4": {
+      "conflict": true,
+      "files": [
+        "AGENTS.md"
+      ],
+      "tree": "afc5dfb6aa97d423319c64510bfea8b4743cf859"
+    },
+    "pr3_plus_pr4": {
+      "conflict": false,
+      "tree": "7ec31b36f61d77ce621e1d64cc0b19d59671ec50"
+    }
+  },
+  "mission_target_repo": "blassana280-ux/agentskills",
+  "no_merge_performed": true,
+  "pr2": {
+    "base": "main",
+    "check_runs": [
+      {
+        "app": "github-actions",
+        "conclusion": "success",
+        "name": "validate (3.13)",
+        "url": "https://github.com/blassana280-ux/agentskills/actions/runs/40666421424/job/122741956460"
+      },
+      {
+        "app": "github-actions",
+        "conclusion": "success",
+        "name": "validate (3.11)",
+        "url": "https://github.com/blassana280-ux/agentskills/actions/runs/40666421424/job/122741956434"
+      },
+      {
+        "app": "github-actions",
+        "conclusion": "success",
+        "name": "validate (3.12)",
+        "url": "https://github.com/blassana280-ux/agentskills/actions/runs/40666421424/job/122741956097"
+      },
+      {
+        "app": "github-actions",
+        "conclusion": "success",
+        "name": "validate (3.13)",
+        "url": "https://github.com/blassana280-ux/agentskills/actions/runs/40666413505/job/122741929490"
+      },
+      {
+        "app": "github-actions",
+        "conclusion": "success",
+        "name": "validate (3.12)",
+        "url": "https://github.com/blassana280-ux/agentskills/actions/runs/40666413505/job/122741929461"
+      },
+      {
+        "app": "github-actions",
+        "conclusion": "success",
+        "name": "validate (3.11)",
+        "url": "https://github.com/blassana280-ux/agentskills/actions/runs/40666413505/job/122741929153"
+      }
+    ],
+    "checks_success": 6,
+    "checks_total": 6,
+    "files_changed": 100,
+    "head": "arena/fba5d524-agentskills",
+    "head_sha": "12ce4e00cbf46f928f08f6bd53fbfe9ee60f65b8",
+    "local_baseline_tests": "Ran 50 tests ... OK",
+    "local_validate": "OK — 112 agents et 7 contrats validés",
+    "merge_state_status": "CLEAN",
+    "mergeable": "MERGEABLE",
+    "state": "OPEN"
+  },
+  "session_base": "9d91dad0279c41d60fdb944f4fa09da3c40decc3",
+  "session_branch": "arena/2644be5c-skills-collection",
+  "workspace_repo": "blassana280-ux/skills-collection"
+}

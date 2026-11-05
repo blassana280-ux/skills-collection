@@ -1,0 +1,71 @@
+name: OmniBrain v4 CI
+
+# CI de la branche de session Arena. Aucune fusion automatique :
+# les PR restent à la décision de Lassana.
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: ["arena/2644be5c-skills-collection"]
+    paths:
+      - "omni-agents-framework/**"
+      - ".github/workflows/omnibrain-v4.yml"
+  pull_request:
+    paths:
+      - "omni-agents-framework/**"
+      - ".github/workflows/omnibrain-v4.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: omni-agents-framework
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Validate agent network (115 agents)
+        run: python3 -m omnibrain validate
+
+      - name: Verify generated catalog matches sources
+        run: |
+          python3 tools/generate_agents.py
+          git diff --exit-code -- catalog specialized || (echo "Fiches ou catalogue non régénérés : lancer python3 tools/generate_agents.py" && exit 1)
+
+      - name: Run full test suite (v3 + v4)
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Smoke-test CLI on all examples
+        run: |
+          for f in examples/task-*.md; do
+            python3 -m omnibrain plan "$f" --format json > /tmp/plan.json
+            python3 -c "import json; d=json.load(open('/tmp/plan.json')); assert d['briefs'] and d['wave']==0"
+          done
+
+      - name: Parallel wave covers the whole network
+        run: python3 scripts/demo-parallele.py
+
+      - name: Benchmarks - 10 frozen tasks
+        run: python3 tools/benchmark.py --no-write
+
+      - name: GEPA prompt loop - journal check
+        run: |
+          python3 tools/optimize_prompts.py --iterations 2 --db "$RUNNER_TEMP/gepa.sqlite3" --journal "$RUNNER_TEMP/gepa.jsonl" > "$RUNNER_TEMP/gepa-summary.json"
+          test "$(wc -l < "$RUNNER_TEMP/gepa.jsonl")" -eq 2
+
+      - name: Runtime service mode - bounded tick
+        run: OMNIBRAIN_DB="$RUNNER_TEMP/runtime.sqlite3" python3 -m omni.sandbox --max-ticks 1
+
+      - name: No drift on tracked files
+        run: git diff --exit-code
