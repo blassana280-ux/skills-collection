@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
+import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,13 +16,19 @@ from typing import Any, Iterator
 
 from .config import DB_PATH, ensure_dirs
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 _local = threading.local()
+_tx_local = threading.local()
 _lock = threading.RLock()
 
 
 def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def epoch() -> float:
+    """Horloge partagée par les processus pour les baux (secondes Unix)."""
+    return time.time()
 
 
 def connect(path: Path | None = None) -> sqlite3.Connection:
@@ -36,14 +43,45 @@ def connect(path: Path | None = None) -> sqlite3.Connection:
 
 
 @contextmanager
-def transaction(conn: sqlite3.Connection) -> Iterator[sqlite3.Connection]:
+def transaction(conn: sqlite3.Connection, immediate: bool = False) -> Iterator[sqlite3.Connection]:
+    """Transaction réentrante par connexion.
+
+    `immediate=True` prend le verrou d'écriture SQLite dès l'entrée (BEGIN IMMEDIATE) :
+    indispensable aux sections lire-réserver-écrire partagées entre processus. Les
+    appels imbriqués utilisent des SAVEPOINTs et ne committent pas prématurément.
+    """
+    depths = getattr(_tx_local, "depths", None)
+    if depths is None:
+        depths = {}
+        _tx_local.depths = depths
+    key = id(conn)
+    depth = depths.get(key, 0)
+    if depth:
+        savepoint = f"sp_{key}_{depth}"
+        conn.execute(f"SAVEPOINT {savepoint}")
+        depths[key] = depth + 1
+        try:
+            yield conn
+            conn.execute(f"RELEASE SAVEPOINT {savepoint}")
+        except Exception:
+            conn.execute(f"ROLLBACK TO SAVEPOINT {savepoint}")
+            conn.execute(f"RELEASE SAVEPOINT {savepoint}")
+            raise
+        finally:
+            depths[key] = depth
+        return
     with _lock:
+        if immediate:
+            conn.execute("BEGIN IMMEDIATE")
+        depths[key] = 1
         try:
             yield conn
             conn.commit()
         except Exception:
             conn.rollback()
             raise
+        finally:
+            depths[key] = 0
 
 
 SCHEMA_SQL = """
@@ -64,14 +102,28 @@ CREATE TABLE IF NOT EXISTS agent_versions (
 CREATE TABLE IF NOT EXISTS missions (
     id TEXT PRIMARY KEY, objective TEXT NOT NULL, state TEXT NOT NULL, priority INTEGER NOT NULL DEFAULT 5,
     plan_json TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
-    budget_usd REAL NOT NULL DEFAULT 0.05, privacy TEXT NOT NULL DEFAULT 'standard', result_json TEXT
+    budget_usd REAL NOT NULL DEFAULT 0.05, privacy TEXT NOT NULL DEFAULT 'standard', result_json TEXT,
+    owner_worker_id TEXT, lease_token TEXT, lease_expires_at REAL NOT NULL DEFAULT 0,
+    heartbeat_at REAL, fencing_token INTEGER NOT NULL DEFAULT 0,
+    run_attempts INTEGER NOT NULL DEFAULT 0, cancel_requested INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY, mission_id TEXT NOT NULL REFERENCES missions(id), agent_id TEXT NOT NULL,
     tool TEXT, input_json TEXT NOT NULL DEFAULT '{}', state TEXT NOT NULL DEFAULT 'pending',
     attempts INTEGER NOT NULL DEFAULT 0, result_json TEXT, error TEXT,
     idempotency_key TEXT UNIQUE, depends_on TEXT NOT NULL DEFAULT '[]',
-    timeout_s INTEGER NOT NULL DEFAULT 120, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+    timeout_s INTEGER NOT NULL DEFAULT 120, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+    execution_token TEXT, owner_worker_id TEXT
+);
+CREATE TABLE IF NOT EXISTS task_executions (
+    task_id TEXT PRIMARY KEY REFERENCES tasks(id), mission_id TEXT NOT NULL,
+    idempotency_key TEXT UNIQUE, fencing_token INTEGER NOT NULL,
+    worker_id TEXT NOT NULL, result_json TEXT NOT NULL, completed_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS workers (
+    worker_id TEXT PRIMARY KEY, pid INTEGER NOT NULL, hostname TEXT NOT NULL,
+    started_at REAL NOT NULL, last_heartbeat REAL NOT NULL, stopped_at REAL,
+    state TEXT NOT NULL DEFAULT 'alive'
 );
 CREATE TABLE IF NOT EXISTS bus_messages (
     id TEXT PRIMARY KEY, sender TEXT NOT NULL, recipient TEXT NOT NULL, mission_id TEXT,
@@ -98,7 +150,20 @@ CREATE TABLE IF NOT EXISTS approvals (
 CREATE TABLE IF NOT EXISTS budget_ledger (
     id INTEGER PRIMARY KEY AUTOINCREMENT, scope TEXT NOT NULL, scope_id TEXT NOT NULL,
     mission_id TEXT, provider TEXT, model TEXT, tokens_in INTEGER NOT NULL DEFAULT 0,
-    tokens_out INTEGER NOT NULL DEFAULT 0, cost_usd REAL NOT NULL DEFAULT 0, at TEXT NOT NULL
+    tokens_out INTEGER NOT NULL DEFAULT 0, cost_usd REAL NOT NULL DEFAULT 0, at TEXT NOT NULL,
+    reservation_id TEXT, call_key TEXT
+);
+CREATE TABLE IF NOT EXISTS budget_reservations (
+    id TEXT PRIMARY KEY, call_key TEXT UNIQUE, mission_id TEXT, task_id TEXT,
+    provider TEXT, model TEXT, status TEXT NOT NULL DEFAULT 'reserved',
+    amount_usd REAL NOT NULL, actual_cost_usd REAL, tokens_in_est INTEGER NOT NULL DEFAULT 0,
+    tokens_out_est INTEGER NOT NULL DEFAULT 0, tokens_in_actual INTEGER, tokens_out_actual INTEGER,
+    created_at TEXT NOT NULL, updated_at TEXT NOT NULL, error TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS budget_reservation_scopes (
+    reservation_id TEXT NOT NULL REFERENCES budget_reservations(id),
+    scope TEXT NOT NULL, scope_id TEXT NOT NULL, amount_usd REAL NOT NULL,
+    PRIMARY KEY(reservation_id, scope, scope_id)
 );
 CREATE TABLE IF NOT EXISTS quotas (
     scope TEXT NOT NULL, scope_id TEXT NOT NULL, limit_usd REAL NOT NULL, period TEXT NOT NULL DEFAULT 'total',
@@ -117,10 +182,26 @@ CREATE TABLE IF NOT EXISTS strategies (
     id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, version INTEGER NOT NULL, content TEXT NOT NULL,
     score REAL, active INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS learning_schedulers (
+    id TEXT PRIMARY KEY, interval_seconds REAL NOT NULL, max_proposals INTEGER NOT NULL DEFAULT 5,
+    owner_worker_id TEXT, lease_token TEXT, lease_expires_at REAL NOT NULL DEFAULT 0,
+    heartbeat_at REAL, last_run_at TEXT, next_run_at REAL, state TEXT NOT NULL DEFAULT 'active',
+    created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS learning_runs (
+    id TEXT PRIMARY KEY, scheduler_id TEXT NOT NULL DEFAULT 'default', trigger TEXT NOT NULL,
+    worker_id TEXT NOT NULL, lease_token TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'running',
+    started_at TEXT NOT NULL, finished_at TEXT, heartbeat_at REAL, lease_expires_at REAL NOT NULL,
+    report_json TEXT, error TEXT NOT NULL DEFAULT ''
+);
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, level TEXT NOT NULL, component TEXT NOT NULL,
     mission_id TEXT, message TEXT NOT NULL, data_json TEXT NOT NULL DEFAULT '{}'
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_learning_one_running ON learning_runs(status) WHERE status='running';
+CREATE INDEX IF NOT EXISTS idx_missions_queue ON missions(state, priority, created_at);
+CREATE INDEX IF NOT EXISTS idx_budget_reservations_status ON budget_reservations(status);
+CREATE INDEX IF NOT EXISTS idx_budget_reservation_scopes ON budget_reservation_scopes(scope, scope_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_mission ON tasks(mission_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_state ON tasks(state);
 CREATE INDEX IF NOT EXISTS idx_memory_level ON memory_items(level, owner);
@@ -130,9 +211,30 @@ CREATE INDEX IF NOT EXISTS idx_events_mission ON events(mission_id);
 """
 
 
+def _add_columns(conn: sqlite3.Connection, table: str, columns: dict[str, str]) -> None:
+    present = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+    for name, decl in columns.items():
+        if name not in present:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {decl}")
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Migration additive v1 -> v2 : aucune suppression, aucune réécriture de données."""
+    _add_columns(conn, "missions", {
+        "owner_worker_id": "TEXT", "lease_token": "TEXT",
+        "lease_expires_at": "REAL NOT NULL DEFAULT 0", "heartbeat_at": "REAL",
+        "fencing_token": "INTEGER NOT NULL DEFAULT 0", "run_attempts": "INTEGER NOT NULL DEFAULT 0",
+        "cancel_requested": "INTEGER NOT NULL DEFAULT 0",
+    })
+    _add_columns(conn, "tasks", {"execution_token": "TEXT", "owner_worker_id": "TEXT"})
+    _add_columns(conn, "budget_ledger", {"reservation_id": "TEXT", "call_key": "TEXT"})
+
+
 def init_db(conn: sqlite3.Connection) -> None:
     with transaction(conn):
         conn.executescript(SCHEMA_SQL)
+        _migrate(conn)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_missions_lease ON missions(state, lease_expires_at)")
         # FTS5 si disponible, sinon recherche LIKE (repli honnête documenté).
         try:
             conn.execute("CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts USING fts5(content, content='memory_items', content_rowid='rowid')")

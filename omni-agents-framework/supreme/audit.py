@@ -8,8 +8,10 @@ Le rapport JSON est horodaté et archivé dans var/supreme/ (gitignoré).
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import unittest
+import uuid
 from pathlib import Path
 
 from .config import SUPREME_ROOT, VAR_DIR, ensure_dirs
@@ -63,28 +65,58 @@ def _tests_count() -> int:
 
 
 def run_audit(save: bool = True, conn=None) -> dict:
+    from . import SUPREME_VERSION
     from .backup import BackupManager
     from .providers import configured_providers
     from .registry import Registry
     from .observability import ObservabilityEngine
     from .budget import BudgetController
     from .router import ModelRouter
-    from .db import get_conn
+    from .db import get_conn, epoch
 
     own = conn is None
     conn = conn or get_conn()
     registry = Registry(conn)
-    obs = ObservabilityEngine(conn, registry, BudgetController(conn), ModelRouter(conn))
+    budget = BudgetController(conn)
+    obs = ObservabilityEngine(conn, registry, budget, ModelRouter(conn))
     backups = BackupManager().list_backups()
     conf = configured_providers()
+    schema = conn.execute("SELECT value FROM schema_meta WHERE key='version'").fetchone()
+    workers = {r["state"]: r["c"] for r in conn.execute("SELECT state, COUNT(*) c FROM workers GROUP BY state")}
+    active_leases = conn.execute("SELECT COUNT(*) c FROM missions WHERE state='running' AND lease_expires_at > ?", (epoch(),)).fetchone()["c"]
+    orphan_tasks = conn.execute(
+        """SELECT COUNT(*) c FROM tasks t JOIN missions m ON m.id=t.mission_id
+           WHERE m.state='planned' AND t.state IN ('assigned','running','validating')""").fetchone()["c"]
+    learning_running = conn.execute("SELECT COUNT(*) c FROM learning_runs WHERE status='running'").fetchone()["c"]
+    learning_errors = conn.execute("SELECT COUNT(*) c FROM learning_runs WHERE status IN ('failed','interrupted')").fetchone()["c"]
+    quota_violations = []
+    for q in conn.execute("SELECT scope, scope_id, limit_usd FROM quotas").fetchall():
+        exposure = budget.exposure(q["scope"], q["scope_id"])
+        if exposure > float(q["limit_usd"]) + 1e-9:
+            quota_violations.append({"scope": q["scope"], "scope_id": q["scope_id"],
+                                     "limit_usd": q["limit_usd"], "exposure_usd": exposure})
+    over_settled = conn.execute(
+        "SELECT COUNT(*) c FROM budget_reservations WHERE status='settled' AND actual_cost_usd > amount_usd + 1e-12").fetchone()["c"]
+    reliability = {"schema_version": int(schema["value"]) if schema else None,
+                   "workers": workers, "active_leases": active_leases,
+                   "orphan_active_tasks_in_planned_missions": orphan_tasks,
+                   "learning_running": learning_running, "learning_error_runs": learning_errors,
+                   "ok": (schema and int(schema["value"]) >= 2 and orphan_tasks == 0 and learning_running <= 1)}
+    budget_audit = {"reservations": {r["status"]: r["c"] for r in conn.execute(
+                        "SELECT status, COUNT(*) c FROM budget_reservations GROUP BY status")},
+                    "quota_violations": quota_violations, "settled_over_reservation": over_settled,
+                    "ok": not quota_violations and over_settled == 0}
     report = {
-        "audited_at": now(),
+        "audited_at": now(), "version": SUPREME_VERSION,
+        "framework_root": str(FRAMEWORK_ROOT),
         "catalog": _catalog_audit(),
         "registry": {"status_counts": registry.status_counts()},
         "providers": {"configured_count": sum(1 for p in conf if p["configured"]),
                       "priority_order": [p["name"] for p in sorted(conf, key=lambda x: x["priority"])],
                       "note": "configuré != opérationnel ; 0 appel réel réussi = 0 connecté"},
         "security": _security_audit(),
+        "reliability": reliability,
+        "budget": budget_audit,
         "backups": {"count": len(backups),
                     "latest": backups[-1]["id"] if backups else None,
                     "latest_integrity": backups[-1].get("integrity") if backups else None},
@@ -93,10 +125,12 @@ def run_audit(save: bool = True, conn=None) -> dict:
         "distinctions": ["enregistré != opérationnel", "connecteur écrit != fournisseur connecté",
                          "serveur local != déploiement cloud", "test simulé != intégration réelle"],
     }
-    report["ok"] = report["catalog"]["ok"] and report["security"]["ok"]
+    report["ok"] = (report["catalog"]["ok"] and report["security"]["ok"]
+                    and reliability["ok"] and budget_audit["ok"])
     if save:
         ensure_dirs()
-        p = VAR_DIR / f"audit-{now().replace(':', '').replace('-', '')[:15]}.json"
+        p = VAR_DIR / f"audit-{now().replace(':', '').replace('-', '')[:15]}-{uuid.uuid4().hex[:8]}.json"
         p.write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
+        os.chmod(p, 0o600)
         report["saved_to"] = str(p)
     return report

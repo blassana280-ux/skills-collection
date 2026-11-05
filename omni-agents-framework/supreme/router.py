@@ -9,11 +9,14 @@ injectées explicitement et marquées comme telles.
 from __future__ import annotations
 
 import json
+import math
 import time
 import urllib.error
 import urllib.request
+import uuid
 from dataclasses import dataclass, field
 
+from .budget import BudgetController
 from .config import env_present
 from .db import log_event
 from .providers import ProviderClient, resolve_key
@@ -110,7 +113,7 @@ class ModelRouter:
             custom = _custom_compat_provider()
             if custom is not None:
                 self.providers.append(custom)
-        self.budget = budget
+        self.budget = budget if budget is not None else (BudgetController(conn) if conn is not None else None)
         self.http_timeout = http_timeout
         self.allow_network = allow_network
         self.client = client or ProviderClient(timeout=max(http_timeout, 25.0), allow_network=allow_network)
@@ -227,57 +230,134 @@ class ModelRouter:
     def record_quality(self, model_key: str, score: float) -> None:
         self.quality_history.setdefault(model_key, []).append(max(0.0, min(1.0, score)))
 
+    @staticmethod
+    def _input_token_bound(messages: list[dict]) -> int:
+        """Borne conservatrice sans tokenizer officiel : caractères + marge de overhead.
+
+        Ce n'est pas une estimation marketing ; elle sert uniquement à réserver une
+        limite haute avant l'appel. Le coût réel est soldé sur l'usage fournisseur.
+        """
+        chars = sum(len(str(m.get("content", ""))) for m in messages)
+        return int(chars) + 1024
+
+    @staticmethod
+    def _cost(spec: ModelSpec, tokens_in: int, tokens_out: int) -> float:
+        return (spec.cost_per_1k_in * int(tokens_in) + spec.cost_per_1k_out * int(tokens_out)) / 1000.0
+
     def complete(self, task: dict, messages: list[dict], max_tokens: int = 1024,
                  temperature: float = 0.2, mission_id: str | None = None,
-                 agent_id: str | None = None) -> dict:
-        """Routage + VRAI appel HTTP avec fallback multi-fournisseurs et budget.
+                 agent_id: str | None = None, task_id: str | None = None,
+                 call_key: str | None = None, extra_scopes: list | None = None) -> dict:
+        """Routage + VRAI appel HTTP, réservation budgétaire avant chaque tentative.
 
         Renvoie {ok, text, provider, model, usage, cost_usd, latency_ms, error, attempts}.
-        Aucune réponse simulée : si aucun fournisseur n'est configuré/disponible, ok=False.
+        Chaque tentative est tracée (fournisseur/modèle/statut/coût/réservation). Les
+        erreurs réseau sans statut HTTP conservent la réservation (`interrupted`) par
+        prudence comptable ; aucun fallback ne contourne les quotas centraux.
         """
+        try:
+            max_tokens = int(max_tokens)
+        except (TypeError, ValueError):
+            return {"ok": False, "text": "", "error": "max_tokens invalide", "provider": None,
+                    "model": None, "cost_usd": 0.0, "attempts": []}
+        if max_tokens <= 0:
+            return {"ok": False, "text": "", "error": "max_tokens doit être positif", "provider": None,
+                    "model": None, "cost_usd": 0.0, "attempts": []}
+        task_cap = task.get("max_cost_usd", 0.05)
+        try:
+            task_cap = float(task_cap)
+        except (TypeError, ValueError):
+            task_cap = 0.0
+        if not math.isfinite(task_cap) or task_cap < 0:
+            task_cap = 0.0
         route = self.route(task)
         if not route.get("available"):
             return {"ok": False, "text": "", "error": route.get("reason", "aucun modèle disponible"),
                     "provider": None, "model": None, "cost_usd": 0.0, "attempts": []}
         specs = {f"{m.provider}/{m.model}": m for m in self.configured_models()}
-        order = [route["model"]] + list(route.get("fallbacks", []))
+        order = [route["model"]]
+        if not task.get("disable_fallback"):
+            order += list(route.get("fallbacks", []))
+        input_bound = self._input_token_bound(messages)
         attempts = []
         last_error = "aucune tentative"
+        base_call_key = call_key or uuid.uuid4().hex
         for key in order:
             spec = specs.get(key)
-            if spec is None:
+            prov = next((x for x in self.providers if x.name == spec.provider), None) if spec else None
+            if spec is None or prov is None:
                 continue
-            prov = next((x for x in self.providers if x.name == spec.provider), None)
-            if prov is None:
+            if max_tokens > spec.context or input_bound + max_tokens > spec.context:
+                attempts.append({"model": key, "ok": False, "error": "limite de tokens/contexte dépassée",
+                                 "skipped": True, "max_tokens": max_tokens, "context": spec.context})
+                last_error = "limite de tokens/contexte dépassée"
                 continue
+            upper_cost = self._cost(spec, input_bound, max_tokens)
+            if upper_cost > task_cap + 1e-12:
+                attempts.append({"model": key, "ok": False, "error": "borne de coût supérieure au budget maximal",
+                                 "skipped": True, "estimated_max_cost_usd": round(upper_cost, 9),
+                                 "max_cost_usd": task_cap})
+                last_error = "budget maximal insuffisant pour la borne de coût"
+                continue
+            entries = [("provider", prov.name), ("global", "default")]
+            if mission_id:
+                entries.append(("mission", mission_id))
+            if agent_id:
+                entries.append(("agent", agent_id))
+            entries.extend(extra_scopes or [])
+            reservation_id = None
+            if self.budget is not None:
+                reservation = self.budget.reserve(
+                    entries, upper_cost, mission_id=mission_id, task_id=task_id,
+                    provider=prov.name, model=spec.model, tokens_in_est=input_bound,
+                    tokens_out_est=max_tokens, call_key=f"{base_call_key}:{key}:{uuid.uuid4().hex[:8]}")
+                if not reservation.get("reserved"):
+                    attempts.append({"model": key, "ok": False, "error": reservation.get("reason", "réservation refusée"),
+                                     "skipped": True, "reservation": reservation})
+                    last_error = reservation.get("reason", "réservation refusée")
+                    continue
+                reservation_id = reservation["reservation_id"]
             api_key = resolve_key(prov.env_var, prov.name)
-            base_url = prov.base_url
             res = self.client.complete(provider=prov.name, model=spec.model, messages=messages,
-                                       base_url=base_url, kind=prov.kind, api_key=api_key,
+                                       base_url=prov.base_url, kind=prov.kind, api_key=api_key,
                                        max_tokens=max_tokens, temperature=temperature)
-            attempts.append({"model": key, "ok": res.ok, "http_status": res.http_status,
-                             "error": res.error, "latency_ms": round(res.latency_ms, 2)})
+            attempt = {"model": key, "provider": prov.name, "ok": res.ok, "http_status": res.http_status,
+                       "error": res.error, "latency_ms": round(res.latency_ms, 2),
+                       "reservation_id": reservation_id, "estimated_max_cost_usd": round(upper_cost, 9)}
             if res.ok:
                 usage = res.usage or {"input_tokens": 0, "output_tokens": 0}
-                cost = (spec.cost_per_1k_in * usage.get("input_tokens", 0)
-                        + spec.cost_per_1k_out * usage.get("output_tokens", 0)) / 1000.0
-                if self.budget is not None and mission_id:
+                tokens_in = int(usage.get("input_tokens", 0) or 0)
+                tokens_out = int(usage.get("output_tokens", 0) or 0)
+                cost = self._cost(spec, tokens_in, tokens_out)
+                attempt.update({"usage": usage, "cost_usd": round(cost, 9)})
+                if self.budget is not None and reservation_id:
                     try:
-                        self.budget.record("mission", mission_id, cost, mission_id=mission_id,
-                                           provider=prov.name, model=spec.model,
-                                           tokens_in=usage.get("input_tokens", 0),
-                                           tokens_out=usage.get("output_tokens", 0),
-                                           extra_scopes=[("agent", agent_id)] if agent_id else None)
-                    except Exception:
-                        pass
+                        settled = self.budget.settle(reservation_id, cost, tokens_in=tokens_in,
+                                                     tokens_out=tokens_out, provider=prov.name, model=spec.model)
+                        if not settled.get("recorded"):
+                            raise ValueError(settled.get("reason", "solde budgétaire refusé"))
+                    except Exception as e:
+                        self.budget.release(reservation_id, reason=str(e), interrupted=True)
+                        attempt.update({"ok": False, "error": f"comptabilisation refusée : {e}"})
+                        attempts.append(attempt)
+                        last_error = attempt["error"]
+                        prov.status = "error"
+                        continue
+                attempts.append(attempt)
                 if self.conn is not None:
                     log_event(self.conn, "info", "router", f"complétion réelle réussie : {key}",
-                              mission_id, {"latency_ms": round(res.latency_ms, 2), "cost_usd": round(cost, 6)})
+                              mission_id, {"latency_ms": round(res.latency_ms, 2), "cost_usd": round(cost, 9),
+                                           "reservation_id": reservation_id, "provider": prov.name, "model": spec.model})
                 return {"ok": True, "text": res.text, "provider": prov.name, "model": spec.model,
-                        "usage": usage, "cost_usd": round(cost, 6), "latency_ms": round(res.latency_ms, 2),
-                        "error": "", "attempts": attempts}
+                        "usage": usage, "cost_usd": round(cost, 9), "latency_ms": round(res.latency_ms, 2),
+                        "error": "", "attempts": attempts, "reservation_id": reservation_id}
+            # Échec : libérer seulement si le fournisseur a explicitement rejeté avant traitement.
+            if self.budget is not None and reservation_id:
+                uncertain = res.http_status == 0 or res.http_status >= 500
+                self.budget.release(reservation_id, reason=res.error, interrupted=uncertain)
+                attempt["reservation_status"] = "interrupted" if uncertain else "released"
+            attempts.append(attempt)
             last_error = res.error
-            # marque le fournisseur en erreur pour le fallback suivant
             prov.status = "error" if res.http_status else "unreachable"
         if self.conn is not None:
             log_event(self.conn, "warning", "router", "complétion échouée sur tous les fournisseurs",

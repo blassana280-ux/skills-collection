@@ -12,15 +12,30 @@ Usage : python3 -m supreme <commande>
   rotate-token           régénère le jeton API (0600, jamais affiché) ; redémarrer serve ensuite
   providers [--check]    statut des fournisseurs IA (sans clés) ; --check = appel réel de disponibilité
   providers --init-secrets  crée un modèle de fichier de secrets vide (0600, gitignoré)
-  worker [--once]        processus worker séparé consommant la file de missions (Phase G)
+  worker [--once]        processus worker séparé, bail/heartbeat/fencing, arrêt propre (SIGINT/SIGTERM)
   audit                  audit exécutable : catalogue, sécurité, sauvegardes, KPIs, tests (Phase I)
-  learn                  cycle d'amélioration contrôlée : observer->proposer->comparer->rapport
+  learn [--periodic]     apprentissage ponctuel ou périodique configurable, rapports persistés,
+                         bail unique, arrêt propre, reprise après interruption ; --status pour inspecter
 """
 from __future__ import annotations
 
 import argparse
 import json
+import signal
 import sys
+import threading
+
+
+def _stop_event_with_signals() -> threading.Event:
+    stop = threading.Event()
+    def _handle(signum, frame):
+        stop.set()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        try:
+            signal.signal(sig, _handle)
+        except (ValueError, OSError):
+            pass
+    return stop
 
 
 def main(argv=None):
@@ -42,9 +57,21 @@ def main(argv=None):
     wk.add_argument("--once", action="store_true")
     wk.add_argument("--interval", type=float, default=1.0)
     wk.add_argument("--max", type=int, default=None)
+    wk.add_argument("--max-polls", type=int, default=None)
+    wk.add_argument("--worker-id", default=None)
+    wk.add_argument("--lease-seconds", type=float, default=30.0)
+    wk.add_argument("--heartbeat-seconds", type=float, default=None)
     ad = sub.add_parser("audit")
     ad.add_argument("--no-save", action="store_true")
-    sub.add_parser("learn")
+    ln = sub.add_parser("learn")
+    ln.add_argument("--periodic", action="store_true")
+    ln.add_argument("--interval", type=float, default=300.0)
+    ln.add_argument("--max-cycles", type=int, default=None)
+    ln.add_argument("--max-proposals", type=int, default=5)
+    ln.add_argument("--scheduler-id", default="default")
+    ln.add_argument("--lease-seconds", type=float, default=30.0)
+    ln.add_argument("--heartbeat-seconds", type=float, default=None)
+    ln.add_argument("--status", action="store_true")
     args = ap.parse_args(argv)
 
     if args.cmd == "catalog":
@@ -104,21 +131,41 @@ def main(argv=None):
 
     if args.cmd == "audit":
         from .audit import run_audit
-        print(json.dumps(run_audit(save=not args.no_save), ensure_ascii=False, indent=1))
-        return 0
+        report = run_audit(save=not args.no_save)
+        print(json.dumps(report, ensure_ascii=False, indent=1))
+        return 0 if report.get("ok") else 1
 
     core = bootstrap(evaluate=False)
     if args.cmd == "worker":
         from .worker import run_worker
+        stop = _stop_event_with_signals()
         print(json.dumps(run_worker(once=args.once, interval=args.interval,
-                                    max_missions=args.max, core=core), ensure_ascii=False, indent=1))
+                                    max_missions=args.max, core=core, max_polls=args.max_polls,
+                                    worker_id=args.worker_id, lease_seconds=args.lease_seconds,
+                                    heartbeat_interval=args.heartbeat_seconds,
+                                    stop_event=stop), ensure_ascii=False, indent=1))
         return 0
     if args.cmd == "learn":
-        from .learning import LearningEngine
+        from .learning import LearningEngine, LearningScheduler
         from .evaluation import EvaluationEngine
         ev = EvaluationEngine(core.conn, core.registry, router=core.router)
         le = LearningEngine(core.conn, core.registry, ev)
-        print(json.dumps(le.run_cycle(), ensure_ascii=False, indent=1))
+        if args.status:
+            sched = LearningScheduler(core.conn, le, scheduler_id=args.scheduler_id,
+                                      interval_seconds=args.interval, max_proposals=args.max_proposals,
+                                      lease_seconds=args.lease_seconds, heartbeat_interval=args.heartbeat_seconds)
+            print(json.dumps(sched.status(), ensure_ascii=False, indent=1))
+            return 0
+        if args.periodic:
+            sched = LearningScheduler(core.conn, le, scheduler_id=args.scheduler_id,
+                                      interval_seconds=args.interval, max_proposals=args.max_proposals,
+                                      lease_seconds=args.lease_seconds, heartbeat_interval=args.heartbeat_seconds)
+            stop = _stop_event_with_signals()
+            print(json.dumps(sched.run(max_cycles=args.max_cycles, stop_event=stop), ensure_ascii=False, indent=1))
+            return 0
+        print(json.dumps(le.run_cycle(max_proposals=args.max_proposals, trigger="once",
+                                      scheduler_id=args.scheduler_id, lease_seconds=args.lease_seconds),
+                         ensure_ascii=False, indent=1))
         return 0
     if args.cmd == "sync":
         print(json.dumps(core.registry.sync_catalog(), ensure_ascii=False)); return 0

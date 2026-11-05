@@ -4,5 +4,5 @@ Stdlib uniquement. Aucune donnée simulée : les statuts et métriques provienne
 d'exécutions réelles persistées dans SQLite.
 """
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 SUPREME_VERSION = __version__

@@ -15,6 +15,7 @@ from urllib.parse import parse_qs, urlencode, urlparse
 
 from .config import DASHBOARD_DIR, VAR_DIR, ensure_dirs
 from .evaluation import EvaluationEngine
+from .leases import LeaseLostError
 from .orchestrator import OmniBrainCore
 from .observability import ObservabilityEngine
 from .reporting import ReportingEngine
@@ -331,6 +332,8 @@ def make_handler(state: APIState):
                 return self._send(404, {"error": "route inconnue"})
             except PermissionError as e:
                 return self._send(403, {"error": str(e)})
+            except LeaseLostError as e:
+                return self._send(409, {"error": str(e)})
             except (KeyError, ValueError) as e:
                 return self._send(400, {"error": str(e)})
             except Exception as e:

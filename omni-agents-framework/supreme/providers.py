@@ -220,6 +220,12 @@ class ProviderClient:
         if not self.allow_network:
             return CompletionResult(False, provider=provider, model=model,
                                     error="réseau désactivé (allow_network=False)")
+        try:
+            max_tokens = int(max_tokens)
+        except (TypeError, ValueError):
+            return CompletionResult(False, provider=provider, model=model, error="max_tokens invalide")
+        if max_tokens <= 0:
+            return CompletionResult(False, provider=provider, model=model, error="max_tokens doit être positif")
         if not base_url:
             return CompletionResult(False, provider=provider, model=model,
                                     error="base_url non configurée pour ce fournisseur")
