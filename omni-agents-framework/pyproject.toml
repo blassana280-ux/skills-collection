@@ -1,0 +1,20 @@
+[project]
+name = "omnibrain-framework"
+version = "1.0.0"
+description = "OmniBrain — routeur multi-agents parallèles : classification, matrice de routage, briefs en une vague, gates qualité. Zéro dépendance runtime, compatible Agent Skills."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "blassana280-ux" }]
+keywords = ["ai-agents", "orchestration", "agent-skills", "routing", "multi-agent"]
+dependencies = []
+
+[project.scripts]
+omnibrain = "omnibrain.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["omnibrain*"]

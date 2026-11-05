@@ -1,0 +1,227 @@
+# Matrice de routage OmniBrain — source de vérité déclarative.
+# Modifier ce fichier suffit pour ajouter/retirer un agent du réseau :
+# le CLI (`omnibrain validate`, `route`, `plan`) lit cette matrice au runtime.
+
+version = "1.0.0"
+
+[classification]
+# Scores en deçà/au-delà desquels la complexité bascule.
+simple_threshold = 3
+medium_threshold = 6
+complex_threshold = 9
+min_squad = 4
+max_squad = 8
+# Domaines à risque : toute occurrence fait grimper la complexité et rend
+# l'expertise correspondante obligatoire dans l'escouade.
+risk_domains = ["security", "finance-ohada", "devops"]
+# Connecteurs détectant une demande multi-partites.
+connectors = [" et ", " and ", " ainsi que ", " puis ", " ensuite ", ","]
+complexity_lexemes = [
+  "refonte", "migration", "architecture", "audit complet", "multi-agent",
+  "multi-agents", "parallèle", "parallel", "escouade", "squad",
+  "bout en bout", "end-to-end", "mise en production", "industrialisation",
+]
+
+# ---------------------------------------------------------------- agents ----
+
+[[agents]]
+id = "omnibrain"
+name = "OmniBrain Orchestrator"
+file = "specialized/specialized-omnibrain-orchestrator-agent.md"
+orchestrator = true
+domains = ["orchestration"]
+keywords = ["omnibrain", "orchestration", "routage", "dispatching", "coordination"]
+artifacts = ["orchestration-report"]
+emoji = "🧠"
+
+[[agents]]
+id = "frontend-ui"
+name = "Frontend & UI Agent"
+file = "specialized/specialized-frontend-ui-agent.md"
+domains = ["ui", "frontend"]
+keywords = [
+  "ui", "ux", "interface", "frontend", "front-end", "react", "vue", "css",
+  "tailwind", "composant", "design system", "design-system", "maquette",
+  "accessibilité", "wcag", "wireframe", "storybook", "responsive",
+]
+artifacts = ["ui-components", "design-tokens"]
+emoji = "🎨"
+
+[[agents]]
+id = "backend-api"
+name = "Backend & API Agent"
+file = "specialized/specialized-backend-api-agent.md"
+domains = ["backend"]
+keywords = [
+  "backend", "api", "serveur", "server", "endpoint", "rest", "graphql",
+  "base de données", "database", "sql", "orm", "microservice", "auth",
+  "authentification", "webhook", "node", "django", "fastapi", "spring",
+]
+artifacts = ["api-contract", "service-code"]
+emoji = "⚙️"
+
+[[agents]]
+id = "data-ai"
+name = "Data & AI Agent"
+file = "specialized/specialized-data-ai-agent.md"
+domains = ["data", "ai"]
+keywords = [
+  "donnée", "données", "data", "etl", "pipelines", "analyse", "analytics",
+  "bi", "tableau de bord", "ml", "machine learning", "ia", "llm", "rag",
+  "embedding", "modèle", "dataset", "statistique", "kpi",
+]
+artifacts = ["data-contract", "model-card"]
+emoji = "📊"
+
+[[agents]]
+id = "qa-test"
+name = "QA & Test Agent"
+file = "specialized/specialized-qa-test-agent.md"
+domains = ["qa"]
+keywords = [
+  "test", "tests", "qa", "qualité", "couverture", "couverture de code",
+  "unitaires", "intégration", "e2e", "end-to-end test", "playwright",
+  "jest", "pytest", "bug", "régression", "recette",
+]
+artifacts = ["test-plan", "test-evidence"]
+emoji = "🧪"
+
+[[agents]]
+id = "devops-sre"
+name = "DevOps & SRE Agent"
+file = "specialized/specialized-devops-sre-agent.md"
+domains = ["devops"]
+risk = true
+keywords = [
+  "devops", "sre", "ci", "cd", "cd/ci", "pipeline", "docker", "kubernetes",
+  "k8s", "terraform", "infra", "infrastructure", "déploiement", "deployment",
+  "monitoring", "observabilité", "cloud", "mise en production", "incident",
+]
+artifacts = ["deployment-plan", "runbook"]
+emoji = "🚀"
+
+[[agents]]
+id = "security"
+name = "Security Agent"
+file = "specialized/specialized-security-agent.md"
+domains = ["security"]
+risk = true
+keywords = [
+  "sécurité", "security", "vulnérabilité", "vuln", "cve", "owasp",
+  "pentest", "pen-test", "chiffrement", "rgpd", "conformité sécurité",
+  "secret", "gestion des accès", "iam", "audit sécurité", "menace",
+]
+artifacts = ["threat-model", "security-findings"]
+emoji = "🛡️"
+
+[[agents]]
+id = "adversarial-reviewer"
+name = "Adversarial Reviewer"
+file = "specialized/specialized-adversarial-reviewer-agent.md"
+domains = ["review"]
+keywords = [
+  "revue adverse", "revue critique", "adversarial", "red team", "critique",
+  "contre-expertise", "challenger", "remise en cause", "biais",
+]
+artifacts = ["adversarial-report"]
+emoji = "🔍"
+
+[[agents]]
+id = "ohada-finance"
+name = "Finance OHADA Agent"
+file = "specialized/specialized-ohada-finance-agent.md"
+domains = ["finance-ohada"]
+risk = true
+keywords = [
+  "ohada", "syscohada", "audcif", "comptabilité", "fiscalité", "fiscal",
+  "tva", "impôt", "impot", "bilan", "liasse", "audit financier",
+  "conformité fiscale", "paie", "payroll", "beps", "prix de transfert",
+  "états financiers", "control interne", "contrôle interne",
+]
+artifacts = ["compliance-memo", "filing-calendar"]
+emoji = "⚖️"
+
+[[agents]]
+id = "marketing-growth"
+name = "Marketing & Growth Agent"
+file = "specialized/specialized-marketing-growth-agent.md"
+domains = ["marketing"]
+keywords = [
+  "marketing", "growth", "croissance", "acquisition", "rétention", "funnel",
+  "entonnoir", "seo", "sea", "campagne", "brand", "marque", "positionnement",
+  "messaging", "copywriting", "réseaux sociaux", "community", "lancement",
+]
+artifacts = ["growth-plan", "messaging-framework"]
+emoji = "📣"
+
+[[agents]]
+id = "research-intel"
+name = "Research & Intelligence Agent"
+file = "specialized/specialized-research-intel-agent.md"
+domains = ["research"]
+keywords = [
+  "recherche", "research", "étude", "benchmark", "concurrence", "marché",
+  "market", "veille", "sources", "bibliographie", "analyse comparative",
+  "tendances", "sourcing", "preuve", "documentation",
+]
+artifacts = ["research-dossier", "source-ledger"]
+emoji = "🔎"
+
+[[agents]]
+id = "product-delivery"
+name = "Product & Delivery Agent"
+file = "specialized/specialized-product-delivery-agent.md"
+domains = ["product"]
+keywords = [
+  "product", "produit", "roadmap", "spécification", "spec", "user story",
+  "backlog", "priorisation", "rice", "moscow", "cadrage", "besoin",
+  "moindre effort", "livraison", "delivery", "pmv", "mvp",
+]
+artifacts = ["product-brief", "delivery-plan"]
+emoji = "🧭"
+
+# ------------------------------------------------------------- contracts ----
+# Contrats d'interface entre agents : le dispatcher n'émet que les contrats
+# dont les membres font partie de l'escouade retenue.
+
+[[contracts]]
+artifact = "api-contract"
+producers = ["backend-api"]
+consumers = ["frontend-ui", "qa-test", "security"]
+schema = "templates/interface-contract.md#api-contract"
+
+[[contracts]]
+artifact = "data-contract"
+producers = ["data-ai"]
+consumers = ["backend-api", "product-delivery", "qa-test"]
+schema = "templates/interface-contract.md#data-contract"
+
+[[contracts]]
+artifact = "test-plan"
+producers = ["qa-test"]
+consumers = ["backend-api", "frontend-ui", "devops-sre"]
+schema = "templates/interface-contract.md#test-plan"
+
+[[contracts]]
+artifact = "deployment-plan"
+producers = ["devops-sre"]
+consumers = ["security", "qa-test", "backend-api"]
+schema = "templates/interface-contract.md#deployment-plan"
+
+[[contracts]]
+artifact = "ui-components"
+producers = ["frontend-ui"]
+consumers = ["product-delivery", "qa-test"]
+schema = "templates/interface-contract.md#ui-contract"
+
+[[contracts]]
+artifact = "security-findings"
+producers = ["security"]
+consumers = ["backend-api", "devops-sre", "adversarial-reviewer"]
+schema = "templates/interface-contract.md#security-contract"
+
+[[contracts]]
+artifact = "research-dossier"
+producers = ["research-intel"]
+consumers = ["product-delivery", "marketing-growth", "ohada-finance"]
+schema = "templates/interface-contract.md#research-contract"
