@@ -180,7 +180,8 @@ def make_handler(state: APIState):
             reporting = ReportingEngine(c["conn"], c["registry"], obs)
             try:
                 if path == "/api/health":
-                    return self._send(200, {"status": "ok", "version": "1.0.0"})
+                    from . import SUPREME_VERSION
+                    return self._send(200, {"status": "ok", "version": SUPREME_VERSION})
                 if path == "/api/status":
                     return self._send(200, obs.system_status())
                 if path == "/api/kpis":
