@@ -65,9 +65,10 @@ class OmniBrainCore:
         if comp is None:
             conn = get_conn(self.db_path) if self.db_path else self.conn
             registry = Registry(conn)
+            budget = BudgetController(conn)
             comp = {"conn": conn, "registry": registry, "bus": Bus(conn, registry),
-                    "memory": MemoryEngine(conn, registry), "budget": BudgetController(conn),
-                    "policy": PolicyEngine(conn), "router": ModelRouter(conn),
+                    "memory": MemoryEngine(conn, registry), "budget": budget,
+                    "policy": PolicyEngine(conn), "router": ModelRouter(conn, budget=budget),
                     "planner": MissionPlanner(registry)}
             self._local.comp = comp
         return comp
@@ -127,16 +128,35 @@ class OmniBrainCore:
                          {"task_id": task_id, "tool": t["tool"]})
         tool = t["tool"]
         if not tool:
-            route = comp["router"].route({"capabilities": ["general"], "max_cost_usd": 0.05})
-            if not route["available"]:
-                self._set_task(task_id, "blocked", error=route["reason"], conn=conn)
+            # Tâche LLM : appel RÉEL via le routeur (clé en env, jamais journalisée).
+            # Sans fournisseur configuré/disponible -> blocage honnête (aucune simulation).
+            self._set_task(task_id, "running", conn=conn)
+            limits = profile["execution_limits"]
+            mrow = conn.execute("SELECT objective, privacy FROM missions WHERE id=?", (mid,)).fetchone()
+            objective = mrow["objective"] if mrow else ""
+            privacy = (mrow["privacy"] if mrow else "standard") or "standard"
+            system = profile.get("system_instructions", "")
+            user_content = json.dumps({
+                "objectif_mission": objective,
+                "specialite_agent": profile.get("specialization", ""),
+                "tache": t["input"],
+                "consigne": "Produis une réponse structurée et vérifiable. Signale toute incertitude.",
+            }, ensure_ascii=False)
+            messages = [{"role": "system", "content": system}, {"role": "user", "content": user_content}]
+            res = comp["router"].complete(
+                {"capabilities": ["general"], "max_cost_usd": limits.get("max_cost", 0.05), "privacy": privacy},
+                messages, max_tokens=min(limits.get("max_tokens", 2048), 2048),
+                mission_id=mid, agent_id=t["agent_id"])
+            if not res["ok"]:
+                self._set_task(task_id, "blocked", error=res["error"], conn=conn)
                 comp["bus"].send("omnibrain-core", t["agent_id"], "omnibrain-core", mid, "task_blocked",
-                                 {"task_id": task_id, "reason": route["reason"]})
-                return {"task_id": task_id, "state": "blocked", "reason": route["reason"]}
-            self._set_task(task_id, "blocked",
-                           error="appel LLM réel non implémenté dans cette version ; fournisseur disponible mais exécution à câbler",
-                           conn=conn)
-            return {"task_id": task_id, "state": "blocked"}
+                                 {"task_id": task_id, "reason": res["error"]})
+                return {"task_id": task_id, "state": "blocked", "reason": res["error"]}
+            out = {"text": res["text"], "model": f"{res['provider']}/{res['model']}",
+                   "usage": res["usage"], "cost_usd": res["cost_usd"]}
+            self._set_task(task_id, "done", result=out, conn=conn)
+            self._record_success(mid, task_id, t["agent_id"], f"llm:{res['model']}", out, res["latency_ms"], comp)
+            return {"task_id": task_id, "state": "done", "model": out["model"], "cost_usd": res["cost_usd"]}
         if not check_tool_permission(profile, tool):
             self._set_task(task_id, "blocked", error=f"outil {tool} non autorisé pour {t['agent_id']}", conn=conn)
             return {"task_id": task_id, "state": "blocked"}
