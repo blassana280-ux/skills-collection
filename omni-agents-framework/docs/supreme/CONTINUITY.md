@@ -10,8 +10,8 @@ Ce document permet une reprise sans perdre le contexte. Aucune fusion de PR n'es
   (re-spécification/réconciliation), contexte modèle attesté, API durcie, exploitation `ops/`.
   Rapport de livraison courant : **`FINAL-COMPLETION-REPORT.md`** ; runbook : **`RUNBOOK.md`**.
 - **Schéma SQLite live v4** (33 tables déclarées), migration additive depuis v3, données préservées.
-- Audit CLI 1.4.0 : version `1.4.0`, `schema_version=4`, **442 tests découverts**.
-- Tests : **442 découverts = 105 V4/non-SUPREME + 337 SUPREME** ; 441 locaux verts + 1 opt-in ignoré.
+- Audit CLI 1.4.0 : version `1.4.0`, `schema_version=4`, **443 tests découverts**.
+- Tests : **442 découverts = 105 V4/non-SUPREME + 338 SUPREME** ; 442 locaux verts + 1 opt-in ignoré.
 - Missions réelles cumulées : **13 completed**, **44 tâches done**, **9 divisions**, **18 agents distincts**,
   88 messages bus, 44 mémoires, **0 USD**. Preuves : `validation/missions-real-140-*.json`.
 - Répartition exacte clarifiée : **40 spécialistes outil + 20 chefs outil = 60 `monitored`** ;

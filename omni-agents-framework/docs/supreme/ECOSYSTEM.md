@@ -26,7 +26,7 @@ Racine dépôt : `skills-collection/`. Framework : `skills-collection/omni-agent
   agents). Risque de versions concurrentes divergentes à long terme.
 
 ### Recommandation (sans fusion automatique)
-1. **SUPREME (#5) = plateforme canonique** 1000 agents, la plus complète et testée (**442 tests découverts : 105 V4 + 337 SUPREME ; 441 locaux exécutés verts + 1 opt-in réel ignoré**).
+1. **SUPREME (#5) = plateforme canonique** 1000 agents, la plus complète et testée (**443 tests découverts : 105 V4 + 338 SUPREME ; 442 locaux exécutés verts + 1 opt-in réel ignoré**).
 2. **OMNI-RESEARCH 100 (#2) = sous-projet de recherche distinct** 100 agents. Deux options :
    - le garder comme projet séparé clairement délimité (préfixe `omni-research-100/`), ou
    - converger ses idées utiles (ex. moteur Internet, UI FastAPI) vers SUPREME via des PR dédiées.

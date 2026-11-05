@@ -28,7 +28,7 @@
   `/api/activation/{id}/respecify`, `/api/activation/{id}/reconcile`.
 - Schéma **v4** additif : `guardian_runs`, `security_findings`, `guardian_schedulers`,
   `integrity_baseline`, colonnes `provider_models.context_attested/context_source/context_attested_at`.
-- **64 tests** dans `tests/test_supreme_final_140.py` + 2 tests de cohérence documentaire.
+- **65 tests** dans `tests/test_supreme_final_140.py` + 2 tests de cohérence documentaire.
 
 ### Corrigé
 - Sauvegardes créées en `0644` → **`0600`/`0700`** ; 20 fichiers existants durcis, intégrité revérifiée.
@@ -48,7 +48,7 @@
 - Audit : inclut `schema_version`, vérification des sauvegardes et état Guardian.
 
 ### Validation
-- **442 tests découverts = 105 V4 + 337 SUPREME** ; 441 locaux verts + 1 opt-in réel ignoré.
+- **443 tests découverts = 105 V4 + 338 SUPREME** ; 442 locaux verts + 1 opt-in réel ignoré.
 - 3 missions réelles multi-divisions supplémentaires : cumul **13 missions**, **44 tâches**,
   **9 divisions**, **18 agents distincts**, **0 USD**.
 - 2 cycles d'apprentissage réels : 0 proposition, `improvement_proven=false` (aucun gain inventé).

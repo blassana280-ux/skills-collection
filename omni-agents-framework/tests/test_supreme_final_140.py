@@ -509,8 +509,21 @@ class TestBackupRetention(SupremeTestCase):
         self.manager.backup("recent")
         Path(first["db"]).write_bytes(b"corrupted")
         res = self.manager.prune(keep=1, confirm=PRUNE_CONFIRM, dry_run=False)
-        self.assertEqual(res["deleted"], [])
-        self.assertTrue(any("intégrité" in p["reason"] for p in res["protected"]))
+        # L'invariant réel : une sauvegarde corrompue n'est JAMAIS supprimée,
+        # quel que soit son rang dans la fenêtre de rétention.
+        self.assertNotIn(first["id"], res["deleted"])
+        self.assertTrue(Path(first["db"]).exists())
+        self.assertTrue(any(p["id"] == first["id"] for p in res["protected"]))
+
+    def test_retention_order_is_deterministic_within_same_second(self):
+        from supreme.backup import PRUNE_CONFIRM
+        first = self.manager.backup("a")
+        second = self.manager.backup("b")
+        self.assertEqual(first["created_at"], second["created_at"])
+        self.assertGreater(second["created_epoch"], first["created_epoch"])
+        res = self.manager.prune(keep=1, confirm=PRUNE_CONFIRM, dry_run=False)
+        self.assertEqual(res["deleted"], [first["id"]], "la plus ancienne doit partir, pas la plus récente")
+        self.assertTrue(Path(second["db"]).exists())
 
 
 class TestOperationsEndpoints(SupremeTestCase):

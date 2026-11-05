@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import time
 import sqlite3
 import uuid
 from pathlib import Path
@@ -45,7 +46,10 @@ class BackupManager:
         if CATALOG_DIR.is_dir():
             shutil.copytree(CATALOG_DIR, dest_dir / "catalog", dirs_exist_ok=True)
         integrity = self._integrity(dest_db)
-        meta = {"id": bid, "label": label, "created_at": now(), "db": str(dest_db),
+        # Horodatage haute précision : `created_at` n'a qu'une précision seconde et
+        # ne suffit pas à ordonner deux sauvegardes créées dans la même seconde.
+        meta = {"id": bid, "label": label, "created_at": now(), "created_epoch": time.time(),
+                "db": str(dest_db),
                 "integrity": integrity, "size_bytes": dest_db.stat().st_size,
                 "permissions": "0600", "directory_permissions": "0700"}
         meta_path = dest_dir / "meta.json"
@@ -105,7 +109,11 @@ class BackupManager:
         """
         if keep < 1:
             raise ValueError("keep doit être >= 1 : au moins une sauvegarde est conservée")
-        backups = sorted(self.list_backups(), key=lambda m: m["created_at"], reverse=True)
+        # Ordre déterministe et exact : epoch haute précision si disponible
+        # (sauvegardes 1.4.0+), sinon horodatage seconde puis id en dernier recours.
+        backups = sorted(self.list_backups(),
+                         key=lambda m: (float(m.get("created_epoch") or 0.0), m["created_at"], m["id"]),
+                         reverse=True)
         protected, candidates = [], []
         for index, meta in enumerate(backups):
             path = Path(meta["db"])

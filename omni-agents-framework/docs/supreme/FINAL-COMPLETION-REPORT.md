@@ -251,6 +251,8 @@ et de la documentation. Remplacés par des motifs haute confiance (clés privée
 | 12 | Doc `response_format` ≠ code | faible | opt-in documenté + test de contrat | ✅ |
 | 13 | Doc confirmation quarantaine erronée | faible | alignée + test de cohérence code↔docs | ✅ |
 | 14 | Vue divisions comptait mal les agents locaux | moyenne | mode représentatif : 40 + 20, pas 60 spécialistes | ✅ |
+| 15 | Rétention : tri non déterministe à la seconde | élevée | `created_epoch` haute précision + tri stable ; test d'ordre ajouté | ✅ |
+| 16 | Réponse 413 pouvait être un reset TCP | faible | vidange bornée par blocs avant réponse | ✅ |
 
 ### Posture vérifiée
 
@@ -270,12 +272,11 @@ le champ `not_reproduced_by_last_scan` le signale sans lever le blocage.
 
 ## 8. Tests et CI
 
-**442 tests découverts = 105 V4/non-SUPREME + 337 SUPREME.**
-Dernière exécution complète : `Ran 442 tests in 148.759s` — tous verts sauf
-l'absence alors du présent rapport, corrigée depuis ; **1 test fournisseur réel
-opt-in ignoré** faute de clé (`skipped=1`).
+**443 tests découverts = 105 V4/non-SUPREME + 338 SUPREME.**
+Dernière exécution complète : **`Ran 443 tests in 160.552s` → `OK (skipped=1)`**.
+Le test ignoré est le test fournisseur réel opt-in, faute de clé.
 
-Nouveaux tests de cette phase : **64** dans `tests/test_supreme_final_140.py`
+Nouveaux tests de cette phase : **65** dans `tests/test_supreme_final_140.py`
 (Guardian, concurrence de bail, non-mutation des permissions, re-baseline tracée,
 paliers, preuve post-quarantaine, reprise propriétaire vivant/mort,
 re-spécification, réconciliation avec remplacement, contexte attesté, parsing
@@ -284,7 +285,7 @@ numérique, contrat JSON opt-in, sauvegardes privées + vérification + rétenti
 endpoints d'exploitation, scripts ops/systemd) et **2** de cohérence documentaire
 supplémentaires.
 
-Catégories strictement séparées : **441 tests locaux réels exécutés verts**
+Catégories strictement séparées : **442 tests locaux réels exécutés verts**
 (SQLite, subprocess, signaux POSIX, HTTP vers stub `127.0.0.1`) · **0 test
 fournisseur IA réel** · **0 test cloud réel**. Un stub local n'est jamais compté
 comme preuve d'exécution externe.
@@ -423,7 +424,7 @@ env.example), `docs/supreme/RUNBOOK.md`, ce rapport.
 
 ## 13. Conclusion
 
-SUPREME 1.4.0 est **implémenté, testé localement (442 tests), migré en v4 et
+SUPREME 1.4.0 est **implémenté, testé localement (443 tests), migré en v4 et
 exploitable localement** : 1 020 profils cohérents, 20 divisions, 60 agents à
 preuve locale réelle, 13 missions réelles réussies sur 9 divisions, mémoire et
 apprentissage mesurés, protection continue active, sauvegardes privées vérifiées,

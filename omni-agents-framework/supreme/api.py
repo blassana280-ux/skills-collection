@@ -157,6 +157,7 @@ def _divisions_detail(c: dict) -> list[dict]:
 
 
 MAX_BODY_BYTES = 1_048_576  # 1 Mio : largement suffisant pour un objectif de mission.
+MAX_DRAIN_BYTES = 8_388_608  # 8 Mio absorbés par blocs avant de répondre 413 (mémoire constante).
 
 
 def _int_field(body: dict, name: str, default, *, minimum=None):
@@ -258,6 +259,15 @@ def make_handler(state: APIState):
             if length < 0:
                 raise BodyError("Content-Length négatif")
             if length > MAX_BODY_BYTES:
+                # Vidange bornée et sans allocation : si l'on répond immédiatement,
+                # un client encore en train d'écrire peut recevoir un reset TCP au
+                # lieu du 413. On absorbe au plus MAX_DRAIN_BYTES puis on répond.
+                remaining = min(length, MAX_DRAIN_BYTES)
+                while remaining > 0:
+                    chunk = self.rfile.read(min(65_536, remaining))
+                    if not chunk:
+                        break
+                    remaining -= len(chunk)
                 raise BodyTooLarge(f"corps limité à {MAX_BODY_BYTES} octets")
             if not length:
                 return {}
