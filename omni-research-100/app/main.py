@@ -5,6 +5,7 @@ Sert l'API réelle ET l'interface web (PWA, responsive Android/ordinateur).
 from __future__ import annotations
 
 import os
+import re
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -22,6 +23,27 @@ from .core.logging_conf import configure_logging, log_event
 from .runtime import Runtime, build_runtime
 
 WEB_DIR = Path(__file__).resolve().parent / "web"
+
+# Sources CSP acceptables pour l'embarquement de l'interface. Aucun « ; »,
+# retour à la ligne ni caractère de contrôle : impossibilité d'injecter une
+# directive ou un en-tête HTTP via la variable d'environnement.
+_CSP_SOURCE_RE = re.compile(r"^[A-Za-z0-9'\"*.:/_\- ]{1,200}$")
+
+
+def frame_ancestors_for(env: str, raw: str | None = None) -> str:
+    """Origines autorisées à afficher l'UI dans une iframe.
+
+    Chaîne vide = politique historique stricte (``X-Frame-Options: DENY`` et
+    ``frame-ancestors 'none'``). L'assouplissement par ``OMNI_FRAME_ANCESTORS``
+    est réservé aux previews / environnements de développement : il est ignoré
+    en production.
+    """
+    if env == "production":
+        return ""
+    value = (os.getenv("OMNI_FRAME_ANCESTORS", "") if raw is None else raw).strip()
+    if not value or value == "'none'" or not _CSP_SOURCE_RE.fullmatch(value):
+        return ""
+    return value
 
 
 def create_app(runtime: Runtime | None = None, settings: Settings | None = None,
@@ -71,14 +93,22 @@ def create_app(runtime: Runtime | None = None, settings: Settings | None = None,
     @app.middleware("http")
     async def security_headers(request: Request, call_next):
         response = await call_next(request)
+        allowed_frames = frame_ancestors_for(settings.env)
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
-        response.headers.setdefault("X-Frame-Options", "DENY")
+        if allowed_frames:
+            # La directive CSP fait foi ; laisser X-Frame-Options: DENY
+            # annulerait l'autorisation dans les navigateurs historiques.
+            if "X-Frame-Options" in response.headers:
+                del response.headers["X-Frame-Options"]
+        else:
+            response.headers.setdefault("X-Frame-Options", "DENY")
         response.headers.setdefault("Referrer-Policy", "no-referrer")
         response.headers.setdefault(
             "Content-Security-Policy",
             "default-src 'self'; script-src 'self'; style-src 'self'; "
             "img-src 'self' data:; connect-src 'self'; font-src 'self'; "
-            "object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+            "object-src 'none'; base-uri 'self'; frame-ancestors "
+            + (allowed_frames or "'none'"),
         )
         return response
 

@@ -89,3 +89,14 @@ node --test tests/test_web_ui.test.js tests/test_web_ui_dom.test.js
 
 `test-results/` contient les traces de la dernière exécution locale ; la CI
 conserve les siennes en artefact.
+
+## L'aperçu est blanc dans une iframe / connexion 401 après redémarrage
+
+- Par défaut l'interface refuse l'embarquement (`X-Frame-Options: DENY`,
+  `frame-ancestors 'none'`). Lancer `make preview` :
+  `scripts/serve_preview.sh` définit `OMNI_FRAME_ANCESTORS` pour le seul
+  environnement de développement. En production, la variable est ignorée.
+- Après modification de `OMNI_ADMIN_PASSWORD` / `OMNI_USER_PASSWORD`,
+  `Store.init()` réapplique le nouveau hash au démarrage sans supprimer les
+  données. Vérifier `data/preview.env` (ignoré par Git) et utiliser les
+  identifiants de développement `admin` / `change-me-admin`.

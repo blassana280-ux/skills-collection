@@ -316,7 +316,8 @@ def stance_pairs(docs: list[SourceRecord], positive: list[str],
 def length_stats(docs: list[SourceRecord]) -> dict[str, float]:
     lengths = [len(re.findall(r"\w+", doc_text(d))) for d in docs]
     if not lengths:
-        return {"documents": 0, "mean_words": 0.0, "max_words": 0, "min_words": 0}
+        return {"documents": 0, "mean_words": 0.0, "max_words": 0,
+                "min_words": 0, "total_words": 0}
     return {"documents": len(lengths), "mean_words": round(sum(lengths) / len(lengths), 2),
             "max_words": max(lengths), "min_words": min(lengths),
             "total_words": sum(lengths)}

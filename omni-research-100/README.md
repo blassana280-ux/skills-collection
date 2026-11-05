@@ -19,7 +19,7 @@ données non fiables (neutralisation des injections, aucune exécution de code).
 | Élément | État |
 |---|---|
 | Code complet (backend, 100 agents, moteur Internet, cerveau, mémoire, API, UI) | **OPÉRATIONNEL ET TESTÉ** |
-| 100 handlers exécutés individuellement avec sorties distinctes | **OPÉRATIONNEL ET TESTÉ** (79 tests Python + 16 tests Node) |
+| 100 handlers exécutés individuellement avec sorties distinctes | **OPÉRATIONNEL ET TESTÉ** (87 tests Python + 16 tests Node) |
 | Pipeline FAST / DEEP / MAXIMUM de bout en bout | **OPÉRATIONNEL ET TESTÉ** (avec double de test hors ligne déclaré) |
 | Adaptateur OmniBrain v1 (contrat réel inspecté + file JSONL) | **OPÉRATIONNEL ET TESTÉ** |
 | Parseurs des 5 connecteurs (SearXNG, Tavily, Brave, Exa, Firecrawl) | **IMPLÉMENTÉS, PARSING TESTÉ** avec transport HTTP simulé ; `scripts/verify_providers_live.py` permet la vérification live dès qu'une clé/service existe |
@@ -30,8 +30,8 @@ données non fiables (neutralisation des injections, aucune exécution de code).
 | Interface dans un vrai navigateur | **PARTIELLE** : 5 tests statiques + **11 tests DOM jsdom** exécutant le JS réel + 38 contrôles HTTP live ; aucun navigateur Android/desktop dans le sandbox |
 | Dépôt privé `blassana280-ux/omni-research-100` | **CRÉÉ le 2026-11-04** (manuellement) : existence confirmée par contrôle `git ls-remote`/API ; **contenu, 4 PR et CI du dépôt autonome non vérifiables depuis cette session** (403, jeton antérieur à la création). Voir [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) §0 bis |
 | Protection de branche `main` | **BLOQUÉE** (403 + modification de permissions globales soumise à autorisation) |
-| CI GitHub Actions (PR #2, run 41727343863) | **VERTE** : 79 tests Python, 16 tests Node, 100 profils, `pip-audit`, vérification hors ligne |
-| Application réelle en aperçu local | **OPÉRATIONNELLE** : `uvicorn` sur `0.0.0.0:8000`, health/UI/login/agents/providers/mission vérifiés via HTTP (`test-results/live_app_smoke.json`) |
+| CI GitHub Actions (PR #2, run 41727343863) | **VERTE** : 87 tests Python, 16 tests Node, 100 profils, `pip-audit`, vérification hors ligne |
+| Application réelle en aperçu local | **OPÉRATIONNELLE** : `make preview` / `scripts/serve_preview.sh`, `uvicorn` sur `0.0.0.0:8000`, iframe autorisée en développement uniquement, 38/38 contrôles HTTP rejoués le 2026-11-05 (`test-results/live_api_full.json`) |
 | Fusion de Pull Request | **NON EFFECTUÉE** (autorisation explicite requise) |
 
 Le code livré se trouve dans **`blassana280-ux/skills-collection`**, branche

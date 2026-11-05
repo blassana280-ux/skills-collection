@@ -1,3 +1,10 @@
+Vérification HTTP de l'application réelle — rejouée le 2026-11-05
+Base : http://127.0.0.1:8000 (uvicorn 0.0.0.0:8000, preview Arena)
+Statut : OK
+Contrôles : 38
+Contrôles en échec : []
+Échecs déclarés : []
+
 {
   "status": "OK",
   "checks": 38,

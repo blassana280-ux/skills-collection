@@ -1,6 +1,6 @@
 # Résultats de tests — exécutés et conservés
 
-Date : 2026-11-03 (UTC). Environnement : Python 3.11.2, Node v22.22.3,
+Date : 2026-11-03 (UTC) ; suite rejouée le 2026-11-05. Environnement : Python 3.11.2, Node v22.22.3,
 FastAPI 0.115.6, Pydantic 2.10.4, SQLAlchemy 2.0.36, SQLite en mémoire/fichier
 temporaire, `httpx.MockTransport` pour les hôtes HTTP externes.
 
@@ -23,16 +23,16 @@ supplémentaires produisent des rapports JSON conservés).
 
 | Suite | Tests | Échecs | Erreurs | Ignorés |
 |---|---|---|---|---|
-| `pytest` (Python) | **79** | 0 | 0 | 0 |
+| `pytest` (Python) | **87** | 0 | 0 | 0 |
 | `node --test` (interface) | **16** | 0 | 0 | 0 |
 | Vérification hors ligne de bout en bout | 1 pipeline FAST | 0 | — | — |
-| **Total** | **95 tests + 1 pipeline** | **0** | **0** | **0** |
+| **Total** | **103 tests + 1 pipeline** | **0** | **0** | **0** |
 
-Durée pytest : 16,371 s. Durée Node : 58,1 ms.
+Durée pytest : 20,148 s. Durée Node : 1,126 s.
 
 **CI GitHub Actions** : PR #2, run `41727343863` → **SUCCÈS** (1 min 03 s) :
 intégrité des 100 profils, analyse locale des dépendances, `pip-audit`,
-79 tests Python, catalogue régénéré, 16 tests Node, vérification hors ligne,
+87 tests Python, catalogue régénéré, 16 tests Node, vérification hors ligne,
 artefacts conservés. Un premier run (`41727016713`) a échoué sur l'intégrité des
 profils générés car `test-results/agent_results.json` était exclu par la règle
 racine `*_results.json` ; corrigé par une négation dans le `.gitignore` du
@@ -57,6 +57,9 @@ produit (commit `824072f`), puis CI verte.
 | `tests/test_api.py` | 7 | cycle de mission complet via HTTP, auth/RBAC, agents/fournisseurs/réglages/métriques, SSE, erreurs |
 | `tests/test_omnibrain.py` | 8 | contrat, clé, version sur TOUTES les routes, cycle complet, `mode` racine (bug corrigé), file JSONL, absence de droits admin |
 | `tests/test_deployment_and_ssrf.py` | 6 | garde DNS SSRF avec résolveur contrôlé (IPv4 privée/publique, échec DNS, mode hors ligne), cohérence Docker/compose/SearXNG, syntaxe et confirmation des scripts de sauvegarde |
+| `tests/test_frame_ancestors.py` | 4 | politique stricte par défaut, iframe de preview explicitement autorisée, refus d'injection d'en-tête, production jamais assouplie |
+| `tests/test_agents_empty_evidence.py` | 2 | schéma complet de `length_stats([])` et exécution des 100 handlers avec zéro source (bug DEEP-03) |
+| `tests/test_account_rotation.py` | 2 | rotation du mot de passe prise en compte au redémarrage, idempotence, aucune donnée effacée |
 
 Tests de l'interface : `tests/test_web_ui.test.js` (5 tests statiques :
 absence de données fictives, absence de `innerHTML`, vrais endpoints,
@@ -72,7 +75,7 @@ identique à l'API. Aucun navigateur réel n'est encore utilisé.
 
 | Fichier | Contenu |
 |---|---|
-| `junit.xml` | Rapport JUnit des 79 tests |
+| `junit.xml` | Rapport JUnit des 87 tests |
 | `pytest.txt` | Sortie console pytest |
 | `node.txt` | Sortie console Node |
 | `agent_results.json` | État individuel des 100 agents |
@@ -87,18 +90,6 @@ identique à l'API. Aucun navigateur réel n'est encore utilisé.
 | `live_api_full.json` / `.txt` | **38/38 contrôles HTTP réels** sur l'application lancée : auth, settings, metrics, audit, backup, refus de purge, 100 agents, fournisseurs, cycle de mission, **SSE avec événements réels lus**, rapport, contrat/modes/version/queue OmniBrain et cycle complet de soumission |
 
 ## Bugs découverts et corrigés (avant de déclarer la livraison)
-
-9-11. Vérification HTTP live du 2026-11-04 (`scripts/verify_live_api.py`) :
-- `omni_submit` renvoyait 422 quand `mode` était fourni au niveau racine :
-  `str(Mode.FAST)` vaut `"Mode.FAST"` en Python 3.11 → `_mode()` extrait
-  désormais `.value` et accepte un `Mode` déjà typé ;
-- la garde `X-OmniBrain-Contract` n'était appliquée qu'à `POST /missions` :
-  elle est maintenant une dépendance du routeur entier (GET inclus), avec
-  2 tests de non-régression ;
-- le résultat du bouton « Tester réellement » disparaissait au re-rendu de la
-  liste des fournisseurs : le résultat est conservé dans l'état de l'UI et
-  réaffiché après re-rendu (détecté par le test DOM).
-
 
 1. `AgentRegistry.validate()` cherchait les handlers par nom de noyau →
    « handler manquant WEB-01 » : passage à un index par identifiant.
@@ -118,6 +109,30 @@ identique à l'API. Aucun navigateur réel n'est encore utilisé.
    en fin de plan pour garantir les 100 agents mobilisables.
 8. Assertions sur le marqueur de données non fiables et sur le nombre de
    sources d'un test fournisseur borné → alignées sur le comportement réel.
+
+9-11. Vérification HTTP live du 2026-11-04 (`scripts/verify_live_api.py`) :
+- `omni_submit` renvoyait 422 quand `mode` était fourni au niveau racine :
+  `str(Mode.FAST)` vaut `"Mode.FAST"` en Python 3.11 → `_mode()` extrait
+  désormais `.value` et accepte un `Mode` déjà typé ;
+- la garde `X-OmniBrain-Contract` n'était appliquée qu'à `POST /missions` :
+  elle est maintenant une dépendance du routeur entier (GET inclus), avec
+  2 tests de non-régression ;
+- le résultat du bouton « Tester réellement » disparaissait au re-rendu de la
+  liste des fournisseurs : le résultat est conservé dans l'état de l'UI et
+  réaffiché après re-rendu (détecté par le test DOM).
+
+12-14. Reprise du preview du 2026-11-05 (`scripts/serve_preview.sh`) :
+- l'interface renvoyait `X-Frame-Options: DENY` et `frame-ancestors 'none'`,
+  ce qui rendait l'aperçu Arena vide : `OMNI_FRAME_ANCESTORS` permet
+  désormais un assouplissement validé, ignoré en production et en cas de
+  valeur malformée (4 tests) ;
+- sans aucune source — cas normal du preview sans clé de fournisseur —
+  `length_stats([])` omettait `total_words` et faisait lever `KeyError` à
+  DEEP-03 : schéma complété et 100 handlers rejoués sans preuve (2 tests) ;
+- les comptes locaux étaient semés une seule fois en base : modifier
+  `OMNI_ADMIN_PASSWORD` puis redémarrer laissait l'ancien hash actif (401).
+  `Store.init()` réapplique désormais la configuration sans effacer les
+  données (2 tests).
 
 ## Ce que ces tests ne prouvent PAS
 

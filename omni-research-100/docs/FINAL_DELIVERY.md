@@ -67,7 +67,7 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
 
 ## 5. Tests et CI
 
-- 79 tests Python, 16 tests Node, **0 échec** ; `test-results/junit.xml`,
+- 87 tests Python, 16 tests Node, **0 échec** ; `test-results/junit.xml`,
   `pytest.txt`, `node.txt`.
 - 100 handlers : `agent_results.json` (100/100 verts).
 - Pipeline hors ligne : `offline_verification.json` (`NEEDS_WORK`, gate
@@ -77,7 +77,7 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
 - Conformité OmniBrain : `omnibrain_contract_check.json` (6/6).
 - Fournisseurs live : `providers_live.json` (`live_verified: []`).
 - CI : runs verts ✓ (dernier vérifié `41733501383`) (intégrité 100 profils, dépendances, `pip-audit`,
-  79 tests, catalogue, 16 tests Node, pipeline hors ligne, conformance OmniBrain,
+  87 tests, catalogue, 16 tests Node, pipeline hors ligne, conformance OmniBrain,
   état live des fournisseurs, artefacts).
 
 ## 6. Blocages restants (mise à jour du 2026-11-04)
@@ -112,8 +112,14 @@ concurrence **mesurée** et bornée, jamais présentée comme 100 simultanés.
   déploiement payant.
 
 Vérifications rejouées avec succès le 2026-11-04 dans cette session :
-**79 tests Python + 16 tests Node, 0 échec**, pipeline hors ligne, conformité
+**87 tests Python + 16 tests Node, 0 échec**, pipeline hors ligne, conformité
 OmniBrain 6/6 contre les sources réelles, intégrité des 100 profils,
 **38/38 contrôles HTTP sur l'application réellement lancée** (dont SSE),
 CI verte sur la branche de session (runs `41749092607`, `41749617698`,
 `41753670783`). Trois bugs découverts par ces vérifications ont été corrigés.
+
+Reprise du preview du 2026-11-05 : serveur relancé via
+`scripts/serve_preview.sh`, affichage iframe rendu configurable sans affaiblir
+la production, 3 nouveaux bugs corrigés (iframe, `total_words` avec zéro
+source, rotation des mots de passe) et suite portée à **87 pytest + 16 Node**.
+Les 38 contrôles HTTP ont été rejoués avec succès sur ce serveur.

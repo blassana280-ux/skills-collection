@@ -206,7 +206,7 @@
     "mission_terminal": {
       "ok": true,
       "status": "insufficient_evidence",
-      "mission_id": "mission-afcc07caf0ae4c40"
+      "mission_id": "mission-2abe0bee4fd64be4"
     },
     "mission/agents": {
       "ok": true,
@@ -260,10 +260,10 @@
       "ok": true,
       "status": 200,
       "sample": [
-        "data: {\"id\": 37, \"ts\": 1793787383.7919483, \"kind\": \"mission_created\", \"stage\": \"queued\", \"payload\": {\"query\": \"Vérification HTTP complète de l API\", \"mode\": \"fa",
-        "data: {\"id\": 38, \"ts\": 1793787383.801379, \"kind\": \"stage_changed\", \"stage\": \"planning\", \"payload\": {\"status\": \"planning\", \"progress\": 0.05}}",
-        "data: {\"id\": 39, \"ts\": 1793787383.8078065, \"kind\": \"mission_planned\", \"stage\": \"planning\", \"payload\": {\"agents\": 3, \"waves\": 1, \"providers\": [], \"max_parallel\":",
-        "data: {\"id\": 40, \"ts\": 1793787383.811681, \"kind\": \"stage_changed\", \"stage\": \"searching\", \"payload\": {\"status\": \"searching\", \"progress\": 0.18}}"
+        "data: {\"id\": 75, \"ts\": 1793843175.6868541, \"kind\": \"mission_created\", \"stage\": \"queued\", \"payload\": {\"query\": \"Vérification HTTP complète de l API\", \"mode\": \"fa",
+        "data: {\"id\": 76, \"ts\": 1793843175.694893, \"kind\": \"stage_changed\", \"stage\": \"planning\", \"payload\": {\"status\": \"planning\", \"progress\": 0.05}}",
+        "data: {\"id\": 77, \"ts\": 1793843175.7005272, \"kind\": \"mission_planned\", \"stage\": \"planning\", \"payload\": {\"agents\": 3, \"waves\": 1, \"providers\": [], \"max_parallel\":",
+        "data: {\"id\": 78, \"ts\": 1793843175.703867, \"kind\": \"stage_changed\", \"stage\": \"searching\", \"payload\": {\"status\": \"searching\", \"progress\": 0.18}}"
       ]
     },
     "omni_contract": {

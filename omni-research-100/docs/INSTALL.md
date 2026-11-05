@@ -29,6 +29,21 @@ curl -X POST http://localhost:8000/api/auth/login \
 # Interface : http://localhost:8000  — OpenAPI : http://localhost:8000/docs
 ```
 
+## Preview local (développement, affichage dans une iframe)
+
+```bash
+make preview        # équivalent à ./scripts/serve_preview.sh 8000
+```
+
+Le lanceur crée si besoin `data/preview.env` (**ignoré par Git**, mode 600)
+avec des secrets aléatoires et les mots de passe de développement documentés
+(`admin` / `change-me-admin`, `researcher` / `change-me-user`), puis démarre
+`uvicorn` sur `0.0.0.0:8000` avec une base SQLite dédiée. Il définit
+`OMNI_FRAME_ANCESTORS` pour autoriser l'iframe du preview ; en production
+cette variable est ignorée (voir `SECURITY.md`). Au redémarrage,
+`Store.init()` réapplique un mot de passe changé dans l'environnement sans
+effacer les données.
+
 ## Installation avec Docker (stack complète)
 
 ```bash
@@ -50,7 +65,7 @@ docker run --rm -p 8000:8000 --env-file .env \
 ## Tests et vérification
 
 ```bash
-.venv/bin/python -m pytest -q                       # 79 tests
+.venv/bin/python -m pytest -q                       # 87 tests
 node --test tests/test_web_ui.test.js tests/test_web_ui_dom.test.js  # 16 tests
 .venv/bin/python scripts/verify_offline.py        # bout en bout hors ligne
 .venv/bin/python scripts/gen_profiles.py --check  # intégrité des 100 profils

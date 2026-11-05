@@ -43,6 +43,13 @@
 - UI : création de nœuds via `textContent`/`createElement`, **aucun
   `innerHTML`** (test Node dédié). En-têtes CSP, `X-Content-Type-Options`,
   `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`.
+- **Anti-clicjacking** : `X-Frame-Options: DENY` et `frame-ancestors 'none'`
+  par défaut. `OMNI_FRAME_ANCESTORS` (liste de sources CSP sans `;` ni
+  caractère de contrôle, 200 caractères maximum) autorise uniquement
+  l'embarquement demandé par un preview ; la variable est **ignorée quand
+  `OMNI_ENV=production`** et toute valeur malformée rétablit la politique
+  stricte. Comportement couvert par 4 tests, dont un refus d'injection
+  d'en-tête.
 
 ## 4. SSRF et réseau
 

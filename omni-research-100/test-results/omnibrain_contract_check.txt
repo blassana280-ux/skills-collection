@@ -1,6 +1,6 @@
-{"ts": 1793787414.208, "level": "INFO", "component": "app", "event": "started", "mission_id": "", "env": "test", "database": "sqlite", "agents": 100}
+{"ts": 1793843213.686, "level": "INFO", "component": "app", "event": "started", "mission_id": "", "env": "test", "database": "sqlite", "agents": 100}
 HTTP Request: GET http://testserver/api/omnibrain/v1/contract "HTTP/1.1 200 OK"
-{"ts": 1793787414.238, "level": "INFO", "component": "app", "event": "stopped", "mission_id": ""}
+{"ts": 1793843213.726, "level": "INFO", "component": "app", "event": "stopped", "mission_id": ""}
 {
   "status": "COMPATIBILITÉ VÉRIFIÉE CONTRE LES SOURCES RÉELLES",
   "checks": {

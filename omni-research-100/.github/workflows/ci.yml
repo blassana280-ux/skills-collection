@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   quality:
-    name: Tests Python (79) + interface (16) + intégrité des 100 agents
+    name: Tests Python (87) + interface (16) + intégrité des 100 agents
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

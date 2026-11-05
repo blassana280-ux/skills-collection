@@ -5,6 +5,30 @@ Branche de session :
 `arena/63999462-skills-collection` du dépôt
 `blassana280-ux/skills-collection`. Code produit dans `omni-research-100/`.
 
+## 0 quater. Reprise du preview du 2026-11-05 (session Arena)
+
+- **Inspection d'abord** : le processus `uvicorn` (PID 5758) tournait déjà sur
+  `0.0.0.0:8000`, `health ok`, 100 agents. Blocage réel identifié : la page
+  renvoyait `X-Frame-Options: DENY` et `frame-ancestors 'none'`, donc l'aperçu
+  Arena ne pouvait pas l'afficher.
+- **Réparation** : `OMNI_FRAME_ANCESTORS` rend l'embarquement configurable,
+  strict par défaut, refusant toute valeur malformée et **ignoré en
+  production**. Nouveau lanceur `scripts/serve_preview.sh` (+ cible
+  `make preview`) et configuration locale `data/preview.env` ignorée par Git.
+  Aucun secret réel publié : mots de passe de développement documentés dans
+  `.env.example`.
+- **3 bugs découverts et corrigés** : iframe bloquée ; `length_stats([])`
+  omettait `total_words` (DEEP-03 en `KeyError` avec 0 source) ; rotation de
+  mot de passe sans effet au redémarrage (401). 8 tests de non-régression.
+- **Vérifications rejouées** : **87 pytest + 16 Node = 103 tests, 0 échec**,
+  pipeline hors ligne, conformité OmniBrain 6/6, audit des dépendances,
+  catalogue 100/100, **38/38 contrôles HTTP** sur l'application relancée
+  (login, SSE réel, cycle OmniBrain complet), aucun `agent_failed` dans les
+  nouveaux journaux. Processus de preview : `omni-research-100-a975a204`.
+- Aucune fusion, aucune modification de `main`, aucune suppression, aucun
+  secret publié, aucune dépense. Le dépôt privé cible reste inaccessible
+  (403) au jeton de cette session : inchangé.
+
 ## 0. Livraison du 2026-11-04 — dépôt privé dédié LIVRÉ
 
 > Les affirmations de cette section proviennent de l'agent de reprise (Mistral).
@@ -51,7 +75,7 @@ Contrôle demandé après l'intervention de Mistral. Rapport complet :
 | Commits de l'agent de reprise | `c4bd3d5`, `b3be423` — **1 seul fichier modifié** : `docs/PROJECT_STATUS.md`. Aucun code produit altéré |
 | CI de la branche de session | **Verte** : runs `41749092607`, `41749617698`, `41753670783` |
 | PR #2 | **OPEN, non fusionnée** ; aucune fusion effectuée |
-| Suite de tests rejouée ici | **79 pytest + 16 Node, 0 échec** ; `verify_offline.py`, `verify_omnibrain_contract.py` (6/6) et `gen_profiles.py --check` tous verts |
+| Suite de tests rejouée ici | **87 pytest + 16 Node, 0 échec** ; `verify_offline.py`, `verify_omnibrain_contract.py` (6/6) et `gen_profiles.py --check` tous verts |
 | Intégrité de la source locale | 124 fichiers suivis, 13 modules `app/brain`, 3 scripts `.sh` exécutables — conforme à ce qui a dû être répliqué |
 | **Non vérifiable ici** | 124 fichiers répliqués, SHA d'arbres, 4 branches `feat/01..04`, 4 PR #1–#4, CI du dépôt autonome, corrections des modules/permissions, absence de code sur `main` |
 
@@ -89,7 +113,7 @@ n'est demandée ; aucune opération sensible n'a été effectuée.
   (`str(Mode.FAST)` → `"Mode.FAST"`) ; la garde de version OmniBrain ne
   couvrait que `POST /missions` ; le résultat du bouton « Tester réellement »
   disparaissait au re-rendu. Tests de non-régression ajoutés.
-- Suite portée à **79 tests Python + 16 tests Node, 0 échec**.
+- Suite portée à **87 tests Python + 16 tests Node, 0 échec**.
 
 ## 1. Terminé et vérifié
 
@@ -107,7 +131,7 @@ n'est demandée ; aucune opération sensible n'a été effectuée.
   réglages, métriques, sauvegarde, rétention, adaptateur OmniBrain v1.
 - **UI** : responsive/PWA, 7 vues réelles, SSE authentifié + polling de repli,
   aucune donnée fictive, aucun `innerHTML`.
-- **Tests** : 79 Python + 16 Node + 1 pipeline hors ligne, **0 échec**,
+- **Tests** : 87 Python + 16 Node + 1 pipeline hors ligne, **0 échec**,
   résultats dans `test-results/` ; 8 bugs découverts et corrigés
   (`docs/TEST_RESULTS.md`).
 - **CI / Docker / docs** : 2 workflows — **CI verte** sur la PR #2 (run `41727343863`, 1 min 03 s) après correction d'un fichier de résultats exclu par le `.gitignore` racine ; Dockerfile, docker-compose 5 services,

@@ -79,7 +79,7 @@ Exemple Nginx : `proxy_pass http://127.0.0.1:8000;`,
 `.github/workflows/omni-research-100-ci.yml` (dépôt conteneur) et
 `.github/workflows/ci.yml` (dépôt autonome) exécutent : installation des
 dépendances épinglées, intégrité des 100 profils générés, analyse des
-dépendances + `pip-audit`, 79 tests Python (JUnit), 100 handlers, 16 tests
+dépendances + `pip-audit`, 87 tests Python (JUnit), 100 handlers, 16 tests
 Node, vérification hors ligne de bout en bout, puis conservation des
 résultats en artefact. Voir `TEST_RESULTS.md`.
 

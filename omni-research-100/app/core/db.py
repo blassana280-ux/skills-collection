@@ -20,7 +20,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from .security import hash_password
+from .security import hash_password, verify_password
 
 Base = declarative_base()
 
@@ -247,9 +247,17 @@ class Store:
                 ("admin", self._admin_password, "admin"),
                 ("researcher", self._user_password, "researcher"),
             ):
-                if s.get(UserRow, username) is None:
+                row = s.get(UserRow, username)
+                if row is None:
                     s.add(UserRow(username=username,
                                   password_hash=hash_password(password), role=role))
+                else:
+                    # Une rotation de mot de passe dans l'environnement doit
+                    # prendre effet au redémarrage, sans effacer les données
+                    # ni réécrire inutilement un hash déjà conforme.
+                    if not verify_password(password, row.password_hash):
+                        row.password_hash = hash_password(password)
+                    row.role = role
             s.commit()
 
     @contextmanager
