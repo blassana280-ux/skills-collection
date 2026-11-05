@@ -95,3 +95,37 @@ class TestMemory(SupremeTestCase):
 if __name__ == "__main__":
     import unittest
     unittest.main()
+
+
+class TestTfidfSearch(SupremeTestCase):
+    """Recherche contextuelle TF-IDF locale réelle (Phase F, sans fournisseur)."""
+
+    def test_tfidf_rank_relevance(self):
+        from supreme.memory import tfidf_rank
+        docs = ["le chat dort paisiblement", "le chien aboie fort", "chat et chien jouent ensemble"]
+        scores = tfidf_rank("chat chien", docs)
+        self.assertEqual(len(scores), 3)
+        # le document contenant les deux termes doit avoir le meilleur score
+        self.assertEqual(scores.index(max(scores)), 2)
+        self.assertTrue(all(0.0 <= s <= 1.0 for s in scores))
+
+    def test_tfidf_empty_query(self):
+        from supreme.memory import tfidf_rank
+        self.assertEqual(tfidf_rank("", ["a", "b"]), [0.0, 0.0])
+
+    def test_search_tfidf_mode(self):
+        mem = self.core.memory
+        mem.add("omnibrain-core", "collective", "collective", "semantic",
+                "La latence réseau dépasse le budget alloué", source="t1", confidence=0.8)
+        mem.add("omnibrain-core", "collective", "collective", "semantic",
+                "Recette de cuisine traditionnelle", source="t2", confidence=0.8)
+        mem.add("omnibrain-core", "collective", "collective", "semantic",
+                "Latence et performance du réseau à optimiser", source="t3", confidence=0.8)
+        res = mem.search("omnibrain-core", query="latence réseau", mode="tfidf")
+        self.assertEqual(res["mode"], "tfidf")
+        self.assertTrue(res["tfidf_available"])
+        self.assertGreaterEqual(len(res["results"]), 2)
+        # les résultats pertinents (latence/réseau) doivent précéder la recette
+        contents = [r["content"] for r in res["results"]]
+        self.assertIn("latence", contents[0].lower())
+        self.assertTrue(all("_tfidf" in r for r in res["results"]))

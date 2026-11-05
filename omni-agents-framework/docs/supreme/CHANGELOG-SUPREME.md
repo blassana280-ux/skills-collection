@@ -17,8 +17,12 @@
 - **Dashboard mobile** : onglets Coûts + Sécurité, fournisseurs enrichis (configuré ≠ opérationnel),
   contrôle des missions (relancer/annuler). API `/api/providers`, `/api/alerts`, `/api/security`.
 - Documentation `PROVIDERS.md` (connexion sécurisée sans exposer de secret).
+- **Mémoire (Phase F)** : recherche contextuelle **TF-IDF cosinus locale réelle** (`mode='tfidf'`),
+  sans fournisseur — rappel large par tokens + re-ranking cosinus. Embeddings neuronaux toujours
+  signalés indisponibles sans fournisseur (honnête).
+- Documentation `ECOSYSTEM.md` (organisation dépôts/PR #5 vs #2, infrastructure hybride honnête).
 ### Tests
-- +23 fournisseurs, +15 audit sécurité, +12 API observabilité → **294 tests verts** (105 V4 + 189 SUPREME).
+- +23 fournisseurs, +15 audit sécurité, +12 API observabilité, +3 TF-IDF → **297 tests verts** (105 V4 + 192 SUPREME).
 ### Honnêteté
 - **0 fournisseur IA réel connecté** à ce stade (aucune clé, egress sandbox limité). Les tests
   fournisseurs utilisent un **stub HTTP local** (local réel, PAS un fournisseur IA réel).
@@ -47,7 +51,7 @@
 - API Gateway (auth par jeton, rôles) + tableau de bord mobile (données réelles).
 - Reporting Engine (missions, divisions, global, markdown).
 - 41 outils déterministes réels + Skill Registry (860 skills documentaires indexés).
-- **189 tests SUPREME** (+ 105 V4 = 294 verts). CI dédiée Python 3.11/3.12/3.13.
+- **192 tests SUPREME** (+ 105 V4 = 297 verts). CI dédiée Python 3.11/3.12/3.13.
 - Documentation complète + suivi durable (CONTINUITY.md).
 
 ### Réutilisé (V4, non réécrit)
@@ -76,5 +80,5 @@
   statut, IP ; `?token=…` → `REDACTED` ; ni jeton, ni en-têtes, ni corps journalisés.
 - Permissions `0600` renforcées à chaque chargement du jeton.
 - 13 tests de sécurité API ajoutés (journal expurgé, rotation, révocation, permissions, non-affichage)
-  → **189 tests SUPREME / 294 total**.
+  → **192 tests SUPREME / 297 total**.
 - Procédure de rotation/révocation documentée dans `SECURITY.md`.

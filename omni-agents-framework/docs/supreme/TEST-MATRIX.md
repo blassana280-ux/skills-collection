@@ -1,7 +1,7 @@
 # Matrice des tests OMNIBRAIN SUPREME
 
-Suite : `python3 -m unittest discover -s tests` → **294 tests** (105 V4 + 189 SUPREME), tous verts.
-Suite SUPREME seule : `python3 -m unittest discover -s tests -p "test_supreme_*.py"` → **189 tests**.
+Suite : `python3 -m unittest discover -s tests` → **297 tests** (105 V4 + 192 SUPREME), tous verts.
+Suite SUPREME seule : `python3 -m unittest discover -s tests -p "test_supreme_*.py"` → **192 tests**.
 CI : `.github/workflows/omnibrain-supreme.yml` (Python 3.11/3.12/3.13).
 
 | Fichier | Couverture | Tests |
@@ -12,7 +12,7 @@ CI : `.github/workflows/omnibrain-supreme.yml` (Python 3.11/3.12/3.13).
 | `test_supreme_factory.py` | création, doublons, incomplétude, update/rollback, suppression contrôlée | 6 |
 | `test_supreme_policy.py` | niveaux de risque, actions protégées, approbations, RBAC | 6 |
 | `test_supreme_bus.py` | anti-usurpation, ACL, dédup, ack, file morte, injection | 7 |
-| `test_supreme_memory.py` | 4 niveaux, ACL, FTS, versionnement, TTL, graphe, contradictions, rédaction, non-fiable, suppression | 13 |
+| `test_supreme_memory.py` | 4 niveaux, ACL, FTS, versionnement, TTL, graphe, contradictions, rédaction, non-fiable, suppression, **recherche contextuelle TF-IDF locale** | 16 |
 | `test_supreme_router.py` | détection réelle, indisponibilité honnête, fixtures, confidentialité **+ conseil** (preuves ≠ majorité, budget) | 8 |
 | `test_supreme_budget.py` | quotas, coupure, alertes, multi-scopes, coût nul local | 6 |
 | `test_supreme_planner.py` | classification, DAG valide, tâches explicites, permissions, cycles | 6 |

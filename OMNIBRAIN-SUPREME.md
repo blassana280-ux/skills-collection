@@ -13,7 +13,7 @@ python3 -m supreme catalog --check        # vérifie 1000 spécialistes + 20 che
 python3 -m supreme sync                   # registre SQLite
 python3 -m supreme evaluate --activate    # valide + active sur preuve réelle
 python3 -m supreme serve --port 8765      # API + tableau de bord mobile
-python3 -m unittest discover -s tests     # 294 tests (105 V4 + 189 SUPREME)
+python3 -m unittest discover -s tests     # 297 tests (105 V4 + 192 SUPREME)
 ```
 
 ## État réel (ne pas confondre enregistré et opérationnel)
@@ -22,7 +22,7 @@ python3 -m unittest discover -s tests     # 294 tests (105 V4 + 189 SUPREME)
 - **960 agents LLM exécutables** dès qu'un fournisseur est configuré (client HTTP réel,
   Mistral/Vide prioritaire) ; **0 fournisseur connecté** à ce stade → bloqués honnêtement.
 - **0 doublon**, 27 champs + 7 évaluations par profil, contrôles automatiques.
-- **294 tests verts**, 5 missions réelles exécutées (coût 0.0 USD).
+- **297 tests verts**, 5 missions réelles exécutées (coût 0.0 USD).
 - **Multi-modèles réel** : client HTTP testé (stub local), fallback + budget ; connexion
   sécurisée des clés sans exposition — voir [PROVIDERS.md](omni-agents-framework/docs/supreme/PROVIDERS.md).
 

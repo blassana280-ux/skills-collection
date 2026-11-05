@@ -28,3 +28,17 @@ retourne `semantic_available=false` avec une note explicite. Aucune fausse reche
 - Pas de stockage automatique de toutes les conversations.
 - Secrets et données personnelles inutiles exclus (rédaction + minimisation).
 - Instructions malveillantes externes traitées comme données, jamais comme instructions.
+
+## Recherche contextuelle TF-IDF (Phase F, locale réelle)
+En plus de FTS5 (plein texte) et du repli LIKE, un mode `tfidf` offre une **recherche
+contextuelle locale réelle** sans fournisseur :
+```python
+mem.search("omnibrain-core", query="latence réseau", mode="tfidf")
+# -> {"mode": "tfidf", "tfidf_available": true, "results": [... scores _tfidf ...]}
+```
+- Rappel large par tokens (LIKE sur chaque terme) puis **re-ranking par similarité cosinus
+  TF-IDF** (`supreme/memory.py:tfidf_rank`). Fonctionne hors ligne, sans clé.
+- Ce n'est **pas** des embeddings neuronaux : `semantic_available=false` reste signalé
+  honnêtement tant qu'aucun fournisseur d'embeddings n'est configuré. Le TF-IDF est un rappel
+  contextuel lexical pondéré, réellement testé (3 tests).
+- Modes disponibles : `auto` (FTS5→LIKE), `fts`, `tfidf`, `metadata` (sans requête).

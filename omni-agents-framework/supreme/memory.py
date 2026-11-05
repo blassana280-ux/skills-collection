@@ -10,8 +10,11 @@ réellement disponible — signalé honnêtement.
 from __future__ import annotations
 
 import json
+import math
+import re
 import sqlite3
 import uuid
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 from .db import log_event, now, transaction
@@ -19,6 +22,41 @@ from .security import redact, scan_injection, wrap_untrusted
 
 LEVELS = ("central", "individual", "division", "collective")
 KINDS = ("working", "episodic", "semantic", "procedural", "historical", "decision", "error", "skill")
+
+_TOKEN_RE = re.compile(r"[a-z0-9àâäéèêëïîôöùûüç]+", re.IGNORECASE)
+
+
+def _tokenize(text: str) -> list[str]:
+    return [t.lower() for t in _TOKEN_RE.findall(text or "") if len(t) > 1]
+
+
+def tfidf_rank(query: str, documents: list[str]) -> list[float]:
+    """Similarité cosinus TF-IDF locale (sans fournisseur). Vraie recherche contextuelle.
+
+    Renvoie un score [0,1] par document. Fonctionne hors ligne ; ne remplace pas des
+    embeddings neuronaux mais offre un rappel contextuel réel au-delà du simple LIKE.
+    """
+    q_tokens = _tokenize(query)
+    if not q_tokens or not documents:
+        return [0.0] * len(documents)
+    doc_tokens = [_tokenize(d) for d in documents]
+    n = len(documents)
+    df = Counter()
+    for toks in doc_tokens:
+        for t in set(toks):
+            df[t] += 1
+    idf = {t: math.log((n + 1) / (df[t] + 1)) + 1 for t in df}
+    q_tf = Counter(q_tokens)
+    q_vec = {t: q_tf[t] * idf.get(t, 0.0) for t in q_tf}
+    q_norm = math.sqrt(sum(v * v for v in q_vec.values())) or 1.0
+    scores = []
+    for toks in doc_tokens:
+        tf = Counter(toks)
+        d_vec = {t: tf[t] * idf.get(t, 0.0) for t in tf}
+        d_norm = math.sqrt(sum(v * v for v in d_vec.values())) or 1.0
+        dot = sum(q_vec.get(t, 0.0) * d_vec.get(t, 0.0) for t in q_vec)
+        scores.append(max(0.0, min(1.0, dot / (q_norm * d_norm))))
+    return scores
 
 
 class MemoryEngine:
@@ -136,7 +174,27 @@ class MemoryEngine:
                kind: str | None = None, limit: int = 20, mode: str = "auto") -> dict:
         fts_available = self.conn.execute("SELECT value FROM schema_meta WHERE key='fts5'").fetchone()["value"] == "1"
         results: list[dict] = []
-        if query and fts_available and mode in ("auto", "fts"):
+        used = "metadata"
+        if query and mode == "tfidf":
+            # Recherche contextuelle locale réelle : rappel large par tokens + cosinus TF-IDF.
+            tokens = _tokenize(query)
+            seen, candidates = set(), []
+            for tok in tokens or [query]:
+                rows = self.conn.execute(
+                    "SELECT * FROM memory_items WHERE deleted=0 AND content LIKE ? LIMIT ?",
+                    (f"%{tok}%", limit * 6)).fetchall()
+                for r in rows:
+                    if r["id"] not in seen:
+                        seen.add(r["id"])
+                        candidates.append(dict(r))
+            if candidates:
+                scores = tfidf_rank(query, [c["content"] for c in candidates])
+                for c, s in zip(candidates, scores):
+                    c["_tfidf"] = round(s, 4)
+                candidates.sort(key=lambda c: c["_tfidf"], reverse=True)
+                results = candidates
+            used = "tfidf"
+        elif query and fts_available and mode in ("auto", "fts"):
             try:
                 rows = self.conn.execute(
                     """SELECT m.* FROM memory_fts f JOIN memory_items m ON m.rowid=f.rowid
@@ -175,7 +233,9 @@ class MemoryEngine:
             if len(filtered) >= limit:
                 break
         return {"results": filtered, "mode": used, "semantic_available": False,
-                "semantic_note": "recherche sémantique par embeddings indisponible sans fournisseur configuré"}
+                "tfidf_available": True,
+                "semantic_note": "recherche contextuelle TF-IDF locale disponible (mode='tfidf') ; "
+                                 "embeddings neuronaux indisponibles sans fournisseur configuré"}
 
     # -------------------------------------------------------- knowledge graph
     def relate(self, actor: str, src: str, dst: str, relation: str) -> None:
