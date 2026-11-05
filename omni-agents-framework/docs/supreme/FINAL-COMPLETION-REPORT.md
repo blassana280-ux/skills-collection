@@ -198,6 +198,24 @@ sandbox ; l'egress réseau est restreint aux hôtes de développement, et une
 tentative TLS vers Mistral en 1.3.0 s'est terminée avant toute réponse HTTP —
 ce qui n'est **pas** une preuve d'authentification.
 
+**Blocage egress mesuré et prouvé (nouveau)** : depuis ce sandbox, `api.mistral.ai`,
+`api.openai.com` et `console.mistral.ai` sont **injoignables** — le DNS résout mais
+la connexion TLS est fermée avant tout échange HTTP (`EOF`), tandis que
+`api.github.com` répond **HTTP 200** avec la même méthode. Il s'agit d'un **blocage
+réseau, pas d'un échec d'authentification**. Conséquence : enregistrer une clé ici
+ne permettrait aucune vérification réelle. L'enrôlement doit avoir lieu sur la
+machine qui hébergera réellement SUPREME. Preuves :
+`validation/mistral-egress-test.json`, `validation/egress-control-test.json`.
+
+**Kit d'enrôlement livré** : `ops/enroll-mistral.sh` (refus sans terminal privé,
+emplacement hors dépôt vérifié, **test de joignabilité réel avant toute saisie**,
+saisie masquée deux fois, audit `0600`/`0700`, `--verify` puis découverte des
+modèles, **aucune inférence**), `ops/budget-plan.py` (budget par palier, refuse tout
+prix par défaut) et **`docs/supreme/MISTRAL-ENROLLMENT.md`** (procédure Android /
+Termux, `MISTRAL_API_KEY_FILE`, gestionnaires de secrets). Le mécanisme de saisie
+masquée a été **testé en pseudo-terminal réel** avec une clé factice : aucune fuite
+dans la sortie, fichier `0600`, répertoire `0700`, puis suppression.
+
 **Correctif majeur de cette phase** : la découverte ne lisait que `context_window`,
 si bien qu'OpenAI, DeepSeek, Groq, OpenRouter et Anthropic produisaient des modèles
 à contexte `0`, donc **non routables**. Le parseur accepte désormais
@@ -317,20 +335,20 @@ journalisées dans `events` (`validation/guardian-rebaseline-140.json`). Le cons
 
 ## 8. Tests et CI
 
-**443 tests découverts = 105 V4/non-SUPREME + 338 SUPREME.**
-Dernière exécution complète : **`Ran 443 tests in 160.552s` → `OK (skipped=1)`**.
+**451 tests découverts = 105 V4/non-SUPREME + 346 SUPREME.**
+Dernière exécution complète : **`Ran 451 tests in 163.429s` → `OK (skipped=1)`**.
 Le test ignoré est le test fournisseur réel opt-in, faute de clé.
 
-Nouveaux tests de cette phase : **63** dans `tests/test_supreme_final_140.py`
+Nouveaux tests de cette phase : **71** dans `tests/test_supreme_final_140.py`
 (Guardian, concurrence de bail, non-mutation des permissions, re-baseline tracée,
 paliers, preuve post-quarantaine, reprise propriétaire vivant/mort,
 re-spécification, réconciliation avec remplacement, contexte attesté, parsing
 `context_length`, arbitrage mémoire + ACL, corps API 413/400, validation
 numérique, contrat JSON opt-in, sauvegardes privées + vérification + rétention,
 endpoints d'exploitation, ordre de rétention déterministe, scripts ops/systemd)
-plus **2** de cohérence documentaire supplémentaires, soit **65 nouveaux tests**.
+plus **2** de cohérence documentaire supplémentaires, soit **73 nouveaux tests**.
 
-Catégories strictement séparées : **442 tests locaux réels exécutés verts**
+Catégories strictement séparées : **450 tests locaux réels exécutés verts**
 (SQLite, subprocess, signaux POSIX, HTTP vers stub `127.0.0.1`) · **0 test
 fournisseur IA réel** · **0 test cloud réel**. Un stub local n'est jamais compté
 comme preuve d'exécution externe.
@@ -389,8 +407,11 @@ Procédures complètes : **`docs/supreme/RUNBOOK.md`**.
 
 ### Bloquants réels (la mission ne peut pas être déclarée terminée)
 
-1. **Identifiant fournisseur absent.** Aucune clé Mistral/OpenAI/… dans
-   l'environnement. Action humaine, **sans jamais communiquer la clé ici** :
+1. **Identifiant fournisseur absent et egress bloqué.** Aucune clé Mistral/OpenAI/…
+   dans l'environnement, et `api.mistral.ai` est injoignable depuis le sandbox
+   (blocage TLS prouvé, §5). L'enrôlement doit se faire sur la machine d'exécution
+   réelle — voir **`MISTRAL-ENROLLMENT.md`** pour la procédure Android/Termux.
+   Action humaine, **sans jamais communiquer la clé ici** :
    ```bash
    python3 -m supreme providers --connect mistral      # saisie masquée, terminal privé
    ```
@@ -489,7 +510,7 @@ env.example), `docs/supreme/RUNBOOK.md`, ce rapport.
 
 ## 13. Conclusion
 
-SUPREME 1.4.0 est **implémenté, testé localement (443 tests), migré en v4 et
+SUPREME 1.4.0 est **implémenté, testé localement (451 tests), migré en v4 et
 exploitable localement** : 1 020 profils cohérents, 20 divisions, 60 agents à
 preuve locale réelle, 13 missions réelles réussies sur 9 divisions, mémoire et
 apprentissage mesurés, protection continue active, sauvegardes privées vérifiées,

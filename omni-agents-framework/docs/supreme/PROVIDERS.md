@@ -162,3 +162,11 @@ python3 -m supreme guardian --resolve FND_ID --resolution 'revue documentée' \
 ```
 Le Guardian détecte et alerte ; il ne modifie jamais les permissions, les secrets ni le noyau.
 Le contrôle des permissions GitHub est opt-in (`--allow-github`) car il lit l'API GitHub.
+
+
+## Enrôlement sécurisé d'une clé (1.4.0)
+Voir **`MISTRAL-ENROLLMENT.md`** : procédure Android/Termux, `MISTRAL_API_KEY_FILE`,
+gestionnaires de secrets, et l'interface d'administration (non construite, sur accord).
+Kit guidé : `./ops/enroll-mistral.sh` (refus sans TTY, test de joignabilité réel avant
+saisie, audit des permissions, `--verify` puis découverte, **aucune inférence**).
+Budget par palier sans tarif inventé : `python3 ops/budget-plan.py`.

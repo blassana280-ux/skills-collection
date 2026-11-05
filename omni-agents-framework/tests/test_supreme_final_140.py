@@ -775,3 +775,86 @@ class TestOperationsScripts(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestProviderEnrollmentKit(unittest.TestCase):
+    """Kit d'enrôlement fournisseur : garde-fous réels, aucun secret, aucun réseau payant."""
+
+    ROOT = Path(__file__).resolve().parent.parent
+
+    def test_enroll_script_is_valid_executable_and_never_traces(self):
+        script = self.ROOT / "ops" / "enroll-mistral.sh"
+        self.assertTrue(script.is_file())
+        self.assertTrue(os.access(script, os.X_OK))
+        subprocess.run(["bash", "-n", str(script)], check=True)
+        text = script.read_text()
+        # Ne vérifier que les lignes exécutées, pas les commentaires d'avertissement.
+        active = [ln.strip() for ln in text.splitlines()
+                  if ln.strip() and not ln.strip().startswith("#")]
+        self.assertFalse([ln for ln in active if ln.startswith("set -x") or " -x " in ln.split("#")[0]],
+                         "ne jamais tracer les commandes : risque de fuite de secret")
+        self.assertIn("! -t 0", text, "refus sans terminal privé obligatoire")
+        self.assertIn("--verify", text)
+        self.assertNotIn("AUTORISER INFERENCE'\n", text.replace('\\"', ''),
+                         "le script ne doit pas exécuter l'autorisation d'inférence")
+
+    def test_enroll_refuses_without_tty(self):
+        proc = subprocess.run(["bash", str(self.ROOT / "ops" / "enroll-mistral.sh")],
+                              stdin=subprocess.DEVNULL, capture_output=True, text=True,
+                              cwd=self.ROOT, timeout=120)
+        self.assertEqual(proc.returncode, 3, proc.stdout + proc.stderr)
+        self.assertIn("terminal", (proc.stdout + proc.stderr).lower())
+
+    def test_enroll_never_passes_key_as_argument(self):
+        text = (self.ROOT / "ops" / "enroll-mistral.sh").read_text()
+        self.assertIn('providers --connect "$PROVIDER"', text)
+        for forbidden in ("--api-key", "--key ", "MISTRAL_API_KEY=", "echo $", "read -r KEY"):
+            self.assertNotIn(forbidden, text, forbidden)
+
+    def test_budget_plan_invents_no_price(self):
+        proc = subprocess.run([os.sys.executable, str(self.ROOT / "ops" / "budget-plan.py")],
+                              capture_output=True, text=True, cwd=self.ROOT, timeout=120)
+        self.assertEqual(proc.returncode, 2)
+        payload = json.loads(proc.stdout)
+        self.assertIn("error", payload)
+        self.assertIn("n'invente aucun tarif", payload["note"])
+
+    def test_budget_plan_arithmetic_and_milestones(self):
+        proc = subprocess.run([os.sys.executable, str(self.ROOT / "ops" / "budget-plan.py"),
+                               "--input-per-million", "1.0", "--output-per-million", "2.0",
+                               "--input-tokens", "1000", "--output-tokens", "500"],
+                              capture_output=True, text=True, cwd=self.ROOT, timeout=120)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        payload = json.loads(proc.stdout)
+        # 1000/1M * 1.0 + 500/1M * 2.0 = 0.001 + 0.001 = 0.002 USD
+        self.assertAlmostEqual(payload["cout_estime_par_agent_usd"], 0.002, places=8)
+        self.assertEqual([t["palier_cumulatif"] for t in payload["paliers"]], A.MILESTONES)
+        self.assertEqual(payload["paliers"][0]["nouveaux_agents"], 5)
+        self.assertAlmostEqual(payload["cout_total_960_usd"], 1.92, places=6)
+        self.assertGreater(payload["paliers"][0]["budget_conseille_usd"],
+                           payload["paliers"][0]["cout_estime_usd"])
+
+    def test_budget_plan_rejects_non_finite_prices(self):
+        proc = subprocess.run([os.sys.executable, str(self.ROOT / "ops" / "budget-plan.py"),
+                               "--input-per-million", "nan", "--output-per-million", "1"],
+                              capture_output=True, text=True, cwd=self.ROOT, timeout=120)
+        self.assertEqual(proc.returncode, 2)
+
+    def test_masked_entry_refuses_non_tty_and_leaks_nothing(self):
+        import io
+
+        from supreme import credentials as C
+        fake = "TEST-LOCAL-FAKE-NOT-A-CREDENTIAL"
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.object(C, "VAR_DIR", Path(tmp)):
+                with self.assertRaises(C.CredentialError):
+                    C.store_interactive("mistral", input_stream=io.StringIO(fake))
+                self.assertFalse(C.secret_path("mistral").exists())
+
+    def test_enrollment_doc_states_real_blockers(self):
+        text = (self.ROOT / "docs" / "supreme" / "MISTRAL-ENROLLMENT.md").read_text()
+        self.assertIn("api.mistral.ai", text)
+        self.assertIn("MISTRAL_API_KEY_FILE", text)
+        self.assertIn("Termux", text)
+        self.assertIn("NON", text)
+        self.assertNotIn("clé enregistrée avec succès", text)

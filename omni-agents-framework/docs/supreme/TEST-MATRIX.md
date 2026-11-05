@@ -1,13 +1,13 @@
 # Matrice des tests OMNIBRAIN SUPREME 1.4.0
 
 Racine dépôt : `skills-collection/`. Framework : `skills-collection/omni-agents-framework/`.
-Dernière exécution réelle locale : **443 tests découverts** = **105 V4/non-SUPREME + 338 SUPREME**.
-Résultat : **442 tests locaux exécutés verts + 1 test fournisseur réel opt-in ignoré** (`OK (skipped=1)`).
+Dernière exécution réelle locale : **451 tests découverts** = **105 V4/non-SUPREME + 346 SUPREME**.
+Résultat : **450 tests locaux exécutés verts + 1 test fournisseur réel opt-in ignoré** (`OK (skipped=1)`).
 
 Commandes exécutées depuis `skills-collection/omni-agents-framework/` :
 ```bash
-python3 -m unittest discover -s tests                              # 443 découverts, OK (skipped=1)
-python3 -m unittest discover -s tests -p "test_supreme_*.py"       # 338 découverts, OK (skipped=1)
+python3 -m unittest discover -s tests                              # 451 découverts, OK (skipped=1)
+python3 -m unittest discover -s tests -p "test_supreme_*.py"       # 346 découverts, OK (skipped=1)
 # V4/non-SUPREME : 105 OK (sélection des modules non test_supreme_*)
 python3 -m unittest tests.test_supreme_hardening                   # 20 OK
 python3 -m supreme audit                                           # ok=true, version 1.4.0, schéma 4
@@ -44,16 +44,16 @@ CI : `.github/workflows/omnibrain-supreme.yml` + `.github/workflows/omnibrain-v4
 | `omni-agents-framework/tests/test_supreme_docs_coherence.py` | version courante dans les documents de livraison ; PV historique 1.3.0 préservé ; phrases de confirmation code↔docs ; décompte TEST-MATRIX égal à la découverte unittest réelle | 4 |
 | `omni-agents-framework/tests/test_supreme_activation_130.py` | **1.3.0** : credentials sécurisés, adaptateur Mistral local, autorisation/prix/quotas, campagnes progressives, quarantaine, conseil/second avis, mémoire/apprentissage, API/dashboard ; inclut 1 test réel opt-in ignoré sans clé | 38 |
 | `omni-agents-framework/tests/test_supreme_e2e.py` | mission réelle → mémoire → télémétrie → rapport → traçabilité | 1 |
-| `omni-agents-framework/tests/test_supreme_final_140.py` | **1.4.0** : Guardian (11 contrôles, dédup, bail concurrent, résolution humaine, non-mutation, re-baseline tracée), paliers 5→960, preuve post-quarantaine, reprise propriétaire vivant/mort, re-spécification campagne, réconciliation membre avec remplacement, contexte attesté HTTPS, parsing `context_length`, arbitrage mémoire sans suppression, ACL, corps API borné 413/400, validation numérique, contrat JSON opt-in, sauvegardes 0600/0700 + vérification + rétention opt-in, endpoints exploitation, ordre de rétention déterministe, scripts ops/systemd | 63 |
-| **Total SUPREME** | | **338** |
+| `omni-agents-framework/tests/test_supreme_final_140.py` | **1.4.0** : Guardian (11 contrôles, dédup, bail concurrent, résolution humaine, non-mutation, re-baseline tracée), paliers 5→960, preuve post-quarantaine, reprise propriétaire vivant/mort, re-spécification campagne, réconciliation membre avec remplacement, contexte attesté HTTPS, parsing `context_length`, arbitrage mémoire sans suppression, ACL, corps API borné 413/400, validation numérique, contrat JSON opt-in, sauvegardes 0600/0700 + vérification + rétention opt-in, endpoints exploitation, ordre de rétention déterministe, scripts ops/systemd, kit d'enrôlement fournisseur (TTY, anti-trace, budget sans prix inventé) | 71 |
+| **Total SUPREME** | | **346** |
 | **V4/non-SUPREME** | modules historiques `test_catalog`, `test_classifier`, `test_cli`, `test_dispatcher`, `test_frontmatter`, `test_gates`, `test_parallel`, `test_registry`, `test_router`, `test_wrapper`, `test_v4_*` | **105** |
-| **Total général** | | **443** |
+| **Total général** | | **451** |
 
 ## Catégories strictement séparées
 | Catégorie | Description | État 1.4.0 |
 | --- | --- | --- |
 | **Tests simulés (fixtures)** | Données injectées explicitement, aucun réseau | conseil avec analyses fixtures, routage fixture |
-| **Tests locaux réels** | SQLite, subprocess, signaux POSIX, outils déterministes, HTTP vers stub 127.0.0.1 | **442 exécutés verts** ; stub ≠ fournisseur IA réel |
+| **Tests locaux réels** | SQLite, subprocess, signaux POSIX, outils déterministes, HTTP vers stub 127.0.0.1 | **450 exécutés verts** ; stub ≠ fournisseur IA réel |
 | **Tests fournisseurs IA réels** | Appel API réel avec clé vers fournisseur externe | **0 exécuté** ; 1 test opt-in ignoré ; aucune clé, egress sandbox limité |
 | **Tests cloud réels** | Déploiement cloud vérifié | **0** : aucun cloud déployé |
 

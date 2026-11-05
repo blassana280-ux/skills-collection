@@ -164,6 +164,10 @@ python3 -m supreme guardian --resolve FND-xxxx \
 
 ## 10. Activation progressive réelle (nécessite l'humain)
 
+Guide complet, y compris depuis Android : **`MISTRAL-ENROLLMENT.md`**.
+Enrôlement guidé avec test de joignabilité préalable : `./ops/enroll-mistral.sh`.
+Budget par palier sans tarif inventé : `python3 ops/budget-plan.py`.
+
 ```bash
 # 1) clé sans jamais la communiquer dans une conversation
 python3 -m supreme providers --connect mistral          # saisie masquée, TTY privé
