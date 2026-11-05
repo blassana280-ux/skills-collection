@@ -22,7 +22,7 @@
   signalés indisponibles sans fournisseur (honnête).
 - Documentation `ECOSYSTEM.md` (organisation dépôts/PR #5 vs #2, infrastructure hybride honnête).
 ### Tests
-- +23 fournisseurs, +15 audit sécurité, +12 API observabilité, +3 TF-IDF → **297 tests verts** (105 V4 + 192 SUPREME).
+- +23 fournisseurs, +15 audit sécurité, +12 API observabilité, +3 TF-IDF → **298 tests verts** (105 V4 + 193 SUPREME).
 ### Honnêteté
 - **0 fournisseur IA réel connecté** à ce stade (aucune clé, egress sandbox limité). Les tests
   fournisseurs utilisent un **stub HTTP local** (local réel, PAS un fournisseur IA réel).
@@ -51,7 +51,7 @@
 - API Gateway (auth par jeton, rôles) + tableau de bord mobile (données réelles).
 - Reporting Engine (missions, divisions, global, markdown).
 - 41 outils déterministes réels + Skill Registry (860 skills documentaires indexés).
-- **192 tests SUPREME** (+ 105 V4 = 297 verts). CI dédiée Python 3.11/3.12/3.13.
+- **193 tests SUPREME** (+ 105 V4 = 298 verts). CI dédiée Python 3.11/3.12/3.13.
 - Documentation complète + suivi durable (CONTINUITY.md).
 
 ### Réutilisé (V4, non réécrit)
@@ -80,5 +80,5 @@
   statut, IP ; `?token=…` → `REDACTED` ; ni jeton, ni en-têtes, ni corps journalisés.
 - Permissions `0600` renforcées à chaque chargement du jeton.
 - 13 tests de sécurité API ajoutés (journal expurgé, rotation, révocation, permissions, non-affichage)
-  → **192 tests SUPREME / 297 total**.
+  → **193 tests SUPREME / 298 total**.
 - Procédure de rotation/révocation documentée dans `SECURITY.md`.

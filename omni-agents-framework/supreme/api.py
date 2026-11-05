@@ -223,7 +223,8 @@ def make_handler(state: APIState):
                                             "quotas": [dict(r) for r in c["conn"].execute("SELECT * FROM quotas")]})
                 if path == "/api/memory/search":
                     return self._send(200, c["memory"].search("omnibrain-core", query=qs.get("q", [""])[0],
-                                                              level=qs.get("level", [None])[0], limit=int(qs.get("limit", ["20"])[0])))
+                                                              level=qs.get("level", [None])[0], limit=int(qs.get("limit", ["20"])[0]),
+                                                              mode=qs.get("mode", ["auto"])[0]))
                 if path == "/api/approvals":
                     return self._send(200, {"pending": c["policy"].pending_approvals()})
                 if path == "/api/tools":

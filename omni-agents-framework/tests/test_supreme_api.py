@@ -208,3 +208,12 @@ class TestApiObservability(TestAPI):
         self.assertIn("tab-security", html)
         self.assertIn("loadQuotas", html)
         self.assertIn("loadSecurity", html)
+        self.assertIn("memMode", html)  # sélecteur TF-IDF
+
+    def test_memory_search_tfidf_mode_via_api(self):
+        self.core.memory.add("omnibrain-core", "collective", "collective", "semantic",
+                             "latence réseau à optimiser", source="t", confidence=0.8)
+        code, data = self._get("/api/memory/search?q=latence&mode=tfidf")
+        self.assertEqual(code, 200)
+        self.assertEqual(data["mode"], "tfidf")
+        self.assertTrue(data["tfidf_available"])
