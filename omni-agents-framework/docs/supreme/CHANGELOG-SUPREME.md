@@ -1,5 +1,29 @@
 # Changelog OMNIBRAIN SUPREME
 
+## 1.1.0 — 2026-11-05 (multi-modèles réel, sécurité, dashboard)
+### Ajouté
+- **Intégration multi-modèles RÉELLE** (`supreme/providers.py`) : client HTTP stdlib pour
+  openai-compatible (OpenAI, **Mistral/Vide**, DeepSeek, Groq, OpenRouter, compatible personnalisé),
+  Anthropic, Gemini, Ollama. `complete()` = vrai appel HTTP, aucune réponse simulée.
+- **Mistral/Vide prioritaire** (`priority=1`) ; ajout Groq + compatible OpenAI personnalisé.
+- Routeur `complete()` avec **fallback multi-fournisseurs + budget réel** ; `configured_models()`
+  (le routage cible les fournisseurs configurés, l'appel réel sert de preuve de disponibilité).
+- Orchestrateur : les **agents LLM s'exécutent réellement** via le routeur si fournisseur configuré ;
+  bloqués honnêtement sinon. Conseil : **vraies analyses indépendantes** (budget borné).
+- **Sécurité des clés** : env ou fichier gitignoré `0600` ; jamais journalisées, expurgées des
+  erreurs, jamais dans l'URL. CLI `providers` (`--check`, `--init-secrets`).
+- **Audit sécurité** (`test_supreme_security_audit.py`) : anti-fuite dépôt, isolation 1020 profils,
+  anti-injection, actions protégées, stdlib only, validation entrées.
+- **Dashboard mobile** : onglets Coûts + Sécurité, fournisseurs enrichis (configuré ≠ opérationnel),
+  contrôle des missions (relancer/annuler). API `/api/providers`, `/api/alerts`, `/api/security`.
+- Documentation `PROVIDERS.md` (connexion sécurisée sans exposer de secret).
+### Tests
+- +23 fournisseurs, +15 audit sécurité, +12 API observabilité → **294 tests verts** (105 V4 + 189 SUPREME).
+### Honnêteté
+- **0 fournisseur IA réel connecté** à ce stade (aucune clé, egress sandbox limité). Les tests
+  fournisseurs utilisent un **stub HTTP local** (local réel, PAS un fournisseur IA réel).
+  Mistral/Vide ne sera déclaré opérationnel qu'après un appel API réel réussi.
+
 ## 1.0.0 — 2026-11-05
 ### Ajouté
 - Couche SUPREME complète au-dessus d'OmniBrain V4 (stdlib, SQLite).
@@ -23,7 +47,7 @@
 - API Gateway (auth par jeton, rôles) + tableau de bord mobile (données réelles).
 - Reporting Engine (missions, divisions, global, markdown).
 - 41 outils déterministes réels + Skill Registry (860 skills documentaires indexés).
-- **139 tests SUPREME** (+ 105 V4 = 244 verts). CI dédiée Python 3.11/3.12/3.13.
+- **189 tests SUPREME** (+ 105 V4 = 294 verts). CI dédiée Python 3.11/3.12/3.13.
 - Documentation complète + suivi durable (CONTINUITY.md).
 
 ### Réutilisé (V4, non réécrit)
@@ -52,5 +76,5 @@
   statut, IP ; `?token=…` → `REDACTED` ; ni jeton, ni en-têtes, ni corps journalisés.
 - Permissions `0600` renforcées à chaque chargement du jeton.
 - 13 tests de sécurité API ajoutés (journal expurgé, rotation, révocation, permissions, non-affichage)
-  → **139 tests SUPREME / 244 total**.
+  → **189 tests SUPREME / 294 total**.
 - Procédure de rotation/révocation documentée dans `SECURITY.md`.

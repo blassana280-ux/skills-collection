@@ -13,21 +13,24 @@ python3 -m supreme catalog --check        # vérifie 1000 spécialistes + 20 che
 python3 -m supreme sync                   # registre SQLite
 python3 -m supreme evaluate --activate    # valide + active sur preuve réelle
 python3 -m supreme serve --port 8765      # API + tableau de bord mobile
-python3 -m unittest discover -s tests     # 244 tests (105 V4 + 139 SUPREME)
+python3 -m unittest discover -s tests     # 294 tests (105 V4 + 189 SUPREME)
 ```
 
 ## État réel (ne pas confondre enregistré et opérationnel)
 - **1000 spécialistes** enregistrés et validés (20 divisions × 50) + **20 chefs**.
 - **60 agents opérationnels/surveillés** ayant exécuté réellement leur mission représentative.
-- **960 missions représentatives LLM différées** : aucun fournisseur IA configuré.
+- **960 agents LLM exécutables** dès qu'un fournisseur est configuré (client HTTP réel,
+  Mistral/Vide prioritaire) ; **0 fournisseur connecté** à ce stade → bloqués honnêtement.
 - **0 doublon**, 27 champs + 7 évaluations par profil, contrôles automatiques.
-- **244 tests verts**, 5 missions réelles exécutées (coût 0.0 USD).
+- **294 tests verts**, 5 missions réelles exécutées (coût 0.0 USD).
+- **Multi-modèles réel** : client HTTP testé (stub local), fallback + budget ; connexion
+  sécurisée des clés sans exposition — voir [PROVIDERS.md](omni-agents-framework/docs/supreme/PROVIDERS.md).
 
 ## Documentation
 - [Audit réel](omni-agents-framework/docs/supreme/AUDIT.md)
 - [Architecture (30 composants)](omni-agents-framework/docs/supreme/ARCHITECTURE.md)
 - [Catalogue des 1000 agents](omni-agents-framework/supreme/catalog/CATALOG-SUPREME.md)
-- [API](omni-agents-framework/docs/supreme/API.md) · [Mémoire](omni-agents-framework/docs/supreme/MEMORY.md) · [Modèles](omni-agents-framework/docs/supreme/MODELS.md)
+- [API](omni-agents-framework/docs/supreme/API.md) · [Mémoire](omni-agents-framework/docs/supreme/MEMORY.md) · [Modèles](omni-agents-framework/docs/supreme/MODELS.md) · [**Fournisseurs (connexion sécurisée)**](omni-agents-framework/docs/supreme/PROVIDERS.md)
 - [Sécurité](omni-agents-framework/docs/supreme/SECURITY.md) · [Déploiement](omni-agents-framework/docs/supreme/DEPLOYMENT.md) · [Maintenance](omni-agents-framework/docs/supreme/MAINTENANCE.md)
 - [Sauvegarde/restauration](omni-agents-framework/docs/supreme/BACKUP-RESTORE.md) · [Dépannage](omni-agents-framework/docs/supreme/TROUBLESHOOTING.md)
 - [Matrice des tests](omni-agents-framework/docs/supreme/TEST-MATRIX.md) · [Changelog](omni-agents-framework/docs/supreme/CHANGELOG-SUPREME.md)

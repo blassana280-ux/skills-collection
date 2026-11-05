@@ -35,11 +35,19 @@ aucune écriture sur `master`, aucune fusion automatique.
 > leur mission représentative (outils déterministes). Les 960 autres attendent un fournisseur IA.
 
 ## D. Intelligence
-- Fournisseurs connectés : **0** (OpenAI, Mistral, DeepSeek, Gemini, OpenRouter, Anthropic, Ollama
-  tous `not_configured`, vérifié par détection réelle).
-- Routeur multi-modèles : implémenté (capacité/coût/qualité/latence/confidentialité, fallback).
-- Conseil multi-modèles : implémenté, décision par preuves + indépendance (≠ majorité), budget borné.
-- Routage/conseil testés sur fixtures explicites ; indisponibles sans clés (honnête).
+- Fournisseurs connectés : **0** (Mistral/Vide, Groq, DeepSeek, OpenAI, OpenRouter, Gemini,
+  Anthropic, Ollama tous `not_configured`, vérifié par détection réelle). Aucune clé, egress limité.
+- **Client multi-modèles RÉEL** (`supreme/providers.py`) : vrai appel HTTP pour openai-compatible,
+  Anthropic, Gemini, Ollama. **Mistral/Vide prioritaire**. Fallback multi-fournisseurs + budget réel.
+- **Agents LLM exécutables** : la branche LLM de l'orchestrateur appelle réellement le routeur ;
+  les 960 agents LLM s'exécutent dès qu'un fournisseur est configuré (prouvé par test bout-en-bout
+  contre stub HTTP local). Sans fournisseur → blocage honnête.
+- Conseil multi-modèles : produit de **vraies analyses indépendantes** via fournisseurs configurés
+  (budget borné, fournisseurs distincts), décision par preuves + indépendance (≠ majorité).
+- **23 tests fournisseurs** : mode sans fournisseur (local réel), client contre **stub HTTP local**
+  (vrai aller-retour, PAS un fournisseur IA réel), fallback, budget, priorité, conseil, sécurité.
+- **Limite honnête** : aucun fournisseur IA réel connecté tant qu'aucune clé n'est fournie.
+  Mistral/Vide ne sera opérationnel qu'après un appel API réel réussi. Voir `PROVIDERS.md`.
 
 ## E. Mémoire
 - Stockage SQLite 4 niveaux / 8 types ; **15 entrées collectives** réelles après 5 missions.
@@ -62,7 +70,7 @@ aucune écriture sur `master`, aucune fusion automatique.
   (aucun outil actuel ne requiert de code arbitraire) ; embeddings inactifs.
 
 ## H. Qualité
-- **244 tests exécutés, tous verts** : 105 V4 + 139 SUPREME (`python3 -m unittest discover -s tests`).
+- **294 tests exécutés, tous verts** : 105 V4 + 189 SUPREME (`python3 -m unittest discover -s tests`).
 - 5 missions réelles exécutées : **15 tâches `done`**, 0 échec, coût 0.0.
 - KPIs réels : agent_success_rate 1.0, mission_success_rate 1.0, avg_mission_duration ~12.8 ms,
   duplicate_agent_rate 0.0, agent_evaluation_score 1.0 ; 6 KPIs `null` (indisponibles, non fabriqués).
@@ -86,13 +94,15 @@ aucune écriture sur `master`, aucune fusion automatique.
 | Orchestration DAG, parallélisme, reprises | **Terminé et testé** |
 | Communication inter-agents | **Terminé et testé** |
 | Mémoire 4 niveaux + recherche | **Terminé et testé** |
-| Routage multi-modèles | **Implémenté, testé sur fixtures ; bloqué sans clés** |
-| Conseil multi-modèles | **Implémenté, testé ; appels API réels à câbler** |
-| Sécurité/gouvernance | **Terminé et testé** |
-| API + tableau de bord mobile | **Terminé et testé (données réelles, live)** |
+| Client multi-modèles réel (HTTP) | **Terminé et testé (stub local réel) ; prêt pour clés** |
+| Routage multi-modèles + fallback + budget | **Terminé et testé ; bloqué sans clés** |
+| Exécution réelle des agents LLM | **Terminé et testé (bout-en-bout stub) ; actif si fournisseur configuré** |
+| Conseil multi-modèles (analyses réelles) | **Terminé et testé ; actif si fournisseur configuré** |
+| Sécurité/gouvernance + audit anti-fuite | **Terminé et testé** |
+| API + tableau de bord mobile (coûts/sécurité/contrôle) | **Terminé et testé (données réelles, live)** |
 | Apprentissage/auto-amélioration | **Terminé et testé** |
 | Workflows CI | **Terminé (CI verte attendue sur PR)** |
-| Fournisseurs IA connectés | **En attente d'autorisation (clés humaines)** |
+| Fournisseurs IA réellement connectés | **En attente d'autorisation (clés humaines) — 0 connecté** |
 | Recherche sémantique embeddings | **En développement (interface prête)** |
 | Déploiement cloud / promotion dépôt autonome | **En attente d'autorisation / bloqué 403** |
 
@@ -100,6 +110,6 @@ aucune écriture sur `master`, aucune fusion automatique.
 L'écosystème est **réellement construit et exécutable** : un cerveau central orchestre 1000
 spécialistes enregistrés/validés (20 divisions), 60 opérationnels sur preuve, avec mémoire,
 bus, sécurité, budget, observabilité, API et tableau de bord mobile — le tout gratuit, testé
-(244 tests) et documenté. L'intelligence multi-modèles est implémentée mais reste indisponible
+(294 tests) et documenté. L'intelligence multi-modèles est implémentée mais reste indisponible
 tant qu'aucune clé de fournisseur n'est fournie (action humaine). Aucun chiffre marketing :
 les 1000 agents ne sont pas présentés comme 1000 opérationnels.
