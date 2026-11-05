@@ -1,0 +1,54 @@
+name: OmniBrain Supreme CI
+
+# CI de la couche SUPREME 1000. Aucune fusion automatique : décision humaine.
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: ["arena/ffc77bf1-skills-collection"]
+    paths:
+      - "omni-agents-framework/supreme/**"
+      - "omni-agents-framework/tests/test_supreme_*.py"
+      - ".github/workflows/omnibrain-supreme.yml"
+  pull_request:
+    paths:
+      - "omni-agents-framework/supreme/**"
+      - "omni-agents-framework/tests/test_supreme_*.py"
+      - ".github/workflows/omnibrain-supreme.yml"
+  workflow_dispatch:
+
+jobs:
+  supreme:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: omni-agents-framework
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Validate catalogue (1000 spécialistes + 20 chefs)
+        run: python3 -m supreme catalog --check
+
+      - name: Verify generated catalogue matches sources
+        run: |
+          python3 -m supreme catalog
+          git diff --exit-code -- supreme/catalog || (echo "Catalogue non régénéré : lancer python3 -m supreme catalog" && exit 1)
+
+      - name: Run SUPREME test suite
+        run: python3 -m unittest discover -s tests -p "test_supreme_*.py" -v
+
+      - name: Run full suite (V4 + SUPREME, non-régression)
+        run: python3 -m unittest discover -s tests
+
+      - name: CLI smoke — sync + mission réelle
+        run: |
+          python3 -m supreme sync
+          python3 -m supreme mission "Vérifier la syntaxe Python et valider un document JSON"

@@ -1,0 +1,30 @@
+# Memory Engine OMNIBRAIN SUPREME
+
+## 4 niveaux
+- **central** : connaissances communes, décisions globales (écriture : chefs/cerveau).
+- **individual** : expériences propres à chaque agent (lecture/écriture : propriétaire seul).
+- **division** : savoir partagé d'une division (membres de la division).
+- **collective** : résultats validés, erreurs, enseignements (écriture : chefs/cerveau).
+
+## 8 types
+`working`, `episodic`, `semantic`, `procedural`, `historical`, `decision`, `error`, `skill`.
+
+## Fonctions réelles (testées)
+- Recherche plein texte **FTS5** (repli LIKE si FTS5 absent) + filtres métadonnées.
+- **Graphe de connaissances** : `relate(src,dst,relation)`, `neighbors`.
+- **Provenance** : champ `source` ; **confiance** : `confidence` ∈ [0,1].
+- **Versionnement** : `update` crée une version liée (`parent_id`), l'ancienne est marquée supprimée.
+- **TTL** : `expires_at` + `expire()` (suppression des informations périmées).
+- **Détection de contradictions** : même `subject_key`, contenus différents.
+- **ACL** : lecture/écriture par niveau + propriétaire.
+- **Suppression contrôlée** : soft-delete avec raison.
+- **Rédaction des secrets** avant persistance ; **contenu non fiable** encapsulé et marqué.
+
+## Recherche sémantique
+Interface présente ; **indisponible sans fournisseur d'embeddings configuré**. Le moteur
+retourne `semantic_available=false` avec une note explicite. Aucune fausse recherche sémantique.
+
+## Politique de stockage
+- Pas de stockage automatique de toutes les conversations.
+- Secrets et données personnelles inutiles exclus (rédaction + minimisation).
+- Instructions malveillantes externes traitées comme données, jamais comme instructions.

@@ -32,3 +32,16 @@ existante.
 5. **Jamais d'écriture directe sur `main`** — branche + Pull Request.
 6. **Respect de l'upstream** — `CONTRIBUTING.md` du dépôt prévaut, y compris
    pour la déclaration d'assistance IA.
+
+## Couche OMNIBRAIN SUPREME 1000 (2026-11-05)
+
+> Source de vérité : `omni-agents-framework/supreme/` + `omni-agents-framework/docs/supreme/`.
+> Point d'entrée : [`OMNIBRAIN-SUPREME.md`](OMNIBRAIN-SUPREME.md).
+
+- 20 divisions × 50 spécialistes = **1000 profils** + 20 chefs ; registre SQLite, orchestrateur
+  DAG, bus, mémoire 4 niveaux, routeur multi-modèles, politique de risque, API + dashboard mobile.
+- **Activation sur preuve** : un agent n'est `operational` qu'après exécution réelle réussie.
+  Ne jamais présenter 1000 agents enregistrés comme 1000 opérationnels.
+- **Aucun fournisseur IA supposé connecté** ; détection réelle, aucune connexion simulée.
+- Reprise du travail : `omni-agents-framework/docs/supreme/CONTINUITY.md`.
+- Tests : `cd omni-agents-framework && python3 -m unittest discover -s tests` (221 verts).
