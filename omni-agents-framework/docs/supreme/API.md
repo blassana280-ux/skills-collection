@@ -49,3 +49,21 @@ Réponse : `{submitted:{mission_id,plan}, result:{state:"completed",tasks:{done:
 - Mission : `objective` (str ≤4000), `priority` (int), `budget_usd` (float ≥0),
   `tasks` optionnel `[{agent_id, tool?, input?, depends_on?}]`.
 - Erreurs : `{error: "..."}` avec code HTTP 400/401/403/404/500.
+
+## Endpoints ajoutés (v1.1–1.2)
+| Route | Auth | Description |
+| --- | --- | --- |
+| `GET /api/providers` | lecture | Fournisseurs : configuré (clé présente) vs vérifié (appel réel), priorité Mistral/Vide, noms de variables d'env — **aucune valeur secrète** |
+| `POST /api/providers/check` | admin | Vérification RÉELLE de disponibilité (appel HTTP `/models`) |
+| `GET /api/alerts` | lecture | 50 derniers événements warning/error/critical, expurgés |
+| `GET /api/security` | lecture | Journal d'accès expurgé (30 dernières lignes), permissions du jeton, posture — aucun secret |
+| `GET /api/missions/{id}` | lecture | Détail : plan complet avec `explanation` + `why` par tâche, tâches, résultat (dont `council` si mission complexe) |
+| `GET /api/agents/{id}/history` | lecture | Historique des missions de l'agent, KPIs (taux de succès), 7 dernières évaluations, supervision |
+| `GET /api/memory/search?mode=tfidf` | lecture | Recherche contextuelle TF-IDF locale (en plus de `auto`/`fts`) |
+
+## Explicabilité & arbitrage
+- Chaque plan contient `explanation` : pourquoi cette classification, cette taille d'escouade,
+  cette stratégie (outils locaux vs LLM), cette vérification croisée, cet arbitrage.
+- Chaque tâche contient `why` : pourquoi cet agent et cet outil.
+- Les missions `complexe` produisent `result.council` : décision du conseil multi-modèles
+  fondée sur les preuves (sorties de tâches réelles), ou `unavailable` honnête sans fournisseur.

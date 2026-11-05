@@ -12,6 +12,9 @@ Usage : python3 -m supreme <commande>
   rotate-token           régénère le jeton API (0600, jamais affiché) ; redémarrer serve ensuite
   providers [--check]    statut des fournisseurs IA (sans clés) ; --check = appel réel de disponibilité
   providers --init-secrets  crée un modèle de fichier de secrets vide (0600, gitignoré)
+  worker [--once]        processus worker séparé consommant la file de missions (Phase G)
+  audit                  audit exécutable : catalogue, sécurité, sauvegardes, KPIs, tests (Phase I)
+  learn                  cycle d'amélioration contrôlée : observer->proposer->comparer->rapport
 """
 from __future__ import annotations
 
@@ -35,6 +38,13 @@ def main(argv=None):
     pv = sub.add_parser("providers")
     pv.add_argument("--check", action="store_true")
     pv.add_argument("--init-secrets", action="store_true")
+    wk = sub.add_parser("worker")
+    wk.add_argument("--once", action="store_true")
+    wk.add_argument("--interval", type=float, default=1.0)
+    wk.add_argument("--max", type=int, default=None)
+    ad = sub.add_parser("audit")
+    ad.add_argument("--no-save", action="store_true")
+    sub.add_parser("learn")
     args = ap.parse_args(argv)
 
     if args.cmd == "catalog":
@@ -92,11 +102,28 @@ def main(argv=None):
     from .reporting import ReportingEngine
     from .backup import BackupManager
 
+    if args.cmd == "audit":
+        from .audit import run_audit
+        print(json.dumps(run_audit(save=not args.no_save), ensure_ascii=False, indent=1))
+        return 0
+
     core = bootstrap(evaluate=False)
+    if args.cmd == "worker":
+        from .worker import run_worker
+        print(json.dumps(run_worker(once=args.once, interval=args.interval,
+                                    max_missions=args.max, core=core), ensure_ascii=False, indent=1))
+        return 0
+    if args.cmd == "learn":
+        from .learning import LearningEngine
+        from .evaluation import EvaluationEngine
+        ev = EvaluationEngine(core.conn, core.registry, router=core.router)
+        le = LearningEngine(core.conn, core.registry, ev)
+        print(json.dumps(le.run_cycle(), ensure_ascii=False, indent=1))
+        return 0
     if args.cmd == "sync":
         print(json.dumps(core.registry.sync_catalog(), ensure_ascii=False)); return 0
     if args.cmd == "evaluate":
-        counts = EvaluationEngine(core.conn, core.registry).evaluate_all(activate=args.activate)
+        counts = EvaluationEngine(core.conn, core.registry, router=core.router).evaluate_all(activate=args.activate)
         print(json.dumps(counts, ensure_ascii=False)); return 0
     if args.cmd == "status":
         obs = ObservabilityEngine(core.conn, core.registry, core.budget, core.router)

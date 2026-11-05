@@ -34,3 +34,16 @@ actuellement. Toute dépense nécessite une approbation humaine explicite (nivea
 | `SUPREME_API_TOKEN` | Jeton admin API (sinon généré) |
 | `SUPREME_ALLOW_ANON_READ` | `1` = lecture anonyme (preview) |
 | `OPENAI_API_KEY` / `MISTRAL_API_KEY` / … | Fournisseurs IA (optionnels, non configurés) |
+
+## Montée en charge horizontale réelle (v1.2, locale)
+La file de missions est persistante (SQLite WAL) et les workers sont des processus séparés :
+```bash
+# Terminal 1 : API
+python3 -m supreme serve --port 8765
+# Terminal 2..N : workers (claim atomique, pas de double exécution)
+python3 -m supreme worker --interval 1
+```
+- Soumettre avec `run: false` (API) pour mettre en file ; les workers consomment.
+- Testé en vrai processus séparé (`test_worker_real_subprocess`).
+- **Cloud non déployé** : cette architecture est prête à être répliquée (workers en conteneurs),
+  mais aucun déploiement cloud n'existe tant qu'il n'est pas autorisé et effectué.

@@ -27,3 +27,12 @@ allowlists de division changent.
 - Profils : `version` + `changelog` ; l'Agent Factory conserve les versions (`agent_versions`)
   et permet `rollback`.
 - Catalogue : source de vérité `divisions/`, sortie `catalog/` régénérable et vérifiée en CI.
+
+## Commandes d'exploitation (v1.2)
+```bash
+python3 -m supreme audit            # audit exécutable : catalogue, sécurité, sauvegardes, KPIs, tests
+python3 -m supreme learn            # cycle d'amélioration contrôlée (rapport JSON, PR = humain)
+python3 -m supreme worker --once    # vide la file de missions (processus séparé possible)
+python3 -m supreme providers        # statut fournisseurs sans clés ; --check = appel réel
+python3 -m supreme rotate-token     # rotation du jeton API (jamais affiché), puis redémarrer serve
+```

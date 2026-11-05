@@ -15,9 +15,10 @@ from .tools import TOOLS, evaluate_tool, run_tool
 
 
 class EvaluationEngine:
-    def __init__(self, conn: sqlite3.Connection, registry):
+    def __init__(self, conn: sqlite3.Connection, registry, router=None):
         self.conn = conn
         self.registry = registry
+        self.router = router  # si fourni : les représentatifs LLM tentent un VRAI appel
 
     def _record(self, agent_id: str, eval_id: str, mode: str, passed: bool, deferred: bool, evidence: str) -> None:
         with transaction(self.conn):
@@ -46,8 +47,31 @@ class EvaluationEngine:
             except Exception as e:
                 results["representative"] = {"passed": False, "deferred": False, "evidence": f"erreur outil : {e}"}
         else:
-            results["representative"] = {"passed": False, "deferred": True,
-                                         "evidence": "mission LLM différée : aucun fournisseur configuré"}
+            # Représentatif LLM : vrai appel si un fournisseur est configuré ; différé sinon.
+            llm_done = False
+            if self.router is not None:
+                self.router.detect()
+                if self.router.configured_models():
+                    prompt = rep.get("prompt") or f"Mission représentative : {prof['objective']}"
+                    res = self.router.complete(
+                        {"capabilities": ["general"], "max_cost_usd": 0.02},
+                        [{"role": "system", "content": prof["system_instructions"]},
+                         {"role": "user", "content": prompt}],
+                        max_tokens=256, agent_id=agent_id)
+                    if res["ok"] and res["text"].strip():
+                        results["representative"] = {
+                            "passed": True, "deferred": False,
+                            "evidence": f"appel LLM réel réussi via {res['provider']}/{res['model']}",
+                            "output": {"text": res["text"][:500],
+                                       "model": f"{res['provider']}/{res['model']}"}}
+                    else:
+                        results["representative"] = {
+                            "passed": False, "deferred": False,
+                            "evidence": f"appel LLM réel échoué : {res['error'][:200]}"}
+                    llm_done = True
+            if not llm_done:
+                results["representative"] = {"passed": False, "deferred": True,
+                                             "evidence": "mission LLM différée : aucun fournisseur configuré"}
         # 4. structured_output
         so_ok = bool(prof["output_format"])
         if rep["mode"] == "tool" and results["representative"].get("output") is not None:

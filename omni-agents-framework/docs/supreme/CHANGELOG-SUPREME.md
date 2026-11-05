@@ -1,5 +1,30 @@
 # Changelog OMNIBRAIN SUPREME
 
+## 1.2.0 — 2026-11-05 (intelligence, opérations, audit — finalisation A→J)
+### Ajouté
+- **Explicabilité OmniBrain** : chaque plan porte `explanation` (classification, escouade,
+  stratégie, vérification, arbitrage) et chaque tâche un champ `why` (sélection agent/outil).
+  Exposé via `/api/missions/{id}` et le bouton « Pourquoi ? » du dashboard.
+- **Arbitrage intégré** : les missions `complexe` passent au conseil multi-modèles en fin
+  d'exécution (preuves = sorties de tâches réelles) ; décision mémorisée au niveau central ;
+  sans fournisseur → statut `unavailable` honnête, jamais de décision fabriquée.
+- **Évaluation LLM réelle** : `EvaluationEngine(router=...)` tente un VRAI appel pour le
+  représentatif LLM ; succès → activation `monitored` sur preuve ; échec → échec (pas différé) ;
+  sans fournisseur → différé honnête. Fin du différage inconditionnel.
+- **Worker séparé (Phase G)** : `supreme/worker.py` + `python3 -m supreme worker [--once]`.
+  File persistante SQLite, **claim atomique** (pas de double exécution), N workers possibles,
+  reprise des tâches abandonnées. Testé en VRAI processus séparé (subprocess).
+- **Audit exécutable (Phase I)** : `supreme/audit.py` + `python3 -m supreme audit` — catalogue
+  (1020, 20×50), sécurité (permissions, gitignore, non-affichage), sauvegardes, KPIs, tests
+  découverts ; rapport JSON horodaté archivé (gitignoré).
+- **Cycle d'amélioration (Phase 13)** : `LearningEngine.run_cycle()` + `python3 -m supreme learn` —
+  observer→identifier→proposer→versionner→évaluer→comparer→accepter sur gain→rapport ;
+  étape PR = porte humaine ; noyau/permissions/sécurité intacts.
+- **Historique par agent** : `/api/agents/{id}/history` (missions, KPIs, 7 dernières évaluations,
+  supervision). Détail mission `/api/missions/{id}`.
+### Tests
+- +9 intelligence, +9 opérations, +2 API → **318 tests verts** (105 V4 + 213 SUPREME).
+
 ## 1.1.0 — 2026-11-05 (multi-modèles réel, sécurité, dashboard)
 ### Ajouté
 - **Intégration multi-modèles RÉELLE** (`supreme/providers.py`) : client HTTP stdlib pour
@@ -22,7 +47,7 @@
   signalés indisponibles sans fournisseur (honnête).
 - Documentation `ECOSYSTEM.md` (organisation dépôts/PR #5 vs #2, infrastructure hybride honnête).
 ### Tests
-- +23 fournisseurs, +15 audit sécurité, +12 API observabilité, +3 TF-IDF → **298 tests verts** (105 V4 + 193 SUPREME).
+- +23 fournisseurs, +15 audit sécurité, +12 API observabilité, +3 TF-IDF → **318 tests verts** (105 V4 + 213 SUPREME).
 ### Honnêteté
 - **0 fournisseur IA réel connecté** à ce stade (aucune clé, egress sandbox limité). Les tests
   fournisseurs utilisent un **stub HTTP local** (local réel, PAS un fournisseur IA réel).
@@ -51,7 +76,7 @@
 - API Gateway (auth par jeton, rôles) + tableau de bord mobile (données réelles).
 - Reporting Engine (missions, divisions, global, markdown).
 - 41 outils déterministes réels + Skill Registry (860 skills documentaires indexés).
-- **193 tests SUPREME** (+ 105 V4 = 298 verts). CI dédiée Python 3.11/3.12/3.13.
+- **213 tests SUPREME** (+ 105 V4 = 318 verts). CI dédiée Python 3.11/3.12/3.13.
 - Documentation complète + suivi durable (CONTINUITY.md).
 
 ### Réutilisé (V4, non réécrit)
@@ -80,5 +105,5 @@
   statut, IP ; `?token=…` → `REDACTED` ; ni jeton, ni en-têtes, ni corps journalisés.
 - Permissions `0600` renforcées à chaque chargement du jeton.
 - 13 tests de sécurité API ajoutés (journal expurgé, rotation, révocation, permissions, non-affichage)
-  → **193 tests SUPREME / 298 total**.
+  → **213 tests SUPREME / 318 total**.
 - Procédure de rotation/révocation documentée dans `SECURITY.md`.

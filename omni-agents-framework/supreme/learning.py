@@ -95,6 +95,61 @@ class LearningEngine:
         log_event(self.conn, "info", "learning", f"rollback stratégie {agent_id} -> v{prev['version']}")
         return {"rolled_back": True, "version": prev["version"]}
 
+    def run_cycle(self, max_proposals: int = 5) -> dict:
+        """Cycle permanent d'amélioration contrôlée (Phase 13), exécutable et auditable.
+
+        1 observer -> 2 identifier -> 3-4 proposer -> 5-7 versionner/évaluer/tester ->
+        8 comparer avant/après -> 9 rapport -> 10 PR = porte humaine (jamais automatique).
+        Aucune modification du noyau, des permissions ou de la sécurité. Les changements
+        de code/dépôt (branche, PR) exigent l'humain ; le cycle produit preuves et candidats.
+        """
+        steps = []
+        outcomes = self.collect_outcomes()                      # 1. observer
+        steps.append({"step": 1, "name": "observer", "status": "done",
+                      "task_success_rate": outcomes["task_success_rate"],
+                      "mission_success_rate": outcomes["mission_success_rate"]})
+        analysis = self.analyze()                               # 2. identifier faiblesses
+        steps.append({"step": 2, "name": "identifier", "status": "done",
+                      "proposals": len(analysis["proposals"])})
+        evaluated = []
+        for p in analysis["proposals"][:max_proposals]:         # 3-8. proposer/évaluer/comparer
+            if p["type"] == "agent_review":
+                agent = self.registry.get(p["target"])
+                if agent is None:
+                    continue
+                rep = next(e for e in agent["profile"]["eval_tests"] if e["id"] == "representative")
+                if rep["mode"] != "tool":
+                    evaluated.append({"target": p["target"], "action": "revue LLM requise",
+                                      "status": "human_or_provider_required"})
+                    continue
+                content = (f"v{now()}: consigne révisée après échecs répétés — "
+                           f"valider les entrées avant l'outil {rep['tool']}, journaliser l'erreur exacte.")
+                try:
+                    cmp = self.compare_and_accept(p["target"], rep["tool"], content)
+                    evaluated.append({"target": p["target"], "action": "stratégie versionnée + comparée",
+                                      "status": "accepted" if cmp["accepted"] else "rejected_no_gain",
+                                      **{k: cmp[k] for k in ("strategy_id", "score", "baseline")}})
+                except PermissionError as e:
+                    evaluated.append({"target": p["target"], "action": "refusé", "status": "protected", "reason": str(e)})
+            else:
+                evaluated.append({"target": p["target"], "action": "correction code requise",
+                                  "status": "human_required",
+                                  "reason": "cause racine à corriger sur branche dédiée + tests + PR (porte humaine)"})
+        steps.append({"step": "3-8", "name": "proposer/évaluer/comparer", "status": "done",
+                      "evaluated": evaluated})
+        report = {  # 9. rapport ; 10. PR = humain
+            "cycle_at": now(), "steps": steps, "analysis": analysis,
+            "step_9_report": "ce rapport JSON est la preuve auditable du cycle",
+            "step_10_pr": {"status": "human_required",
+                           "reason": "création de branche/PR et fusion exigent l'humain ; jamais automatique"},
+            "guarantees": ["noyau intact", "permissions intactes", "sécurité intacte",
+                           "gain mesuré obligatoire", "rollback disponible"],
+        }
+        log_event(self.conn, "info", "learning",
+                  f"cycle d'amélioration : {len(evaluated)} candidat(s) évalué(s), "
+                  f"{sum(1 for e in evaluated if e['status'] == 'accepted')} accepté(s) sur gain mesuré")
+        return report
+
     def self_improvement_report(self) -> dict:
         analysis = self.analyze()
         return {"analysis": analysis,

@@ -86,7 +86,7 @@ def bootstrap(evaluate: bool = True) -> OmniBrainCore:
     if evaluate:
         registered = core.registry.status_counts().get("registered", 0)
         if registered:
-            EvaluationEngine(core.conn, core.registry).evaluate_all(activate=True)
+            EvaluationEngine(core.conn, core.registry, router=core.router).evaluate_all(activate=True)
     return core
 
 
@@ -191,6 +191,26 @@ def make_handler(state: APIState):
                     return self._send(200, {"count": len(agents), "agents": [
                         {k: a[k] for k in ("id", "name", "division", "kind", "status", "version")} |
                         {"objective": a["profile"]["objective"], "risk": a["profile"]["risk_level"]} for a in agents]})
+                if path.startswith("/api/agents/") and path.endswith("/history"):
+                    aid = path.split("/")[3]
+                    a = c["registry"].get(aid)
+                    if a is None:
+                        return self._send(404, {"error": "agent inconnu"})
+                    tasks = [dict(r) for r in c["conn"].execute(
+                        "SELECT id, mission_id, tool, state, error, created_at, updated_at FROM tasks "
+                        "WHERE agent_id=? ORDER BY created_at DESC LIMIT 50", (aid,))]
+                    m = c["conn"].execute(
+                        "SELECT AVG(value) s, COUNT(*) n FROM metrics WHERE name='task_success' AND agent_id=?",
+                        (aid,)).fetchone()
+                    evals = [dict(r) for r in c["conn"].execute(
+                        "SELECT eval_id, mode, passed, deferred, evidence, at FROM eval_runs "
+                        "WHERE agent_id=? ORDER BY id DESC LIMIT 7", (aid,))]
+                    return self._send(200, {
+                        "agent_id": aid, "status": a["status"],
+                        "missions_history": tasks,
+                        "kpis": {"task_success_rate": m["s"], "tasks_measured": m["n"]},
+                        "latest_evaluations": evals,
+                        "supervision": f"chef de division {a['profile']['division']} + télémétrie centrale"})
                 if path.startswith("/api/agents/"):
                     a = c["registry"].get(path.split("/")[-1])
                     return self._send(200 if a else 404, a or {"error": "agent inconnu"})
@@ -198,6 +218,8 @@ def make_handler(state: APIState):
                     return self._send(200, {"divisions": c["registry"].divisions_summary()})
                 if path == "/api/missions":
                     return self._send(200, {"missions": core.list_missions()})
+                if path.startswith("/api/missions/"):
+                    return self._send(200, core.status(path.split("/")[3]))
                 if path.startswith("/api/missions/"):
                     return self._send(200, core.status(path.split("/")[-1]))
                 if path == "/api/models":

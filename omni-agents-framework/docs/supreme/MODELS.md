@@ -31,3 +31,10 @@ Fournir les clés via variables d'environnement / secrets GitHub, puis :
 python3 -m supreme serve   # ou POST /api/providers/check
 ```
 Le routeur détectera et testera réellement les fournisseurs. Aucune dépense sans accord.
+
+## Client réel (v1.1+)
+Le routeur ne se limite plus à la détection : `ModelRouter.complete()` effectue de VRAIS appels
+HTTP (voir `PROVIDERS.md`), avec fallback multi-fournisseurs, budget réel et priorité Mistral/Vide.
+Les agents LLM et le conseil s'exécutent réellement dès qu'un fournisseur est configuré et
+répond ; sans fournisseur, tout est bloqué/indisponible honnêtement. `configured != available` :
+seul un appel réussi prouve la disponibilité.

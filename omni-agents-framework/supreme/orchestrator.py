@@ -266,6 +266,31 @@ class OmniBrainCore:
         result = {"mission_id": mission_id, "state": state, "duration_ms": duration_ms,
                   "tasks": {s: states.count(s) for s in set(states)},
                   "cost_usd": c["budget"].mission_cost(mission_id)}
+        # Arbitrage : les missions complexes passent au conseil multi-modèles.
+        # Sans fournisseur -> statut "unavailable" honnête (jamais de décision fabriquée).
+        try:
+            mrow = conn.execute("SELECT objective, plan_json FROM missions WHERE id=?", (mission_id,)).fetchone()
+            plan = json.loads(mrow["plan_json"]) if mrow and mrow["plan_json"] else {}
+            if plan.get("classification", {}).get("level") == "complexe":
+                from .council import Council
+                evidence = [{"task_id": t["id"], "agent_id": t["agent_id"], "tool": t["tool"],
+                             "output": json.loads(t["result_json"]) if t["result_json"] else None}
+                            for t in tasks if t["state"] == "done"]
+                council_res = Council(c["router"]).deliberate(mrow["objective"] if mrow else mission_id,
+                                                              evidence=evidence)
+                result["council"] = council_res
+                log_event(conn, "info", "council", f"arbitrage mission {mission_id} : {council_res['status']}",
+                          mission_id, {"status": council_res["status"]})
+                if council_res.get("decision"):
+                    try:
+                        c["memory"].add("omnibrain-core", "central", "omnibrain-core", "decision",
+                                        f"Conseil mission {mission_id} : {json.dumps(council_res['decision'], ensure_ascii=False)[:400]}",
+                                        source=f"council:{mission_id}", confidence=0.8,
+                                        metadata={"mission_id": mission_id, "subject_key": f"council:{mission_id}"})
+                    except Exception:
+                        pass
+        except Exception as e:
+            log_event(conn, "warning", "council", f"arbitrage non produit : {e}", mission_id)
         with transaction(conn):
             conn.execute("UPDATE missions SET state=?, result_json=?, updated_at=? WHERE id=?",
                          (state, json.dumps(result, ensure_ascii=False), now(), mission_id))

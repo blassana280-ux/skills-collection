@@ -70,7 +70,7 @@ aucune écriture sur `master`, aucune fusion automatique.
   (aucun outil actuel ne requiert de code arbitraire) ; embeddings inactifs.
 
 ## H. Qualité
-- **298 tests exécutés, tous verts** : 105 V4 + 193 SUPREME (`python3 -m unittest discover -s tests`).
+- **318 tests exécutés, tous verts** : 105 V4 + 213 SUPREME (`python3 -m unittest discover -s tests`).
 - 5 missions réelles exécutées : **15 tâches `done`**, 0 échec, coût 0.0.
 - KPIs réels : agent_success_rate 1.0, mission_success_rate 1.0, avg_mission_duration ~12.8 ms,
   duplicate_agent_rate 0.0, agent_evaluation_score 1.0 ; 6 KPIs `null` (indisponibles, non fabriqués).
@@ -84,6 +84,21 @@ aucune écriture sur `master`, aucune fusion automatique.
 - Commits : voir historique git. PR ouverte vers `master` (lien dans le message de livraison).
 - Aucune écriture sur `master`, aucune fusion, aucun force-push, aucun secret commité.
 - Promotion vers `omni-agents-framework` autonome : bloquée 403, documentée, non contournée.
+
+## Finalisation v1.2 (2026-11-05)
+- **Explicabilité** : chaque plan porte `explanation` + `why` par tâche (agent/outil/stratégie),
+  visible via `/api/missions/{id}` et le bouton « Pourquoi ? » du dashboard.
+- **Arbitrage intégré** : missions complexes → conseil multi-modèles sur preuves réelles ;
+  décision mémorisée ; `unavailable` honnête sans fournisseur. Testé (décidé via stub local).
+- **Évaluation LLM réelle** : activation `monitored` sur appel réel réussi (testé stub) ;
+  échec réel ≠ différé ; sans fournisseur → différé honnête.
+- **Workers séparés (Phase G)** : file persistante + claim atomique + vrai subprocess testé.
+  `python3 -m supreme worker` — montée en charge horizontale locale réelle ; cloud non déployé.
+- **Audit exécutable (Phase I)** : `python3 -m supreme audit` — preuves JSON horodatées.
+- **Cycle d'amélioration (Phase 13)** : `run_cycle()` observé→proposé→comparé→rapporté ;
+  acceptation sur gain mesuré uniquement ; PR/fusion = porte humaine ; noyau intact.
+- **Historique par agent** : `/api/agents/{id}/history` (missions, KPIs, évaluations, supervision).
+- **318 tests verts** (105 V4 + 213 SUPREME).
 
 ## J. État final par fonctionnalité
 | Fonctionnalité | État |
@@ -100,7 +115,11 @@ aucune écriture sur `master`, aucune fusion automatique.
 | Conseil multi-modèles (analyses réelles) | **Terminé et testé ; actif si fournisseur configuré** |
 | Sécurité/gouvernance + audit anti-fuite | **Terminé et testé** |
 | API + tableau de bord mobile (coûts/sécurité/contrôle) | **Terminé et testé (données réelles, live)** |
-| Apprentissage/auto-amélioration | **Terminé et testé** |
+| Apprentissage/auto-amélioration + cycle permanent | **Terminé et testé (gain mesuré, PR = humain)** |
+| Explicabilité des choix (agent/modèle/stratégie) | **Terminé et testé** |
+| Arbitrage conseil sur missions complexes | **Terminé et testé (stub) ; réel si fournisseur** |
+| Workers séparés + file persistante (local) | **Terminé et testé (vrai subprocess)** |
+| Audit exécutable | **Terminé et testé** |
 | Workflows CI | **Terminé (CI verte attendue sur PR)** |
 | Fournisseurs IA réellement connectés | **En attente d'autorisation (clés humaines) — 0 connecté** |
 | Recherche sémantique embeddings | **En développement (interface prête)** |
@@ -110,6 +129,6 @@ aucune écriture sur `master`, aucune fusion automatique.
 L'écosystème est **réellement construit et exécutable** : un cerveau central orchestre 1000
 spécialistes enregistrés/validés (20 divisions), 60 opérationnels sur preuve, avec mémoire,
 bus, sécurité, budget, observabilité, API et tableau de bord mobile — le tout gratuit, testé
-(298 tests) et documenté. L'intelligence multi-modèles est implémentée mais reste indisponible
+(318 tests) et documenté. L'intelligence multi-modèles est implémentée mais reste indisponible
 tant qu'aucune clé de fournisseur n'est fournie (action humaine). Aucun chiffre marketing :
 les 1000 agents ne sont pas présentés comme 1000 opérationnels.

@@ -1,7 +1,7 @@
 # Matrice des tests OMNIBRAIN SUPREME
 
-Suite : `python3 -m unittest discover -s tests` → **298 tests** (105 V4 + 193 SUPREME), tous verts.
-Suite SUPREME seule : `python3 -m unittest discover -s tests -p "test_supreme_*.py"` → **193 tests**.
+Suite : `python3 -m unittest discover -s tests` → **318 tests** (105 V4 + 213 SUPREME), tous verts.
+Suite SUPREME seule : `python3 -m unittest discover -s tests -p "test_supreme_*.py"` → **213 tests**.
 CI : `.github/workflows/omnibrain-supreme.yml` (Python 3.11/3.12/3.13).
 
 | Fichier | Couverture | Tests |
@@ -21,9 +21,11 @@ CI : `.github/workflows/omnibrain-supreme.yml` (Python 3.11/3.12/3.13).
 | `test_supreme_learning.py` | collecte, analyse, stratégies, gain, rollback, noyau protégé | 6 |
 | `test_supreme_observability.py` | KPIs réels/null, anti-doublons, traces, pas de secrets | 7 |
 | `test_supreme_backup.py` | sauvegarde/restauration, intégrité, refus corruption | 2 |
-| `test_supreme_api.py` | auth, lecture anonyme, écritures protégées, données réelles, dashboard, API threaded concurrente, sécurité (journal expurgé, rotation/révocation jeton, permissions 0600, non-affichage), observabilité (providers/alerts/security sans secret), mode TF-IDF | 43 |
+| `test_supreme_api.py` | auth, lecture anonyme, écritures protégées, données réelles, dashboard, API threaded concurrente, sécurité (journal expurgé, rotation/révocation jeton, permissions 0600, non-affichage), observabilité (providers/alerts/security sans secret), mode TF-IDF, détail mission + explication, historique agent | 45 |
 | `test_supreme_providers.py` | **fournisseurs** : mode sans fournisseur (local réel), client HTTP contre stub local (openai/anthropic/gemini/ollama, erreurs, expurgation), fallback, budget, priorité Mistral/Vide, conseil réel, sécurité des clés, anti-fuite, mission LLM bout-en-bout | 23 |
 | `test_supreme_security_audit.py` | **audit sécurité** : anti-fuite dépôt, fichiers secrets non suivis, isolation 1020 profils, anti-injection, actions protégées, stdlib only, validation entrées | 15 |
+| `test_supreme_intelligence.py` | **explicabilité** (plan + why par tâche), **arbitrage conseil** des missions complexes (décidé via stub / indisponible sans fournisseur), **activation LLM sur appel réel** (succès/échec/différé) | 9 |
+| `test_supreme_operations.py` | **worker séparé** (file, claim atomique, VRAI subprocess), **audit exécutable** (catalogue/sécurité/tests), **cycle d'apprentissage** (observer→proposer→comparer→rapport, noyau protégé) | 9 |
 | `test_supreme_e2e.py` | mission réelle → mémoire → télémétrie → rapport → traçabilité | 1 |
 
 > `test_supreme_api.py` contient `TestAPI` (8), `TestApiConcurrency` (8 rejoués + 1 concurrence = 9)

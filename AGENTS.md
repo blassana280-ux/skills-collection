@@ -44,4 +44,4 @@ existante.
   Ne jamais présenter 1000 agents enregistrés comme 1000 opérationnels.
 - **Aucun fournisseur IA supposé connecté** ; détection réelle, aucune connexion simulée.
 - Reprise du travail : `omni-agents-framework/docs/supreme/CONTINUITY.md`.
-- Tests : `cd omni-agents-framework && python3 -m unittest discover -s tests` (298 verts).
+- Tests : `cd omni-agents-framework && python3 -m unittest discover -s tests` (318 verts).

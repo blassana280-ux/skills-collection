@@ -48,7 +48,9 @@ class MissionPlanner:
                     raise PermissionError(f"{t['agent_id']} n'est pas autorisé à utiliser {tool}")
                 tasks.append({"id": f"{mission_id}-t{i:03d}", "agent_id": t["agent_id"], "tool": tool,
                               "input": t.get("input", TOOLS[tool].fixture if tool else {}),
-                              "depends_on": t.get("depends_on", []), "kind": "execute"})
+                              "depends_on": t.get("depends_on", []), "kind": "execute",
+                              "why": (f"agent explicitement désigné par l'appelant ; "
+                                      f"{'outil ' + tool + ' autorisé et vérifié' if tool else 'tâche LLM : exécutée via le routeur multi-modèles si fournisseur configuré, sinon bloquée honnêtement'}")})
         else:
             # Décomposition automatique : recherche d'agents pertinents activables hors ligne.
             candidates = self.registry.search(objective, limit=30)
@@ -60,9 +62,15 @@ class MissionPlanner:
             for i, a in enumerate(tool_agents, 1):
                 rep = next(e for e in a["profile"]["eval_tests"] if e["id"] == "representative")
                 tool = rep["tool"]
+                prof = a["profile"]
+                matched = [w for w in objective.lower().split()
+                           if w in (prof["objective"] + " " + " ".join(prof["primary_skills"])).lower()][:4]
                 tasks.append({"id": f"{mission_id}-t{i:03d}", "agent_id": a["id"], "tool": tool,
                               "input": inputs.get(a["id"], TOOLS[tool].fixture),
-                              "depends_on": [], "kind": "execute"})
+                              "depends_on": [], "kind": "execute",
+                              "why": (f"sélectionné par recherche du registre (termes communs : {', '.join(matched) or 'repli division partenaire'}) ; "
+                                      f"outil déterministe {tool} autorisé, exécutable hors ligne sans coût ; "
+                                      f"division {prof['division']} ({prof['specialization'][:60]})")})
             # Vérification indépendante par une autre division (D09 contract_check).
             exec_ids = [t["id"] for t in tasks]
             verifier = next((a for a in self.registry.list(division="D09", kind="specialist")
@@ -72,7 +80,8 @@ class MissionPlanner:
                               "tool": "contract_check",
                               "input": {"contract": {"name": "mission-result", "version": "1",
                                                      "fields": [{"name": "results", "type": "array"}]}},
-                              "depends_on": exec_ids, "kind": "verify"})
+                              "depends_on": exec_ids, "kind": "verify",
+                              "why": "vérification croisée indépendante : un agent d'une autre division (D09) contrôle le contrat de sortie, l'exécutant ne s'évalue pas seul"})
             # Rapport par le chef de la division principale.
             if tasks:
                 primary_div = self.registry.get(tasks[0]["agent_id"])["profile"]["division"]
@@ -83,7 +92,8 @@ class MissionPlanner:
                                   "input": {"division": primary_div,
                                             "agents": [{"id": t["agent_id"], "status": "validated"} for t in tasks if t["kind"] == "execute"],
                                             "metrics": {}},
-                                  "depends_on": [tasks[-1]["id"]], "kind": "report"})
+                                  "depends_on": [tasks[-1]["id"]], "kind": "report",
+                                  "why": f"supervision hiérarchique : le chef de {primary_div} consolide le rapport de division après vérification"})
 
         # Validation du DAG
         nodes = [t["id"] for t in tasks]
@@ -91,7 +101,19 @@ class MissionPlanner:
         dag = run_tool("dag_validate", {"nodes": nodes, "edges": edges})
         if not dag["valid"]:
             raise ValueError("graphe de tâches invalide (cycle)")
+        # Explicabilité : pourquoi cette stratégie, cette taille d'escouade, ces étapes.
+        provider_note = ("aucun fournisseur IA configuré : stratégie outils déterministes locaux (gratuit, vérifiable)"
+                         if self.router is None or not self.router.configured_models()
+                         else "fournisseur(s) configuré(s) : les tâches LLM peuvent être routées (preuve par appel réel)")
+        explanation = {
+            "classification": f"objectif de {len(objective.split())} mots, score {classification['score']} -> niveau {classification['level']}",
+            "squad_size": f"escouade de {classification['squad_size']} agent(s) selon le niveau {classification['level']} (simple=1, moyenne=3, complexe=5)",
+            "strategy": provider_note,
+            "verification": "vérification croisée par une division indépendante (D09 contract_check) quand des tâches sont générées automatiquement",
+            "arbitrage": "mission complexe -> conseil multi-modèles (preuves + indépendance, pas majorité) ; sans fournisseur, statut indisponible honnête",
+            "task_rationale": "chaque tâche porte un champ 'why' expliquant la sélection de l'agent et de l'outil",
+        }
         return {"mission_id": mission_id, "objective": objective, "classification": classification,
-                "tasks": tasks, "dag_order": dag["topological_order"],
+                "tasks": tasks, "dag_order": dag["topological_order"], "explanation": explanation,
                 "priority": spec.get("priority", 5), "budget_usd": spec.get("budget_usd", 0.05),
                 "privacy": spec.get("privacy", "standard")}

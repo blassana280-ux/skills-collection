@@ -210,6 +210,37 @@ class TestApiObservability(TestAPI):
         self.assertIn("loadSecurity", html)
         self.assertIn("memMode", html)  # sélecteur TF-IDF
 
+    def test_mission_detail_and_explainability(self):
+        code, data = self._post("/api/missions", {"objective": "Vérifier Python JSON"}, token="test-token")
+        mid = data["submitted"]["mission_id"]
+        code, detail = self._get(f"/api/missions/{mid}")
+        self.assertEqual(code, 200)
+        self.assertIn("explanation", detail["plan"])
+        self.assertTrue(all(t.get("why") for t in detail["plan"]["tasks"]))
+        import urllib.request
+        with urllib.request.urlopen(f"http://127.0.0.1:{self.port}/", timeout=10) as r:
+            html = r.read().decode()
+        self.assertIn("explainMission", html)
+        self.assertIn("explainBox", html)
+
+    def test_agent_history_endpoint(self):
+        # Exécuter une mission réelle pour produire un historique vérifiable.
+        code, data = self._post("/api/missions", {"objective": "Vérifier Python JSON"}, token="test-token")
+        self.assertEqual(code, 201)
+        tasks = data["result"]
+        self.assertEqual(tasks["state"], "completed")
+        # Récupérer un agent ayant exécuté une tâche
+        row = self.core.conn.execute("SELECT agent_id FROM tasks WHERE state='done' LIMIT 1").fetchone()
+        aid = row["agent_id"]
+        code, hist = self._get(f"/api/agents/{aid}/history")
+        self.assertEqual(code, 200)
+        self.assertEqual(hist["agent_id"], aid)
+        self.assertGreaterEqual(len(hist["missions_history"]), 1)
+        self.assertIn("task_success_rate", hist["kpis"])
+        self.assertIn("supervision", hist)
+        code, missing = self._get("/api/agents/S99-999-inexistant/history")
+        self.assertEqual(code, 404)
+
     def test_memory_search_tfidf_mode_via_api(self):
         self.core.memory.add("omnibrain-core", "collective", "collective", "semantic",
                              "latence réseau à optimiser", source="t", confidence=0.8)

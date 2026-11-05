@@ -69,3 +69,11 @@ mission représentative LLM **différée** (aucun fournisseur configuré) — ja
 `config` ← `db` ← `security` ← {`registry`, `bus`, `memory`, `budget`, `policy`}
 ← `planner` ← `orchestrator` ← {`api`, `__main__`}. `tools` est autonome.
 `router`/`council`/`evaluation`/`learning`/`observability`/`reporting`/`backup` au-dessus.
+
+## Compléments v1.1–1.2
+- `supreme/providers.py` : client HTTP multi-fournisseurs réel (composant Model Router étendu).
+- `supreme/worker.py` : processus worker séparé, claim atomique de la file (Resource Manager / Execution Runtime).
+- `supreme/audit.py` : audit exécutable avec preuves (Observability / Reporting).
+- Orchestrateur : arbitrage `Council` intégré aux missions complexes ; plans explicables (`explanation` + `why`).
+- Evaluation : représentatifs LLM tentés réellement si fournisseur configuré (activation sur preuve).
+- Learning : `run_cycle()` — cycle permanent observé→proposé→comparé→rapporté, PR = porte humaine.
