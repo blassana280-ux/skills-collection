@@ -13,7 +13,7 @@ python3 -m supreme catalog --check        # vérifie 1000 spécialistes + 20 che
 python3 -m supreme sync                   # registre SQLite
 python3 -m supreme evaluate --activate    # valide + active sur preuve réelle
 python3 -m supreme serve --port 8765      # API + tableau de bord mobile
-python3 -m unittest discover -s tests     # 221 tests (105 V4 + 116 SUPREME)
+python3 -m unittest discover -s tests     # 231 tests (105 V4 + 126 SUPREME)
 ```
 
 ## État réel (ne pas confondre enregistré et opérationnel)
@@ -21,7 +21,7 @@ python3 -m unittest discover -s tests     # 221 tests (105 V4 + 116 SUPREME)
 - **60 agents opérationnels/surveillés** ayant exécuté réellement leur mission représentative.
 - **960 missions représentatives LLM différées** : aucun fournisseur IA configuré.
 - **0 doublon**, 27 champs + 7 évaluations par profil, contrôles automatiques.
-- **221 tests verts**, 5 missions réelles exécutées (coût 0.0 USD).
+- **231 tests verts**, 5 missions réelles exécutées (coût 0.0 USD).
 
 ## Documentation
 - [Audit réel](omni-agents-framework/docs/supreme/AUDIT.md)

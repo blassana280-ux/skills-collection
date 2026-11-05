@@ -62,10 +62,12 @@ aucune écriture sur `master`, aucune fusion automatique.
   (aucun outil actuel ne requiert de code arbitraire) ; embeddings inactifs.
 
 ## H. Qualité
-- **221 tests exécutés, tous verts** : 105 V4 + 116 SUPREME (`python3 -m unittest discover -s tests`).
+- **231 tests exécutés, tous verts** : 105 V4 + 126 SUPREME (`python3 -m unittest discover -s tests`).
 - 5 missions réelles exécutées : **15 tâches `done`**, 0 échec, coût 0.0.
 - KPIs réels : agent_success_rate 1.0, mission_success_rate 1.0, avg_mission_duration ~12.8 ms,
   duplicate_agent_rate 0.0, agent_evaluation_score 1.0 ; 6 KPIs `null` (indisponibles, non fabriqués).
+- Durcissement concurrence : défaut `database is locked` (workers/API partageant une connexion)
+  détecté par stress puis corrigé (connexion SQLite par thread, WAL) ; 2 tests de régression ajoutés.
 - Erreurs restantes : aucune dans le périmètre livré ; limites documentées.
 
 ## I. GitHub
@@ -98,6 +100,6 @@ aucune écriture sur `master`, aucune fusion automatique.
 L'écosystème est **réellement construit et exécutable** : un cerveau central orchestre 1000
 spécialistes enregistrés/validés (20 divisions), 60 opérationnels sur preuve, avec mémoire,
 bus, sécurité, budget, observabilité, API et tableau de bord mobile — le tout gratuit, testé
-(221 tests) et documenté. L'intelligence multi-modèles est implémentée mais reste indisponible
+(231 tests) et documenté. L'intelligence multi-modèles est implémentée mais reste indisponible
 tant qu'aucune clé de fournisseur n'est fournie (action humaine). Aucun chiffre marketing :
 les 1000 agents ne sont pas présentés comme 1000 opérationnels.

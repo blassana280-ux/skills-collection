@@ -22,8 +22,8 @@
 - Backup & Recovery (SQLite à chaud, intégrité, restauration).
 - API Gateway (auth par jeton, rôles) + tableau de bord mobile (données réelles).
 - Reporting Engine (missions, divisions, global, markdown).
-- 42 outils déterministes réels + Skill Registry (860 skills documentaires indexés).
-- **116 tests SUPREME** (+ 105 V4 = 221 verts). CI dédiée Python 3.11/3.12/3.13.
+- 41 outils déterministes réels + Skill Registry (860 skills documentaires indexés).
+- **126 tests SUPREME** (+ 105 V4 = 231 verts). CI dédiée Python 3.11/3.12/3.13.
 - Documentation complète + suivi durable (CONTINUITY.md).
 
 ### Réutilisé (V4, non réécrit)
@@ -34,3 +34,10 @@
 - Aucun fournisseur IA connecté (clés absentes, réseau sandbox limité).
 - Recherche sémantique par embeddings inactive (FTS5 lexical réel).
 - Promotion vers `omni-agents-framework` autonome bloquée (403 jeton GitHub App).
+
+## 1.0.1 — 2026-11-05 (durcissement concurrence)
+- **Correctif thread-safety** : workers DAG et requêtes API utilisent désormais une connexion
+  SQLite par thread (WAL) au lieu de partager la connexion principale. Élimine les erreurs
+  `database is locked` sous charge multi-missions / API multi-thread.
+- 2 tests de régression ajoutés (missions parallèles, API concurrente) → **126 tests SUPREME / 231 total**.
+- Documentation : décomptes réels (41 outils, 231 tests) corrigés.

@@ -18,7 +18,7 @@ Lecture anonyme si `SUPREME_ALLOW_ANON_READ=1`. Écritures : jeton admin obligat
 | `/api/quotas` | Quotas + totaux dépenses |
 | `/api/memory/search?q=&level=&limit=` | Recherche mémoire (FTS5) |
 | `/api/approvals` | Approbations en attente |
-| `/api/tools` | 42 outils exécutables |
+| `/api/tools` | 41 outils exécutables |
 | `/api/skills` | Skills documentaires + outils |
 | `/api/bus` | Statistiques du bus |
 | `/api/reports/global` | Rapport global |

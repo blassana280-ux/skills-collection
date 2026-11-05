@@ -24,7 +24,7 @@ télémétrie V4 plutôt que de les réécrire. Python 3.11+ **stdlib uniquement
 | 12 | Knowledge Graph | `supreme/memory.py` `relate/neighbors` | Implémenté, testé |
 | 13 | Communication Bus | `supreme/bus.py` (ACL, anti-usurpation, DLQ) | Implémenté, testé |
 | 14 | Execution Runtime | `supreme/runtime.py` `WorkerPool` | Implémenté, testé |
-| 15 | Tool Integration Layer | `supreme/tools.py` (42 outils déterministes) | Implémenté, testé |
+| 15 | Tool Integration Layer | `supreme/tools.py` (41 outils déterministes) | Implémenté, testé |
 | 16 | Security Supervisor | `supreme/security.py` | Implémenté, testé |
 | 17 | Policy Engine | `supreme/policy.py` (4 niveaux, approbations) | Implémenté, testé |
 | 18 | Evaluation Engine | `supreme/evaluation.py` (7 tests/profil) | Implémenté, testé |

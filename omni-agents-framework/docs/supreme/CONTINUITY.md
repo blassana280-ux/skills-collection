@@ -6,7 +6,7 @@ Ce document permet à un autre agent IA de reprendre le travail sans perdre le c
 ## État actuel
 - Couche SUPREME 1.0.0 livrée dans `omni-agents-framework/supreme/`.
 - **1000 spécialistes + 20 chefs** générés, validés ; **60 opérationnels/surveillés** sur preuve réelle.
-- **221 tests verts** (105 V4 + 116 SUPREME). CI dédiée ajoutée.
+- **231 tests verts** (105 V4 + 126 SUPREME). CI dédiée ajoutée.
 - API + tableau de bord mobile fonctionnels sur données réelles.
 - 0 fournisseur IA configuré (honnête) ; routeur/conseil implémentés mais indisponibles sans clés.
 
@@ -38,7 +38,7 @@ Source de vérité des profils : `supreme/divisions/divNN.py` → `supreme/catal
 - PR #2 `omni-research-100` : projet parallèle non fusionné, non touché.
 
 ## Tests
-`cd omni-agents-framework && python3 -m unittest discover -s tests` → 221 verts.
+`cd omni-agents-framework && python3 -m unittest discover -s tests` → 231 verts.
 CI : `.github/workflows/omnibrain-supreme.yml`.
 
 ## Problèmes / permissions manquantes

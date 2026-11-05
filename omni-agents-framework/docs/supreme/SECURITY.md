@@ -16,7 +16,7 @@
 - **RBAC V4 réutilisé** : `omni.sandbox.runtime.RBAC`, actions irréversibles réservées à l'humain.
 - **Auto-modification interdite** : le Learning Engine refuse toute stratégie ciblant le noyau
   ou les politiques. Testé.
-- **Outils sans code arbitraire** : les 42 outils sont des fonctions pures déterministes ; aucun
+- **Outils sans code arbitraire** : les 41 outils sont des fonctions pures déterministes ; aucun
   n'exécute de code non fiable. Le sandbox V4 (`python -I`) reste disponible pour les futurs
   besoins d'exécution isolée.
 

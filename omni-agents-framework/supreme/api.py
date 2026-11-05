@@ -103,52 +103,55 @@ def make_handler(state: APIState):
             if role is None:
                 return self._send(401, {"error": "authentification requise"})
             core = state.core
+            c = core._c()
+            obs = ObservabilityEngine(c["conn"], c["registry"], c["budget"], c["router"])
+            reporting = ReportingEngine(c["conn"], c["registry"], obs)
             try:
                 if path == "/api/health":
                     return self._send(200, {"status": "ok", "version": "1.0.0"})
                 if path == "/api/status":
-                    return self._send(200, state.obs.system_status())
+                    return self._send(200, obs.system_status())
                 if path == "/api/kpis":
-                    return self._send(200, state.obs.kpis())
+                    return self._send(200, obs.kpis())
                 if path == "/api/agents":
-                    agents = core.registry.list(division=qs.get("division", [None])[0],
+                    agents = c["registry"].list(division=qs.get("division", [None])[0],
                                                 kind=qs.get("kind", [None])[0], status=qs.get("status", [None])[0])
                     return self._send(200, {"count": len(agents), "agents": [
                         {k: a[k] for k in ("id", "name", "division", "kind", "status", "version")} |
                         {"objective": a["profile"]["objective"], "risk": a["profile"]["risk_level"]} for a in agents]})
                 if path.startswith("/api/agents/"):
-                    a = core.registry.get(path.split("/")[-1])
+                    a = c["registry"].get(path.split("/")[-1])
                     return self._send(200 if a else 404, a or {"error": "agent inconnu"})
                 if path == "/api/divisions":
-                    return self._send(200, {"divisions": core.registry.divisions_summary()})
+                    return self._send(200, {"divisions": c["registry"].divisions_summary()})
                 if path == "/api/missions":
                     return self._send(200, {"missions": core.list_missions()})
                 if path.startswith("/api/missions/"):
                     return self._send(200, core.status(path.split("/")[-1]))
                 if path == "/api/models":
-                    core.router.detect()
-                    return self._send(200, core.router.status())
+                    c["router"].detect()
+                    return self._send(200, c["router"].status())
                 if path == "/api/quotas":
-                    return self._send(200, {"totals": core.budget.totals(),
-                                            "quotas": [dict(r) for r in core.conn.execute("SELECT * FROM quotas")]})
+                    return self._send(200, {"totals": c["budget"].totals(),
+                                            "quotas": [dict(r) for r in c["conn"].execute("SELECT * FROM quotas")]})
                 if path == "/api/memory/search":
-                    return self._send(200, core.memory.search("omnibrain-core", query=qs.get("q", [""])[0],
+                    return self._send(200, c["memory"].search("omnibrain-core", query=qs.get("q", [""])[0],
                                                               level=qs.get("level", [None])[0], limit=int(qs.get("limit", ["20"])[0])))
                 if path == "/api/approvals":
-                    return self._send(200, {"pending": core.policy.pending_approvals()})
+                    return self._send(200, {"pending": c["policy"].pending_approvals()})
                 if path == "/api/tools":
                     return self._send(200, {"tools": [{"name": t.name, "description": t.description, "risk": t.risk,
                                                        "version": t.version, "executable": True} for t in TOOLS.values()]})
                 if path == "/api/skills":
                     return self._send(200, state.skills.stats() | {"sample": state.skills.list(limit=20)})
                 if path == "/api/bus":
-                    return self._send(200, core.bus.stats())
+                    return self._send(200, c["bus"].stats())
                 if path == "/api/reports/global":
-                    return self._send(200, state.reporting.global_report())
+                    return self._send(200, reporting.global_report())
                 if path == "/api/backups":
                     return self._send(200, {"backups": state.backup.list_backups()})
                 if path.startswith("/api/trace/"):
-                    return self._send(200, state.obs.mission_trace(path.split("/")[-1]))
+                    return self._send(200, obs.mission_trace(path.split("/")[-1]))
                 return self._send(404, {"error": "route inconnue"})
             except KeyError as e:
                 return self._send(404, {"error": str(e)})
@@ -163,6 +166,7 @@ def make_handler(state: APIState):
                 return self._send(401, {"error": "jeton admin requis pour les écritures"})
             body = self._body()
             core = state.core
+            c = core._c()
             try:
                 if path == "/api/missions":
                     from .security import validate_mission_input
@@ -179,14 +183,14 @@ def make_handler(state: APIState):
                 if path.startswith("/api/missions/") and path.endswith("/cancel"):
                     return self._send(200, core.cancel(path.split("/")[3]))
                 if path.startswith("/api/approvals/") and path.endswith("/decide"):
-                    return self._send(200, core.policy.decide(path.split("/")[3], bool(body.get("approved")), body.get("decided_by", "Lassana")))
+                    return self._send(200, c["policy"].decide(path.split("/")[3], bool(body.get("approved")), body.get("decided_by", "Lassana")))
                 if path == "/api/approvals":
-                    aid = core.policy.request_approval(body.get("action", "deploy"), body.get("requested_by", "api"), body.get("context", {}))
+                    aid = c["policy"].request_approval(body.get("action", "deploy"), body.get("requested_by", "api"), body.get("context", {}))
                     return self._send(201, {"approval_id": aid})
                 if path == "/api/backup":
                     return self._send(201, state.backup.backup(body.get("label", "")))
                 if path == "/api/providers/check":
-                    return self._send(200, {"results": core.router.check_availability()})
+                    return self._send(200, {"results": c["router"].check_availability()})
                 return self._send(404, {"error": "route inconnue"})
             except PermissionError as e:
                 return self._send(403, {"error": str(e)})

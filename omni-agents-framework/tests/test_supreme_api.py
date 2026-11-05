@@ -90,3 +90,24 @@ class TestAPI(SupremeTestCase):
 if __name__ == "__main__":
     import unittest
     unittest.main()
+
+
+class TestApiConcurrency(TestAPI):
+    def test_concurrent_reads_and_mission(self):
+        import concurrent.futures
+
+        def get_status(_):
+            code, data = self._get("/api/status")
+            return code
+
+        def submit_mission(i):
+            code, data = self._post("/api/missions",
+                                    {"objective": f"Vérifier Python JSON secrets {i}"},
+                                    token="test-token")
+            return code, data.get("result", {}).get("state")
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as ex:
+            reads = list(ex.map(get_status, range(10)))
+            missions = list(ex.map(submit_mission, range(4)))
+        self.assertTrue(all(c == 200 for c in reads), reads)
+        self.assertTrue(all(c == 201 and s == "completed" for c, s in missions), missions)

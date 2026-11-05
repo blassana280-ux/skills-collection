@@ -92,3 +92,19 @@ class TestOrchestrator(SupremeTestCase):
 if __name__ == "__main__":
     import unittest
     unittest.main()
+
+
+class TestConcurrentMissions(SupremeTestCase):
+    def test_parallel_missions_thread_safe(self):
+        import concurrent.futures
+        core = self.core
+
+        def run_mission(i):
+            sub = core.submit({"objective": f"Vérifier Python JSON secrets latence cron csv {i}"})
+            return core.run(sub["mission_id"])["state"]
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as ex:
+            states = list(ex.map(run_mission, range(8)))
+        self.assertTrue(all(s == "completed" for s in states), states)
+        done = self.conn.execute("SELECT COUNT(*) c FROM tasks WHERE state='done'").fetchone()["c"]
+        self.assertEqual(done, 24)  # 8 missions x 3 tâches
