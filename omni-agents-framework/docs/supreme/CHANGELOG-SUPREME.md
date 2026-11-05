@@ -1,10 +1,42 @@
 # Changelog OMNIBRAIN SUPREME
 
-Version de livraison courante : **SUPREME 1.2.1**. Le paquet V4 historique
+Version de livraison courante : **SUPREME 1.3.0**. Le paquet V4 historique
 `omnibrain-framework` reste à `1.0.0` dans `omni-agents-framework/pyproject.toml` ;
 il ne faut pas confondre cette version V4 avec la version de la couche SUPREME.
 Racine dépôt : `skills-collection/`. Chemins ci-dessous relatifs à
 `skills-collection/omni-agents-framework/` sauf mention contraire.
+
+## 1.3.0 — 2026-11-05 (activation intelligence réelle : Mistral, campagnes, conseil vérifiable)
+### Ajouté / durci
+- **Mistral/Vide** : adaptateur HTTP officiel `/v1/models` + `/v1/chat/completions`, Bearer en en-tête,
+  découverte de modèles, parsing capacités/contexte/usage, erreurs/délais bornés, pas de retry automatique
+  des POST d'inférence, pas de redirection suivie, journalisation sans secrets.
+- **Connexion sécurisée sans clé dans le chat** : `providers --connect mistral` (getpass, terminal privé),
+  env, `MISTRAL_API_KEY_FILE`, fichier runtime `var/supreme/secrets/mistral.key` 0600/répertoire 0700 ;
+  refus des permissions trop larges, symlinks, fichiers non détenus par l'utilisateur courant.
+- **Autorisation d'inférence fermée par défaut** : `provider_controls`, confirmation humaine CLI,
+  plafond USD, nombre d'appels, expiration ≤24 h, quotas centraux, garde atomique dans la réservation.
+  Aucune autorisation d'inférence via l'API publique ; découverte GET séparée de la génération.
+- **Prix attestés** : pas de génération externe sans prix déclarés par l'opérateur, source HTTPS,
+  fraîcheur ≤30 jours ; le coût réel est soldé sur l'usage fournisseur, une réponse sans usage est incertaine.
+- **Activation progressive** : paliers cumulatifs 5 → 20 → 60 → 100 → +100 → 960 agents LLM,
+  sélection round-robin entre divisions, preuve `external_api` obligatoire, sortie JSON exploitable,
+  permissions/budget vérifiés, quarantaine isolée, reprise après interruption, revue humaine pour lever la quarantaine.
+  Un stub local ne peut pas activer un agent LLM.
+- **Conseil vérifiable** : seules les références vers les preuves fournies comptent ; confiance auto-déclarée
+  insuffisante ; second avis borné si désaccord ; statut `needs_review` au lieu d'une fausse décision.
+- **Planification multi-spécialités** : mode LLM explicite sans substitut local simulé, sélection cross-division,
+  vérification structurelle indépendante distinguée de la vérité métier.
+- **Mémoire** : contradictions fondées sur `subject_key` + `claim_key` + `claim_value`, pas sur la simple formulation.
+- **Apprentissage** : comparaison mesurée avant/après entre cycles persistés ; une baseline initiale n'est pas un gain.
+- **Dashboard mobile** : fournisseurs/modèles, activation, décisions, performances par division, coûts/exposition,
+  réservations, alertes ; échappement HTML des données externes.
+- **Schéma SQLite v3 additif** : contrôles fournisseurs, modèles découverts, vérifications, campagnes,
+  membres, preuves d'activation, quarantaine. Aucune suppression de données.
+### Tests à cette livraison
+- **378 tests découverts** = **105 V4/non-SUPREME + 273 SUPREME**.
+- **377 tests locaux exécutés verts + 1 test fournisseur réel opt-in ignoré** faute d'identifiant et d'egress.
+  Aucun fournisseur IA réel connecté, aucun cloud, aucune dépense.
 
 ## 1.2.1 — 2026-11-05 (durcissement final : workers, apprentissage, budget, cohérence)
 ### Corrigé / durci
@@ -36,7 +68,7 @@ Racine dépôt : `skills-collection/`. Chemins ci-dessous relatifs à
 - **Synchronisation GitHub** : merge propre de `master` `af4b951` dans la branche de
   travail, sans réécriture d'historique, sans modification directe de `master`, sans fusion de PR.
 ### Tests
-- Suite complète réelle : **340 tests verts** = **105 V4/non-SUPREME + 235 SUPREME**.
+- Suite complète réelle : **378 tests verts** = **105 V4/non-SUPREME + 273 SUPREME**.
 - Ajout `omni-agents-framework/tests/test_supreme_hardening.py` : 20 tests locaux réels
   (multi-processus, SIGKILL/SIGTERM, fencing, migration, apprentissage périodique,
   budget/conseil, quotas concurrents). Aucun fournisseur IA réel, aucun cloud.

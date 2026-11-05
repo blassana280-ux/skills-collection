@@ -12,12 +12,18 @@
 | API 401 sur écriture | Jeton absent/invalide | Fournir `X-API-Token` (voir `var/supreme/api_token.txt`) |
 | `backpressure : file saturée` | Trop de tâches simultanées | Réduire la concurrence ou augmenter `queue_limit` |
 | Fournisseur `unreachable` | Réseau sortant limité | Vérifier l'accès réseau réel ; le sandbox limite aux hôtes autorisés |
+| `providers --connect` refuse | pas de TTY, permissions trop larges, symlink, propriétaire différent | utiliser un terminal privé ; fichier 0600/répertoire 0700 ; ne pas coller la clé dans le chat |
+| `configured=true` mais `connected=0` | clé présente, aucune découverte réussie | `providers --verify PROVIDER` ; inspecter erreur réseau/auth sans afficher la clé |
+| Inférence refusée avant réseau | contrôle absent/expiré, prix non attestés, modèle non découvert, quota | CLI privé : prix attestés + autorisation bornée ; ne pas contourner |
+| Campagne `blocked` | fournisseur non connecté/autorisé ou palier invalide | `activation --status` ; respecter 5→20→60→100→…→960 |
+| Agent en quarantaine | échec individuel prouvé | revue humaine ; `activation --release-quarantine AGENT_ID --evidence ... --confirm ...` |
+| Réponse externe sans usage | coût réel inconnu | traiter comme incertain ; réconcilier avec preuve fournisseur, pas de double POST automatique |
 
 ## Journalisation
 Événements structurés dans la table `events` (+ export `var/supreme/events.jsonl`),
 corrélés aux missions. Secrets rédigés. `/api/trace/{id}` pour la trace complète.
 
-## 1.2.1 — workers, baux, apprentissage, budget
+## 1.3.0 — workers, baux, apprentissage, budget
 | Symptôme | Cause probable | Action sûre |
 | --- | --- | --- |
 | HTTP 409 sur `/api/missions/{id}/run` | mission déjà détenue par un worker actif | attendre le worker ou inspecter le bail ; ne pas forcer |

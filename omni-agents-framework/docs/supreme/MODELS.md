@@ -1,50 +1,44 @@
-# Routeur multi-modèles & Conseil OMNIBRAIN SUPREME
+# Routeur multi-modèles & Conseil — SUPREME 1.3.0
 
-## Fournisseurs examinés
-OpenAI, Mistral, DeepSeek, Google Gemini, OpenRouter, Anthropic, Ollama (local),
-compatibles OpenAI. **Aucun n'est connecté actuellement** (aucune clé dans l'environnement,
-réseau sortant du sandbox limité à GitHub/npm/PyPI).
+> État réel : aucun fournisseur connecté, aucun modèle externe découvert en production,
+> aucune inférence externe réussie. Le code est implémenté et testé localement ; la connexion
+> réelle reste bloquée par l'absence d'identifiant privé et par l'egress du sandbox.
 
-## Détection réelle
-- `router.detect()` : inspecte la **présence** des variables d'environnement (jamais leur valeur).
-- `router.check_availability()` : appel HTTP réel **seulement si configuré** ; statuts
-  `not_configured`, `available`, `auth_error`, `unreachable`, `network_disabled`.
-- Aucune connexion simulée ; aucun identifiant fabriqué.
+## Découverte et catalogue
+- `ModelRouter.discover_provider(provider)` tente un GET réel de catalogue seulement si une clé est configurée.
+- `sync_catalog(provider)` persiste les modèles découverts dans `provider_models` avec capacités,
+  contexte, aliases, prix attestés éventuels et date de vérification. Une liste vide n'est pas une connexion.
+- `routable_models(task)` ne propose que des modèles découverts, compatibles avec la tâche, le contexte,
+  la confidentialité, les outils, le coût maximal et le fournisseur demandé.
+- Sans fournisseur : `available=false`, raison explicite, aucun modèle inventé. Un outil déterministe
+  local ne peut servir que si la tâche l'autorise explicitement ; un agent LLM ne reçoit pas de substitut simulé.
 
 ## Routage intelligent
-Score = capacité (0.5) + qualité historique (0.3) + coût (0.1) − latence (0.1).
-Contraintes : `privacy=local-only` (modèles locaux seuls), `tools_required`, `max_cost_usd`.
-Fallback : liste des modèles alternatifs classés. Sans fournisseur : `available=false` avec
-raison explicite et repli vers outil déterministe local si la tâche le permet.
+Score = capacité + qualité historique + coût + latence, avec contraintes dures :
+`privacy=local-only`, `tools_required`, `max_cost_usd`, contexte, provider demandé, modèle autorisé.
+Mistral est prioritaire quand il est réellement disponible. Les fallbacks sont bornés et tracés.
+Chaque tentative expose `category`, `endpoint_host`, `request_id`, statut, coût et réservation.
+Seule une tentative `external_api` réussie peut compter comme preuve fournisseur.
+
+## Garde d'inférence
+Avant tout POST externe : contrôle humain actif, non expiré, plafond USD et nombre d'appels,
+prix attestés frais, modèle découvert, contexte connu, quota central. La garde est évaluée dans
+la transaction de réservation pour éviter les courses. Découverte GET ≠ génération payante.
+Les POST ne sont pas rejoués automatiquement ; les redirections sont refusées ; TLS vérifié.
 
 ## Conseil multi-modèles
-Protocole : formulation → analyses indépendantes → arguments → comparaison → vérification →
-désaccords → évaluation des preuves → synthèse → décision. **Décision fondée sur preuves +
-indépendance des sources, pas sur la majorité seule** (testé : une réponse minoritaire mais
-prouvée bat une majorité sans preuve). Budget et tours bornés (`CouncilConfig`).
-Sans fournisseur : statut `unavailable`. La production d'analyses via appels API réels reste
-à câbler quand des clés seront fournies (non simulée).
+1. Chaque représentant produit une analyse réelle via son agent/modèle autorisé.
+2. Le conseil compare les arguments et les références vers les preuves fournies.
+3. Une référence inventée ou une confiance auto-déclarée ne vérifie pas une décision.
+4. Désaccord → second avis borné à un appel supplémentaire si le budget restant le permet.
+5. Sans consensus vérifiable : `needs_review`, pas de fausse décision ni de mémoire centrale présentée comme vérité.
+6. Les coûts sont soldés sur l'usage réel ; une réponse sans usage est incertaine.
 
-## Activation (action humaine requise)
-Fournir les clés via variables d'environnement / secrets GitHub, puis :
-```bash
-python3 -m supreme serve   # ou POST /api/providers/check
-```
-Le routeur détectera et testera réellement les fournisseurs. Aucune dépense sans accord.
+## Activation progressive
+Voir `PROVIDERS.md` : paliers 5→20→60→100→…→960, preuve individuelle `external_api`,
+permissions/budget, quarantaine isolée, reprise contrôlée. Aucun saut direct vers 1020.
+Les 60 outils déterministes existants restent séparés des 960 profils LLM.
 
-## Client réel (v1.1+)
-Le routeur ne se limite plus à la détection : `ModelRouter.complete()` effectue de VRAIS appels
-HTTP (voir `PROVIDERS.md`), avec fallback multi-fournisseurs, budget réel et priorité Mistral/Vide.
-Les agents LLM et le conseil s'exécutent réellement dès qu'un fournisseur est configuré et
-répond ; sans fournisseur, tout est bloqué/indisponible honnêtement. `configured != available` :
-seul un appel réussi prouve la disponibilité.
-
-## Budget strict 1.2.1
-- `ModelRouter.complete` réserve une borne supérieure de coût avant chaque tentative,
-  puis solde sur l'usage réel. Les tentatives sont tracées (fournisseur, modèle, statut,
-  coût, réservation). Les dépassements individuels sont bloqués avant HTTP.
-- `Council.deliberate` utilise `router.complete` avec un plafond collectif conservateur
-  fondé sur les bornes de coût et sans fallback interne ; il ne contourne pas les quotas centraux.
-- Les erreurs réseau/5xx incertaines conservent une réservation `interrupted` par prudence ;
-  les rejets explicites avant traitement (ex. 401) libèrent la réservation.
-- `max_tokens` doit être positif et tenir dans le contexte ; sinon l'appel est bloqué avant HTTP.
+## Sources
+Contrat Mistral confronté au SDK officiel `mistralai/client-python` à `d3da3bd3…`.
+Les prix et modèles disponibles ne sont pas inventés : découverte réelle + attestation humaine des prix.

@@ -13,6 +13,7 @@ on:
       - "omni-agents-framework/tests/_supreme_worker_helper.py"
       - "omni-agents-framework/docs/supreme/**"
       - "OMNIBRAIN-SUPREME.md"
+      - "AGENTS.md"
       - ".github/workflows/omnibrain-supreme.yml"
   pull_request:
     paths:
@@ -21,6 +22,7 @@ on:
       - "omni-agents-framework/tests/_supreme_worker_helper.py"
       - "omni-agents-framework/docs/supreme/**"
       - "OMNIBRAIN-SUPREME.md"
+      - "AGENTS.md"
       - ".github/workflows/omnibrain-supreme.yml"
   workflow_dispatch:
 
@@ -54,9 +56,12 @@ jobs:
       - name: Run full suite (V4 + SUPREME, non-régression)
         run: python3 -m unittest discover -s tests
 
-      - name: CLI smoke — sync + mission réelle + worker + learn + audit
+      - name: CLI smoke — sync + providers/activation sans clés + mission réelle + worker + learn + audit
         run: |
           python3 -m supreme sync
+          python3 -m supreme providers --status
+          python3 -m supreme mistral status
+          python3 -m supreme activation --status
           python3 -m supreme mission "Vérifier la syntaxe Python et valider un document JSON"
           python3 -m supreme mission "Vérifier JSON pour worker" --no-run
           python3 -m supreme worker --once --lease-seconds 5 --heartbeat-seconds 1

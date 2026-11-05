@@ -58,12 +58,17 @@ class EvaluationEngine:
                         [{"role": "system", "content": prof["system_instructions"]},
                          {"role": "user", "content": prompt}],
                         max_tokens=256, agent_id=agent_id)
-                    if res["ok"] and res["text"].strip():
+                    proof = res.get("proof") or {}
+                    if res["ok"] and res["text"].strip() and proof.get("category") == "external_api" and proof.get("http_status") == 200:
                         results["representative"] = {
                             "passed": True, "deferred": False,
-                            "evidence": f"appel LLM réel réussi via {res['provider']}/{res['model']}",
+                            "evidence": f"appel LLM externe réussi via {res['provider']}/{res['model']}",
                             "output": {"text": res["text"][:500],
                                        "model": f"{res['provider']}/{res['model']}"}}
+                    elif res["ok"]:
+                        results["representative"] = {
+                            "passed": False, "deferred": False,
+                            "evidence": "appel local/stub réussi mais non activant : preuve API externe requise"}
                     else:
                         results["representative"] = {
                             "passed": False, "deferred": False,

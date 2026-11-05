@@ -38,7 +38,8 @@ def _catalog_audit() -> dict:
 def _security_audit() -> dict:
     tok = VAR_DIR / "api_token.txt"
     files_ignored = {}
-    for rel in ("var/supreme/api_token.txt", "var/supreme/providers.json", "var/supreme/access.log"):
+    for rel in ("var/supreme/api_token.txt", "var/supreme/providers.json", "var/supreme/access.log",
+                "var/supreme/secrets/mistral.key", "var/supreme/activation/act-example.json"):
         r = subprocess.run(["git", "check-ignore", "-q", f"omni-agents-framework/{rel}"],
                            cwd=FRAMEWORK_ROOT.parent, capture_output=True)
         files_ignored[rel] = r.returncode == 0
@@ -68,6 +69,8 @@ def run_audit(save: bool = True, conn=None) -> dict:
     from . import SUPREME_VERSION
     from .backup import BackupManager
     from .providers import configured_providers
+    from .provider_control import ProviderControl
+    from .activation import ActivationManager
     from .registry import Registry
     from .observability import ObservabilityEngine
     from .budget import BudgetController
@@ -97,11 +100,13 @@ def run_audit(save: bool = True, conn=None) -> dict:
                                      "limit_usd": q["limit_usd"], "exposure_usd": exposure})
     over_settled = conn.execute(
         "SELECT COUNT(*) c FROM budget_reservations WHERE status='settled' AND actual_cost_usd > amount_usd + 1e-12").fetchone()["c"]
+    activation_running = conn.execute("SELECT COUNT(*) c FROM activation_campaigns WHERE status='running'").fetchone()["c"]
     reliability = {"schema_version": int(schema["value"]) if schema else None,
                    "workers": workers, "active_leases": active_leases,
                    "orphan_active_tasks_in_planned_missions": orphan_tasks,
                    "learning_running": learning_running, "learning_error_runs": learning_errors,
-                   "ok": (schema and int(schema["value"]) >= 2 and orphan_tasks == 0 and learning_running <= 1)}
+                   "activation_campaigns_running": activation_running,
+                   "ok": (schema and int(schema["value"]) >= 3 and orphan_tasks == 0 and learning_running <= 1 and activation_running <= 1)}
     budget_audit = {"reservations": {r["status"]: r["c"] for r in conn.execute(
                         "SELECT status, COUNT(*) c FROM budget_reservations GROUP BY status")},
                     "quota_violations": quota_violations, "settled_over_reservation": over_settled,
@@ -112,8 +117,12 @@ def run_audit(save: bool = True, conn=None) -> dict:
         "catalog": _catalog_audit(),
         "registry": {"status_counts": registry.status_counts()},
         "providers": {"configured_count": sum(1 for p in conf if p["configured"]),
+                      "verification": ProviderControl(conn).summary(),
                       "priority_order": [p["name"] for p in sorted(conf, key=lambda x: x["priority"])],
-                      "note": "configuré != opérationnel ; 0 appel réel réussi = 0 connecté"},
+                      "note": "configuré != connecté ; preuve external_api réussie requise ; inférence fermée par défaut"},
+        "activation": {"external_llm_activated": len(ActivationManager(conn, registry, ModelRouter(conn)).activated_ids()),
+                       "quarantined": conn.execute("SELECT COUNT(*) c FROM agent_quarantine WHERE review_required=1").fetchone()["c"],
+                       "campaigns": {r["status"]: r["c"] for r in conn.execute("SELECT status, COUNT(*) c FROM activation_campaigns GROUP BY status")}},
         "security": _security_audit(),
         "reliability": reliability,
         "budget": budget_audit,

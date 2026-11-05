@@ -295,7 +295,8 @@ class TestCouncilLocalStub(unittest.TestCase):
         with mock.patch.dict(os.environ, {**_clean_env(), "STUB_KEY": "stub-secret-123"}, clear=True):
             r = ModelRouter(providers=[p], allow_network=True,
                             client=P.ProviderClient(timeout=10, allow_network=True))
-            res = Council(r, CouncilConfig(max_models=1)).deliberate("quel choix ?")
+            res = Council(r, CouncilConfig(max_models=1)).deliberate(
+                "quel choix ?", evidence=[{"task_id": "preuve1", "agent_id": "a1", "output": {"ok": True}}])
         self.assertEqual(res["status"], "decided")
         self.assertEqual(res["decision"]["answer"], "reponse-A")
         self.assertTrue(res["verified"])  # preuve présente

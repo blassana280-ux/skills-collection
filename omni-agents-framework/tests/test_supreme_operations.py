@@ -115,7 +115,7 @@ class TestLearningCycle(SupremeTestCase):
                             EvaluationEngine(self.conn, self.core.registry))
         report = le.run_cycle()
         self.assertEqual(report["steps"][0]["name"], "observer")
-        evaluated = report["steps"][2]["evaluated"]
+        evaluated = next(step["evaluated"] for step in report["steps"] if "evaluated" in step)
         accepted = [e for e in evaluated if e["status"] == "accepted"]
         self.assertTrue(accepted, evaluated)  # gain mesuré sur outil réel -> accepté
         self.assertEqual(accepted[0]["target"], agent["id"])
@@ -132,7 +132,7 @@ class TestLearningCycle(SupremeTestCase):
                             EvaluationEngine(self.conn, self.core.registry))
         report = le.run_cycle()
         self.assertIsNone(report["steps"][0]["task_success_rate"])
-        self.assertEqual(report["steps"][2]["evaluated"], [])
+        self.assertEqual(next(step["evaluated"] for step in report["steps"] if "evaluated" in step), [])
 
     def test_cycle_never_touches_core(self):
         le = LearningEngine(self.conn, self.core.registry,

@@ -20,6 +20,20 @@
   n'exécute de code non fiable. Le sandbox V4 (`python -I`) reste disponible pour les futurs
   besoins d'exécution isolée.
 
+## Fournisseurs et activation 1.3.0
+- Clés uniquement via environnement injecté, `*_FILE` privé, ou stockage runtime 0600/répertoire 0700.
+  `providers --connect` exige un TTY et `getpass` ; pas de clé en argument, écho, URL, log ou rapport.
+- Permissions/propriétaire/symlinks/taille vérifiés avant lecture ; aucune valeur secrète dans les statuts.
+- Inférence externe fermée par défaut : contrôle humain actif ≤24 h, plafond USD, nombre d'appels,
+  prix attestés ≤30 jours, modèle découvert, contexte connu, quota central. Garde dans la transaction de réservation.
+- Découverte GET séparée de génération POST ; POST jamais rejoué automatiquement ; redirections refusées ; TLS vérifié.
+- Réponse sans usage = incertaine ; timeout/5xx conserve l'exposition ; settle refuse un réel supérieur à la borne.
+- Activation LLM exige `external_api` + HTTP 200 + JSON exploitable + permissions + budget + preuve privée.
+  Un stub `local_test` ne peut pas activer un agent, même dans l'évaluation d'apprentissage.
+- Quarantaine isolée avec bail fencé ; levée seulement après revue humaine CLI. Pas d'auto-élévation de permissions.
+- L'API locale ne peut pas accorder/révoquer l'inférence ni écrire une clé ; confirmations explicites pour les autres écritures sensibles.
+- Rapports publics expurgés : pas de `api_key_prefix`, pas de chemin privé complet, pas de secret fournisseur.
+
 ## API
 - Authentification par jeton (`X-API-Token` / Bearer). Écritures = jeton admin requis.
 - Lecture anonyme possible uniquement si `SUPREME_ALLOW_ANON_READ=1` (opt-in explicite, preview).
@@ -68,7 +82,7 @@ python3 -m supreme serve --port 8765
 - La recherche sémantique par embeddings n'est pas active (pas de fournisseur) ; FTS5 lexical réel.
 - Le conseil multi-modèles nécessite des appels API réels pour produire ses analyses.
 
-## Durcissement 1.2.1 — intégrité d'exécution et financière
+## Durcissement 1.3.0 — intégrité d'exécution et financière
 - **Workers** : chaque mission a un propriétaire, un bail expirant, un heartbeat et un jeton
   de fencing. Un worker qui démarre ne réinitialise pas les missions actives. Les écritures
   d'un ancien propriétaire sont refusées ; les résultats sont dédupliqués (`task_executions`).

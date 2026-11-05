@@ -49,7 +49,7 @@ class TestDocsCoherence(unittest.TestCase):
     def test_test_matrix_counts_match_real_discovery(self):
         total, v4, supreme = _discover_counts()
         text = (FRAMEWORK_ROOT / "docs/supreme/TEST-MATRIX.md").read_text(encoding="utf-8")
-        m = re.search(r"\*\*(\d+) tests verts\*\* = \*\*(\d+) V4/non-SUPREME \+ (\d+) SUPREME\*\*", text)
+        m = re.search(r"\*\*(\d+) tests découverts\*\* = \*\*(\d+) V4/non-SUPREME \+ (\d+) SUPREME\*\*", text)
         self.assertIsNotNone(m, "décompte courant introuvable dans TEST-MATRIX.md")
         self.assertEqual((int(m.group(1)), int(m.group(2)), int(m.group(3))), (total, v4, supreme))
         self.assertEqual(total, v4 + supreme)

@@ -62,11 +62,14 @@ class TestCouncil(unittest.TestCase):
         analyses = [
             {"model": "m1", "answer": "majoritaire-faux", "evidence": [], "sources": [], "confidence": 0.9},
             {"model": "m2", "answer": "majoritaire-faux", "evidence": [], "sources": [], "confidence": 0.9},
-            {"model": "m3", "answer": "minoritaire-vrai", "evidence": ["preuve1", "preuve2"], "sources": ["s1", "s2"], "confidence": 0.8},
+            {"model": "m3", "answer": "minoritaire-vrai", "evidence_refs": ["preuve1", "preuve2"], "confidence": 0.8},
         ]
-        res = c.deliberate("problème", analyses=analyses)
-        self.assertEqual(res["decision"]["answer"], "minoritaire-vrai")
-        self.assertTrue(res["verified"])
+        evidence = [{"task_id": "preuve1", "agent_id": "a1", "output": {}},
+                    {"task_id": "preuve2", "agent_id": "a2", "output": {}}]
+        res = c.deliberate("problème", evidence=evidence, analyses=analyses)
+        self.assertEqual(res["status"], "needs_review")  # désaccord non résolu : pas de fausse décision
+        self.assertEqual(res["provisional"]["answer"], "minoritaire-vrai")
+        self.assertFalse(res["verified"])
 
     def test_budget_caps(self):
         r = ModelRouter(allow_network=False)

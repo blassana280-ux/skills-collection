@@ -253,16 +253,23 @@ class MemoryEngine:
     def contradictions(self, actor: str, level: str, owner: str) -> list[dict]:
         """Détecte les connaissances contradictoires (même sujet/clé, valeurs différentes)."""
         items = self.search(actor, level=level, owner=owner, limit=1000)["results"]
-        by_key: dict[str, list] = {}
+        by_key: dict[tuple, list] = {}
         for it in items:
-            key = it["metadata"].get("subject_key")
+            meta = it["metadata"]
+            key = meta.get("subject_key")
             if key:
-                by_key.setdefault(key, []).append(it)
+                by_key.setdefault((key, meta.get("claim_key", "value")), []).append(it)
         out = []
-        for key, group in by_key.items():
-            contents = {it["content"] for it in group}
-            if len(contents) > 1:
-                out.append({"subject_key": key, "ids": [it["id"] for it in group]})
+        for (key, claim_key), group in by_key.items():
+            values = {}
+            for it in group:
+                meta = it["metadata"]
+                value = meta.get("claim_value", it["content"])
+                canonical = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
+                values.setdefault(canonical, []).append(it["id"])
+            if len(values) > 1:
+                out.append({"subject_key": key, "claim_key": claim_key,
+                            "ids": [it["id"] for it in group], "distinct_values": len(values)})
         return out
 
     def stats(self) -> dict:

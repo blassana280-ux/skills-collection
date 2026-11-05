@@ -87,7 +87,8 @@ class TestSchemaMigration(unittest.TestCase):
             self.assertTrue({"reservation_id", "call_key"} <= bcols)
             self.assertEqual(conn.execute("SELECT objective FROM missions WHERE id='m-old'").fetchone()[0], "ancienne mission")
             self.assertEqual(conn.execute("SELECT state FROM tasks WHERE id='t-old'").fetchone()[0], "done")
-            self.assertEqual(conn.execute("SELECT value FROM schema_meta WHERE key='version'").fetchone()[0], "2")
+            self.assertEqual(conn.execute("SELECT value FROM schema_meta WHERE key='version'").fetchone()[0], "3")
+            self.assertIsNotNone(conn.execute("SELECT name FROM sqlite_master WHERE name='activation_campaigns'").fetchone())
             conn.close()
 
 
@@ -434,7 +435,7 @@ class TestCouncilBudgetHardening(SupremeTestCase):
             router = ModelRouter(conn=self.conn, providers=providers, budget=self.budget)
             res = Council(router, CouncilConfig(max_models=3, max_cost_usd=0.035, max_tokens=600)).deliberate("p")
         posts = [r for r in self.server.requests if r["method"] == "POST"]
-        self.assertEqual(res["status"], "decided")
+        self.assertEqual(res["status"], "needs_review")
         self.assertEqual(len(posts), 1)
         self.assertLessEqual(res["budget_reserved_bound_usd"], res["budget_max_usd"] + 1e-12)
         self.assertTrue(any("budget collectif restant" in e["error"] for e in res["errors"]))

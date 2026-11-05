@@ -396,12 +396,14 @@ class OmniBrainCore:
                     result["council"] = council_res
                     log_event(conn, "info", "council", f"arbitrage mission {mission_id} : {council_res['status']}",
                               mission_id, {"status": council_res["status"]})
-                    if council_res.get("decision"):
+                    if council_res.get("decision") and council_res.get("verified") and council_res.get("status") == "decided":
                         try:
                             c["memory"].add("omnibrain-core", "central", "omnibrain-core", "decision",
                                             f"Conseil mission {mission_id} : {json.dumps(council_res['decision'], ensure_ascii=False)[:400]}",
                                             source=f"council:{mission_id}", confidence=0.8,
-                                            metadata={"mission_id": mission_id, "subject_key": f"council:{mission_id}"})
+                                            metadata={"mission_id": mission_id, "subject_key": f"council:{mission_id}",
+                                                      "verified": True, "evidence_refs": council_res["decision"].get("evidence_refs", []),
+                                                      "claim_key": "mission_conclusion", "claim_value": council_res["decision"].get("answer")})
                         except Exception:
                             pass
             except LeaseLostError:

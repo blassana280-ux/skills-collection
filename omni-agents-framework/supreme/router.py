@@ -18,7 +18,8 @@ from dataclasses import dataclass, field
 
 from .budget import BudgetController
 from .config import env_present
-from .db import log_event
+from .db import epoch, log_event
+from .provider_control import ProviderControl, is_external_endpoint
 from .providers import ProviderClient, resolve_key
 
 
@@ -34,6 +35,9 @@ class ModelSpec:
     streaming: bool
     local: bool = False
     quality_prior: float = 0.5
+    pricing_verified: bool = False
+    pricing_source: str = ""
+    pricing_checked_at: str = ""
 
 
 @dataclass
@@ -48,12 +52,15 @@ class Provider:
     kind: str = "openai"
     priority: int = 50
     display_name: str = ""
+    cooldown_until: float = 0.0
 
     @property
     def configured(self) -> bool:
         if self.name == "openai_compat":
-            return bool(__import__("os").environ.get("SUPREME_OPENAI_COMPAT_BASE_URL")) and env_present(self.env_var)
-        return env_present(self.env_var) or (self.name == "ollama" and env_present("OLLAMA_HOST"))
+            return bool(__import__("os").environ.get("SUPREME_OPENAI_COMPAT_BASE_URL")) and bool(resolve_key(self.env_var, self.name))
+        if self.name == "ollama":
+            return env_present("OLLAMA_HOST")
+        return bool(resolve_key(self.env_var, self.name))
 
 
 # Métadonnées déclarées (non vérifiées tant qu'un appel réel n'a pas réussi).
@@ -62,7 +69,7 @@ DEFAULT_PROVIDERS: list[Provider] = [
     Provider("mistral", "MISTRAL_API_KEY", "https://api.mistral.ai/v1", [
         ModelSpec("mistral", "mistral-small-latest", ("general", "code", "tools"), 0.0002, 0.0006, 32000, True, True),
         ModelSpec("mistral", "mistral-large-latest", ("general", "reasoning", "long-context", "tools"), 0.002, 0.006, 128000, True, True),
-    ], kind="openai", priority=1, display_name="Vide (Mistral AI)"),
+    ], kind="mistral", priority=1, display_name="Vide (Mistral AI)"),
     Provider("groq", "GROQ_API_KEY", "https://api.groq.com/openai/v1", [
         ModelSpec("groq", "llama-3.1-8b-instant", ("general", "code", "tools"), 0.00005, 0.00008, 128000, True, True),
         ModelSpec("groq", "llama-3.3-70b-versatile", ("general", "reasoning", "code", "tools"), 0.00059, 0.00079, 128000, True, True),
@@ -103,7 +110,8 @@ def _custom_compat_provider() -> Provider | None:
 
 class ModelRouter:
     def __init__(self, conn=None, providers: list[Provider] | None = None, budget=None,
-                 http_timeout: float = 8.0, allow_network: bool = True, client: ProviderClient | None = None):
+                 http_timeout: float = 8.0, allow_network: bool = True, client: ProviderClient | None = None,
+                 control: ProviderControl | None = None):
         from dataclasses import replace
         self.conn = conn
         if providers is not None:
@@ -117,7 +125,29 @@ class ModelRouter:
         self.http_timeout = http_timeout
         self.allow_network = allow_network
         self.client = client or ProviderClient(timeout=max(http_timeout, 25.0), allow_network=allow_network)
+        self.control = control if control is not None else (ProviderControl(conn, self.budget) if conn is not None else None)
         self.quality_history: dict[str, list[float]] = {}
+
+    def sync_provider_catalog(self) -> None:
+        """Charge les modèles réellement découverts ; les prix restent une attestation humaine."""
+        if self.control is None:
+            return
+        from dataclasses import replace
+        for prov in self.providers:
+            discovered = self.control.discovered_models(prov.name)
+            if not discovered:
+                continue
+            specs = []
+            for item in discovered:
+                price = self.control.price(prov.name, item["id"])
+                specs.append(ModelSpec(
+                    prov.name, item["id"], tuple(item["capabilities"] or ["general"]),
+                    float(price["input_usd_per_million"]) / 1000 if price else 0.0,
+                    float(price["output_usd_per_million"]) / 1000 if price else 0.0,
+                    int(item["context"] or 0), bool(item["tools"]), False, local=prov.name == "ollama",
+                    pricing_verified=bool(price), pricing_source=price.get("source_url", "") if price else "",
+                    pricing_checked_at=price.get("checked_at", "") if price else ""))
+            prov.models = specs
 
     def detect(self) -> list[dict]:
         out = []
@@ -128,52 +158,33 @@ class ModelRouter:
                         "models_declared": [m.model for m in p.models]})
         return out
 
+    def discover_provider(self, name: str) -> dict:
+        p = next((x for x in self.providers if x.name == name), None)
+        if p is None:
+            raise KeyError(f"fournisseur inconnu : {name}")
+        if not p.configured:
+            return {"provider": name, "ok": False, "status": "not_configured", "models": [], "category": None,
+                    "error": "aucun identifiant configuré", "http_status": 0, "latency_ms": 0, "endpoint_host": ""}
+        if not self.allow_network:
+            return {"provider": name, "ok": False, "status": "network_disabled", "models": [], "category": None,
+                    "error": "réseau désactivé", "http_status": 0, "latency_ms": 0, "endpoint_host": ""}
+        import os
+        key = resolve_key(p.env_var, p.name)
+        base = os.environ.get("OLLAMA_HOST", p.base_url) if p.name == "ollama" else p.base_url
+        res = self.client.discover_models(provider=p.name, base_url=base, kind=p.kind, api_key=key)
+        p.latency_ms = res["latency_ms"]
+        p.status = "available" if res["ok"] else ("auth_error" if res["http_status"] in (401, 403) else "unreachable" if res["http_status"] == 0 else "error")
+        p.error = res["error"]
+        if self.control is not None:
+            res["verification_id"] = self.control.record_verification(p.name, res)
+            self.sync_provider_catalog()
+        return res | {"status": p.status}
+
     def check_availability(self) -> list[dict]:
-        """Vérification RÉELLE : appel HTTP seulement si configuré et réseau autorisé."""
-        results = []
-        for p in self.providers:
-            if not p.configured:
-                p.status = "not_configured"
-                results.append({"provider": p.name, "status": p.status, "models": []})
-                continue
-            if not self.allow_network:
-                p.status = "network_disabled"
-                results.append({"provider": p.name, "status": p.status, "models": []})
-                continue
-            start = time.monotonic()
-            try:
-                key = resolve_key(p.env_var, p.name)
-                if p.kind == "ollama":
-                    req = urllib.request.Request(p.base_url.rstrip("/") + "/api/tags", method="GET")
-                elif p.kind == "gemini":
-                    # Clé en en-tête (jamais dans l'URL, pour ne pas fuiter dans les journaux).
-                    req = urllib.request.Request(p.base_url.rstrip("/") + "/models", method="GET")
-                    if key:
-                        req.add_header("x-goog-api-key", key)
-                elif p.kind == "anthropic":
-                    req = urllib.request.Request(p.base_url.rstrip("/") + "/models", method="GET")
-                    if key:
-                        req.add_header("x-api-key", key)
-                        req.add_header("anthropic-version", "2023-06-01")
-                else:
-                    req = urllib.request.Request(p.base_url.rstrip("/") + "/models", method="GET")
-                    if key:
-                        req.add_header("Authorization", f"Bearer {key}")
-                with urllib.request.urlopen(req, timeout=self.http_timeout) as resp:
-                    status = resp.status
-                p.latency_ms = (time.monotonic() - start) * 1000
-                p.status = "available" if 200 <= status < 300 else "error"
-                p.error = "" if p.status == "available" else f"HTTP {status}"
-            except urllib.error.HTTPError as e:
-                p.status = "auth_error" if e.code in (401, 403) else "error"
-                p.error = f"HTTP {e.code}"
-            except (urllib.error.URLError, TimeoutError, OSError) as e:
-                p.status = "unreachable"
-                p.error = str(e)[:120]
-            results.append({"provider": p.name, "status": p.status, "latency_ms": p.latency_ms,
-                            "error": p.error, "models": [m.model for m in p.models] if p.status == "available" else []})
+        results = [self.discover_provider(p.name) for p in self.providers]
         if self.conn is not None:
-            log_event(self.conn, "info", "router", "vérification disponibilité fournisseurs", data={"results": results})
+            log_event(self.conn, "info", "router", "découverte de modèles effectuée",
+                      data={"results": [{k: v for k, v in r.items() if k != "model_details"} for r in results]})
         return results
 
     def available_models(self) -> list[ModelSpec]:
@@ -181,12 +192,24 @@ class ModelRouter:
         return [m for p in self.providers if p.status == "available" for m in p.models]
 
     def configured_models(self) -> list[ModelSpec]:
-        """Modèles des fournisseurs configurés (clé présente), non encore vérifiés.
-
-        Le routage cible ceux-ci ; l'appel HTTP réel dans complete() sert de preuve
-        de disponibilité (succès) ou déclenche le fallback (échec). Aucune simulation.
-        """
+        """Modèles configurés/découverts ; configuré ne signifie pas autorisés ni vérifiés."""
+        self.sync_provider_catalog()
         return [m for p in self.providers if p.configured for m in p.models]
+
+    def routable_models(self) -> list[ModelSpec]:
+        out = []
+        for p in self.providers:
+            if not p.configured or p.cooldown_until > epoch():
+                continue
+            external = is_external_endpoint(p.base_url)
+            if external:
+                if self.control is None or not self.control.preflight(p.name)["allowed"]:
+                    continue
+            for m in p.models:
+                if external and (not m.pricing_verified or m.context <= 0):
+                    continue
+                out.append(m)
+        return out
 
     def _quality(self, m: ModelSpec) -> float:
         hist = self.quality_history.get(f"{m.provider}/{m.model}", [])
@@ -195,15 +218,19 @@ class ModelRouter:
     def route(self, task: dict) -> dict:
         """Sélectionne un modèle. task: {capabilities[], max_cost_usd, privacy, tools_required}."""
         self.detect()
-        candidates = self.configured_models()
+        candidates = self.routable_models()
         if not candidates:
-            return {"available": False, "reason": "aucun fournisseur IA configuré et disponible",
+            return {"available": False, "reason": "aucun fournisseur IA configuré, autorisé et tarifé disponible",
                     "fallback": "outil déterministe local si la tâche le permet", "model": None}
         caps = set(task.get("capabilities", ["general"]))
         max_cost = task.get("max_cost_usd", 0.05)
         privacy = task.get("privacy", "standard")
         scored = []
         for m in candidates:
+            if task.get("provider") and m.provider != task["provider"]:
+                continue
+            if task.get("model") and m.model != task["model"]:
+                continue
             if privacy == "local-only" and not m.local:
                 continue
             if task.get("tools_required") and not m.tools:
@@ -287,6 +314,25 @@ class ModelRouter:
             prov = next((x for x in self.providers if x.name == spec.provider), None) if spec else None
             if spec is None or prov is None:
                 continue
+            external = is_external_endpoint(prov.base_url)
+            if prov.cooldown_until > epoch():
+                attempts.append({"model": key, "ok": False, "skipped": True, "error": "cooldown fournisseur actif"})
+                last_error = "cooldown fournisseur actif"
+                continue
+            if external:
+                if self.control is None or self.budget is None:
+                    attempts.append({"model": key, "ok": False, "skipped": True, "error": "inférence externe sans contrôle persistant refusée"})
+                    last_error = "inférence externe sans contrôle persistant refusée"
+                    continue
+                gate = self.control.preflight(prov.name, self._cost(spec, input_bound, max_tokens))
+                if not gate["allowed"]:
+                    attempts.append({"model": key, "ok": False, "skipped": True, "error": gate["reason"]})
+                    last_error = gate["reason"]
+                    continue
+                if not spec.pricing_verified or spec.context <= 0:
+                    attempts.append({"model": key, "ok": False, "skipped": True, "error": "prix/contexte non attestés pour ce modèle"})
+                    last_error = "prix/contexte non attestés pour ce modèle"
+                    continue
             if max_tokens > spec.context or input_bound + max_tokens > spec.context:
                 attempts.append({"model": key, "ok": False, "error": "limite de tokens/contexte dépassée",
                                  "skipped": True, "max_tokens": max_tokens, "context": spec.context})
@@ -310,7 +356,8 @@ class ModelRouter:
                 reservation = self.budget.reserve(
                     entries, upper_cost, mission_id=mission_id, task_id=task_id,
                     provider=prov.name, model=spec.model, tokens_in_est=input_bound,
-                    tokens_out_est=max_tokens, call_key=f"{base_call_key}:{key}:{uuid.uuid4().hex[:8]}")
+                    tokens_out_est=max_tokens, call_key=f"{base_call_key}:{key}:{uuid.uuid4().hex[:8]}",
+                    guard=(lambda: self.control.preflight(prov.name, upper_cost)) if external else None)
                 if not reservation.get("reserved"):
                     attempts.append({"model": key, "ok": False, "error": reservation.get("reason", "réservation refusée"),
                                      "skipped": True, "reservation": reservation})
@@ -323,13 +370,17 @@ class ModelRouter:
                                        max_tokens=max_tokens, temperature=temperature)
             attempt = {"model": key, "provider": prov.name, "ok": res.ok, "http_status": res.http_status,
                        "error": res.error, "latency_ms": round(res.latency_ms, 2),
-                       "reservation_id": reservation_id, "estimated_max_cost_usd": round(upper_cost, 9)}
+                       "reservation_id": reservation_id, "estimated_max_cost_usd": round(upper_cost, 9),
+                       "category": res.category, "endpoint_host": res.endpoint_host, "request_id": res.request_id}
             if res.ok:
                 usage = res.usage or {"input_tokens": 0, "output_tokens": 0}
                 tokens_in = int(usage.get("input_tokens", 0) or 0)
                 tokens_out = int(usage.get("output_tokens", 0) or 0)
                 cost = self._cost(spec, tokens_in, tokens_out)
-                attempt.update({"usage": usage, "cost_usd": round(cost, 9)})
+                attempt.update({"usage": usage, "cost_usd": round(cost, 9), "reservation_status": "settled" if reservation_id else "unmanaged_local",
+                                "request_id": res.request_id, "response_id": res.response_id,
+                                "endpoint_host": res.endpoint_host, "category": res.category,
+                                "finish_reason": res.finish_reason})
                 if self.budget is not None and reservation_id:
                     try:
                         settled = self.budget.settle(reservation_id, cost, tokens_in=tokens_in,
@@ -350,12 +401,20 @@ class ModelRouter:
                                            "reservation_id": reservation_id, "provider": prov.name, "model": spec.model})
                 return {"ok": True, "text": res.text, "provider": prov.name, "model": spec.model,
                         "usage": usage, "cost_usd": round(cost, 9), "latency_ms": round(res.latency_ms, 2),
-                        "error": "", "attempts": attempts, "reservation_id": reservation_id}
+                        "error": "", "attempts": attempts, "reservation_id": reservation_id,
+                        "proof": {"category": res.category, "http_status": res.http_status,
+                                  "request_id": res.request_id, "response_id": res.response_id,
+                                  "endpoint_host": res.endpoint_host, "reservation_id": reservation_id,
+                                  "reservation_status": "settled" if reservation_id else "unmanaged_local",
+                                  "usage": usage, "cost_usd": round(cost, 9), "finish_reason": res.finish_reason}}
             # Échec : libérer seulement si le fournisseur a explicitement rejeté avant traitement.
             if self.budget is not None and reservation_id:
-                uncertain = res.http_status == 0 or res.http_status >= 500
+                uncertain = res.uncertain or res.http_status == 0 or res.http_status >= 500
                 self.budget.release(reservation_id, reason=res.error, interrupted=uncertain)
                 attempt["reservation_status"] = "interrupted" if uncertain else "released"
+            if res.retry_after_s is not None:
+                prov.cooldown_until = epoch() + min(float(res.retry_after_s), 300)
+                attempt["retry_after_s"] = res.retry_after_s
             attempts.append(attempt)
             last_error = res.error
             prov.status = "error" if res.http_status else "unreachable"
@@ -366,7 +425,16 @@ class ModelRouter:
                 "cost_usd": 0.0, "attempts": attempts}
 
     def status(self) -> dict:
+        self.sync_provider_catalog()
+        verification = self.control.summary() if self.control else {"verified_count": 0, "connected_recently_count": 0}
         return {"providers": [{"name": p.name, "status": p.status, "configured": p.configured,
                                "latency_ms": p.latency_ms, "error": p.error,
-                               "models": [m.model for m in p.models]} for p in self.providers],
-                "available_count": len(self.available_models())}
+                               "models": [m.model for m in p.models],
+                               "priced_models": [m.model for m in p.models if m.pricing_verified],
+                               "cooldown_until": p.cooldown_until,
+                               "control": self.control.status(p.name) if self.control else None}
+                              for p in self.providers],
+                "available_count": len(self.available_models()),
+                "routable_count": len(self.routable_models()),
+                "verification": verification,
+                "note": "available_count peut inclure un stub local ; seuls verified/external_api prouvent un fournisseur réel."}

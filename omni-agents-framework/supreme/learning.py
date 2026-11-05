@@ -87,7 +87,10 @@ class LearningEngine:
                 self.conn.execute("UPDATE strategies SET active=0 WHERE agent_id=?", (agent_id,))
                 self.conn.execute("UPDATE strategies SET active=1 WHERE id=?", (sid,))
             log_event(self.conn, "info", "learning", f"stratégie acceptée pour {agent_id} (score {ev['score']})")
-            return {"accepted": True, "strategy_id": sid, "score": ev["score"], "baseline": baseline_score}
+            return {"accepted": True, "strategy_id": sid, "score": ev["score"], "baseline": baseline_score,
+                    "accepted_as_baseline": baseline_score is None,
+                    "gain": None if baseline_score is None else ev["score"] - baseline_score,
+                    "note": "baseline initiale, pas un gain mesuré" if baseline_score is None else "gain mesuré sur outil réel"}
         return {"accepted": False, "strategy_id": sid, "score": ev["score"], "baseline": baseline_score,
                 "reason": "pas de gain mesuré"}
 
@@ -184,6 +187,21 @@ class LearningEngine:
             report["steps"].append({"step": 1, "name": "observer", "status": "done",
                                     "task_success_rate": outcomes["task_success_rate"],
                                     "mission_success_rate": outcomes["mission_success_rate"]})
+            previous = self.conn.execute("SELECT id, report_json FROM learning_runs WHERE status='completed' AND report_json IS NOT NULL ORDER BY finished_at DESC, rowid DESC LIMIT 1").fetchone()
+            comparison = {"baseline_run_id": previous["id"] if previous else None,
+                          "task_success_delta": None, "mission_success_delta": None, "improvement_proven": False}
+            if previous:
+                try:
+                    prev = json.loads(previous["report_json"])
+                    po = prev.get("analysis", {}).get("outcomes", {})
+                    for key, out_key in (("task_success_rate", "task_success_delta"), ("mission_success_rate", "mission_success_delta")):
+                        if outcomes.get(key) is not None and po.get(key) is not None:
+                            comparison[out_key] = round(outcomes[key] - po[key], 6)
+                    comparison["improvement_proven"] = any(v is not None and v > 0 for v in (comparison["task_success_delta"], comparison["mission_success_delta"]))
+                except (json.JSONDecodeError, TypeError, AttributeError):
+                    comparison["error"] = "rapport précédent illisible"
+            report["measured_comparison"] = comparison
+            report["steps"].append({"step": "1bis", "name": "mesurer avant/après", "status": "done", **comparison})
             if not self._heartbeat_run(run_id, token, lease_seconds):
                 return self._finish_run(run_id, token, "interrupted", report, "bail de cycle perdu")
             analysis = self.analyze()

@@ -1,4 +1,4 @@
-# Guide de déploiement OMNIBRAIN SUPREME 1.2.1
+# Guide de déploiement OMNIBRAIN SUPREME 1.3.0
 
 Racine dépôt : `skills-collection/`. Framework : `skills-collection/omni-agents-framework/`.
 
@@ -25,6 +25,20 @@ Une preview navigateur locale n'est pas un déploiement cloud public.
 - Promotion vers `omni-agents-framework` autonome : **bloquée par 403** (jeton GitHub App),
   documentée dans `docs/PROMOTION-403.md`, jamais contournée.
 
+## Migration 1.2.1 → 1.3.0 (schéma SQLite v3)
+1. Arrêter proprement les workers/ordonnanceurs et le serveur API (`SIGTERM`).
+2. Sauvegarder : `python3 -m supreme backup` ; vérifier l'intégrité du backup.
+3. Démarrer 1.3.0 : `init_db` applique les migrations additives v2→v3 sans supprimer de données.
+4. Auditer : `python3 -m supreme audit` ; contrôler `schema_version=3`, catalogue, sécurité, budget.
+5. Redémarrer workers/API. Aucune campagne LLM n'est lancée automatiquement.
+6. Connecter un fournisseur seulement via le chemin sécurisé de `PROVIDERS.md`, puis activer par paliers.
+
+## Fournisseurs IA (optionnels, fermés par défaut)
+- `MISTRAL_API_KEY` injectée par un secret manager, ou `MISTRAL_API_KEY_FILE` pointant vers un fichier privé 0600.
+- Saisie interactive : `python3 -m supreme providers --connect mistral` (terminal privé, pas de secret dans le chat).
+- Découverte : `python3 -m supreme providers --verify mistral`. Inférence : prix attestés + autorisation humaine bornée.
+- Aucun secret dans le dépôt, les journaux, les rapports ou l'API. Aucune dépense sans accord explicite.
+
 ## Cloud (évolution, sur autorisation)
 L'architecture SQLite/stdlib peut évoluer vers un service managé (Postgres, file de messages,
 workers) sans réécriture des interfaces. Aucun fournisseur cloud n'est déployé ni payé
@@ -38,7 +52,7 @@ actuellement. Toute dépense nécessite une approbation humaine explicite (nivea
 | `SUPREME_ALLOW_ANON_READ` | `1` = lecture anonyme (preview) |
 | `OPENAI_API_KEY` / `MISTRAL_API_KEY` / … | Fournisseurs IA (optionnels, non configurés) |
 
-## Montée en charge horizontale réelle (v1.2.1, locale)
+## Montée en charge horizontale réelle (v1.3.0, locale)
 La file de missions est persistante (SQLite WAL) et les workers sont des processus séparés
 avec propriétaire, bail expirant, heartbeat et fencing :
 ```bash

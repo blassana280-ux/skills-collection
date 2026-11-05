@@ -23,8 +23,13 @@ BackupManager().restore("<backup_id>")   # écrase la base courante
 - Les sauvegardes contiennent des données runtime ; ne pas les commiter (`var/` ignoré).
 - Tester la restauration périodiquement (test `test_supreme_backup`).
 
-## Migration 1.2.1 (schéma v2 additif)
+## Migration historique 1.2.1 (schéma v2 additif)
 - Avant durcissement : sauvegarde `bk-20261105T163835-22f858`, intégrité `ok`.
 - La migration ajoute colonnes/tables sans supprimer les données existantes.
 - Test de non-régression : `omni-agents-framework/tests/test_supreme_hardening.py::TestSchemaMigration`.
+
+## Migration 1.3.0 (schéma v3 additif)
+- Arrêter les écrivains, sauvegarder, puis laisser `init_db` ajouter les 7 tables fournisseurs/activation.
+- Aucune suppression de données ; les campagnes et preuves restent privées (`0600`).
+- Auditer après migration : `python3 -m supreme audit` (`schema_version=3`).
 - Toujours exécuter `python3 -m supreme backup` avant une migration ou restauration.

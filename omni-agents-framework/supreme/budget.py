@@ -78,7 +78,8 @@ class BudgetController:
 
     def reserve(self, entries: list[tuple[str, str]], amount: float, mission_id: str | None = None,
                 task_id: str | None = None, provider: str | None = None, model: str | None = None,
-                tokens_in_est: int = 0, tokens_out_est: int = 0, call_key: str | None = None) -> dict:
+                tokens_in_est: int = 0, tokens_out_est: int = 0, call_key: str | None = None,
+                guard=None) -> dict:
         """Réserve atomiquement une borne supérieure sur tous les scopes pertinents."""
         amount = _amount(amount)
         scopes = list(dict.fromkeys((sc, sid) for sc, sid in entries if sc in SCOPES and sid))
@@ -95,6 +96,11 @@ class BudgetController:
             if not verdict["allowed"]:
                 log_event(self.conn, "warning", "budget", f"réservation refusée : {verdict['reason']}", mission_id)
                 return {"reserved": False, **verdict}
+            if guard is not None:
+                extra = guard()
+                if not extra.get("allowed"):
+                    log_event(self.conn, "warning", "budget", f"réservation refusée : {extra.get('reason', 'garde refusée')}", mission_id)
+                    return {"reserved": False, **extra}
             self.conn.execute(
                 """INSERT INTO budget_reservations(id,call_key,mission_id,task_id,provider,model,status,
                      amount_usd,tokens_in_est,tokens_out_est,created_at,updated_at)

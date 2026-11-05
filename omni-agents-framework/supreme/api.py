@@ -221,8 +221,6 @@ def make_handler(state: APIState):
                 if path == "/api/missions":
                     return self._send(200, {"missions": core.list_missions()})
                 if path.startswith("/api/missions/"):
-                    return self._send(200, core.status(path.split("/")[3]))
-                if path.startswith("/api/missions/"):
                     return self._send(200, core.status(path.split("/")[-1]))
                 if path == "/api/models":
                     c["router"].detect()
@@ -231,19 +229,47 @@ def make_handler(state: APIState):
                     from .providers import configured_providers
                     c["router"].detect()
                     conf = configured_providers()
-                    # Statut vérifié (si check_availability déjà lancé) par fournisseur.
                     verified = {p.name: p.status for p in c["router"].providers}
+                    control = c["router"].control
                     for item in conf:
                         item["verified_status"] = verified.get(item["name"], "not_checked")
+                        item["control"] = control.status(item["name"]) if control else None
+                        item["discovered_models"] = control.discovered_models(item["name"]) if control else []
                     return self._send(200, {
                         "providers": conf,
                         "configured_count": sum(1 for x in conf if x["configured"]),
+                        "verification": control.summary() if control else {},
                         "priority_order": [x["name"] for x in sorted(conf, key=lambda y: y["priority"])],
-                        "secure_config": "Clés via variables d'environnement ou var/supreme/providers.json (0600, gitignoré). Jamais dans le dépôt.",
-                        "note": "Un fournisseur configuré n'est opérationnel qu'après un appel API réel réussi.",
+                        "secure_config": "Saisie CLI masquée, env, *_FILE ou fichier runtime privé 0600. Aucun secret via l'API.",
+                        "note": "Configuré ≠ connecté. Seule une découverte external_api réussie est une preuve réelle ; l'inférence exige en plus une autorisation humaine.",
                     })
+                if path == "/api/activation":
+                    from .activation import ActivationManager
+                    return self._send(200, ActivationManager(c["conn"], c["registry"], c["router"]).status())
+                if path.startswith("/api/activation/"):
+                    from .activation import ActivationManager
+                    return self._send(200, ActivationManager(c["conn"], c["registry"], c["router"]).status(path.split("/")[-1]))
+                if path == "/api/decisions":
+                    rows = c["conn"].execute("SELECT id, objective, state, result_json, updated_at FROM missions WHERE result_json IS NOT NULL ORDER BY updated_at DESC LIMIT 100").fetchall()
+                    decisions = []
+                    for r in rows:
+                        result = json.loads(r["result_json"]) if r["result_json"] else {}
+                        council = result.get("council")
+                        if council:
+                            decisions.append({"mission_id": r["id"], "objective": r["objective"], "mission_state": r["state"],
+                                              "updated_at": r["updated_at"], "council": council})
+                    return self._send(200, {"decisions": decisions, "count": len(decisions)})
+                if path == "/api/divisions/performance":
+                    rows = c["conn"].execute("""SELECT a.division, COUNT(m.id) n, AVG(m.value) success_rate
+                                                FROM metrics m JOIN agents a ON a.id=m.agent_id
+                                                WHERE m.name='task_success' GROUP BY a.division ORDER BY a.division""").fetchall()
+                    costs = {r["scope_id"]: r["cost"] for r in c["conn"].execute("SELECT scope_id, SUM(cost_usd) cost FROM budget_ledger WHERE scope='division' GROUP BY scope_id")}
+                    return self._send(200, {"divisions": [{"division": r["division"], "measured_tasks": r["n"],
+                                                           "success_rate": r["success_rate"], "cost_usd": costs.get(r["division"], 0.0)} for r in rows]})
                 if path == "/api/quotas":
                     return self._send(200, {"totals": c["budget"].totals(),
+                                            "exposure_totals": c["budget"].exposure_totals(),
+                                            "reservations": c["budget"].reservations(50),
                                             "quotas": [dict(r) for r in c["conn"].execute("SELECT * FROM quotas")]})
                 if path == "/api/memory/search":
                     return self._send(200, c["memory"].search("omnibrain-core", query=qs.get("q", [""])[0],
@@ -292,9 +318,11 @@ def make_handler(state: APIState):
                     return self._send(200, obs.mission_trace(path.split("/")[-1]))
                 return self._send(404, {"error": "route inconnue"})
             except KeyError as e:
-                return self._send(404, {"error": str(e)})
+                from .security import redact
+                return self._send(404, {"error": redact(str(e))})
             except Exception as e:
-                return self._send(500, {"error": str(e)})
+                from .security import redact
+                return self._send(500, {"error": redact(str(e))})
 
         def do_POST(self):
             parsed = urlparse(self.path)
@@ -328,16 +356,35 @@ def make_handler(state: APIState):
                 if path == "/api/backup":
                     return self._send(201, state.backup.backup(body.get("label", "")))
                 if path == "/api/providers/check":
-                    return self._send(200, {"results": c["router"].check_availability()})
+                    provider = body.get("provider")
+                    results = [c["router"].discover_provider(provider)] if provider else c["router"].check_availability()
+                    return self._send(200, {"results": results})
+                if path == "/api/activation/prepare":
+                    from .activation import ActivationManager
+                    if body.get("confirm") != "PREPARER CAMPAGNE":
+                        return self._send(400, {"error": "confirmation PREPARER CAMPAGNE requise"})
+                    manager = ActivationManager(c["conn"], c["registry"], c["router"])
+                    return self._send(201, manager.prepare(int(body.get("size", 5)), provider=body.get("provider", "mistral"),
+                                                           model=body.get("model"), budget_usd=body.get("budget_usd"),
+                                                           per_agent_usd=float(body.get("per_agent_usd", 0.01))))
+                if path.startswith("/api/activation/") and path.endswith("/run"):
+                    from .activation import ActivationManager
+                    if body.get("confirm") != "ACTIVER CAMPAGNE":
+                        return self._send(400, {"error": "confirmation ACTIVER CAMPAGNE requise ; autorisation d'inférence CLI distincte obligatoire"})
+                    manager = ActivationManager(c["conn"], c["registry"], c["router"])
+                    return self._send(200, manager.run(path.split("/")[3], max_agents=body.get("max_agents")))
                 return self._send(404, {"error": "route inconnue"})
             except PermissionError as e:
-                return self._send(403, {"error": str(e)})
+                from .security import redact
+                return self._send(403, {"error": redact(str(e))})
             except LeaseLostError as e:
                 return self._send(409, {"error": str(e)})
             except (KeyError, ValueError) as e:
-                return self._send(400, {"error": str(e)})
+                from .security import redact
+                return self._send(400, {"error": redact(str(e))})
             except Exception as e:
-                return self._send(500, {"error": str(e)})
+                from .security import redact
+                return self._send(500, {"error": redact(str(e))})
 
     return Handler
 

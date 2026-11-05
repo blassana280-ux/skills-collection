@@ -1,4 +1,4 @@
-# Guide de maintenance OMNIBRAIN SUPREME 1.2.1
+# Guide de maintenance OMNIBRAIN SUPREME 1.3.0
 
 Racine dépôt : `skills-collection/`. Framework : `skills-collection/omni-agents-framework/`.
 Les chemins `omni-agents-framework/...` sont relatifs à la racine dépôt ; les commandes
@@ -32,7 +32,7 @@ allowlists de division changent.
   et permet `rollback`.
 - Catalogue : source de vérité `divisions/`, sortie `catalog/` régénérable et vérifiée en CI.
 
-## Commandes d'exploitation (v1.2.1)
+## Commandes d'exploitation (v1.3.0)
 ```bash
 python3 -m supreme audit            # audit exécutable : catalogue, sécurité, baux, budget, apprentissage, tests
 python3 -m supreme learn            # cycle ponctuel persistant (rapport JSON, PR = humain)
@@ -40,7 +40,10 @@ python3 -m supreme learn --periodic --interval 300 --lease-seconds 30 --heartbea
 python3 -m supreme learn --status   # ordonnanceur, derniers cycles, erreurs
 python3 -m supreme worker --once --lease-seconds 30 --heartbeat-seconds 5
 python3 -m supreme worker --interval 1 --lease-seconds 30 --heartbeat-seconds 5
-python3 -m supreme providers        # statut fournisseurs sans clés ; --check = appel réel
+python3 -m supreme providers --status          # statut sans secret
+python3 -m supreme providers --connect mistral # saisie masquée en terminal privé
+python3 -m supreme providers --verify mistral  # découverte GET réelle, sans inférence payante
+python3 -m supreme activation --status         # paliers/campagnes/quarantaine
 python3 -m supreme rotate-token     # rotation du jeton API (jamais affiché), puis redémarrer serve
 ```
 
@@ -69,4 +72,4 @@ python3 -m supreme rotate-token     # rotation du jeton API (jamais affiché), p
 
 ## Migration / sauvegarde
 - Schéma SQLite v2 additif ; toujours sauvegarder avant migration : `python3 -m supreme backup`.
-- Sauvegarde pré-durcissement 1.2.1 : `bk-20261105T163835-22f858` (intégrité `ok`).
+- Sauvegarde pré-durcissement 1.3.0 : `bk-20261105T163835-22f858` (intégrité `ok`).

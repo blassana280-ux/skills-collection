@@ -10,8 +10,12 @@ Usage : python3 -m supreme <commande>
   backup                 sauvegarde la base
   report                 rapport global
   rotate-token           régénère le jeton API (0600, jamais affiché) ; redémarrer serve ensuite
-  providers [--check]    statut des fournisseurs IA (sans clés) ; --check = appel réel de disponibilité
+  providers [--status]   statut sans secret ; --connect PROVIDER = saisie masquée TTY ;
+                         --verify/--sync-models PROVIDER = découverte GET réelle ;
+                         --set-prices/--authorize/--revoke PROVIDER = actions humaines bornées
   providers --init-secrets  crée un modèle de fichier de secrets vide (0600, gitignoré)
+  activation [--status]  paliers 5→20→60→100→…→960 ; --prepare SIZE, --run ID,
+                         --release-quarantine AGENT_ID (revue humaine)
   worker [--once]        processus worker séparé, bail/heartbeat/fencing, arrêt propre (SIGINT/SIGTERM)
   audit                  audit exécutable : catalogue, sécurité, sauvegardes, KPIs, tests (Phase I)
   learn [--periodic]     apprentissage ponctuel ou périodique configurable, rapports persistés,
@@ -52,7 +56,42 @@ def main(argv=None):
     sub.add_parser("rotate-token")
     pv = sub.add_parser("providers")
     pv.add_argument("--check", action="store_true")
+    pv.add_argument("--status", action="store_true", help="statut sans secret (défaut)")
     pv.add_argument("--init-secrets", action="store_true")
+    pv.add_argument("--connect", metavar="PROVIDER", help="saisie locale masquée de la clé (terminal privé requis)")
+    pv.add_argument("--replace", action="store_true")
+    pv.add_argument("--verify", metavar="PROVIDER", help="découverte GET réelle du catalogue, sans inférence payante")
+    pv.add_argument("--sync-models", metavar="PROVIDER", help="alias de --verify : persiste les modèles découverts")
+    pv.add_argument("--set-prices", metavar="PROVIDER", help="atteste les prix d'un modèle découvert")
+    pv.add_argument("--authorize", metavar="PROVIDER", help="autorise une fenêtre d'inférence bornée")
+    pv.add_argument("--revoke", metavar="PROVIDER", help="révoque l'autorisation d'inférence")
+    pv.add_argument("--model", default="")
+    pv.add_argument("--input-per-million", type=float)
+    pv.add_argument("--output-per-million", type=float)
+    pv.add_argument("--source", default="")
+    pv.add_argument("--confirm", default="")
+    pv.add_argument("--budget-usd", type=float)
+    pv.add_argument("--max-calls", type=int)
+    pv.add_argument("--hours", type=float, default=1.0)
+    pv.add_argument("--approved-by", default="")
+    ms = sub.add_parser("mistral")
+    ms.add_argument("action", choices=["status", "discover", "authorize", "price", "revoke"])
+    ms.add_argument("--max-usd", type=float); ms.add_argument("--max-calls", type=int)
+    ms.add_argument("--hours", type=float, default=1.0); ms.add_argument("--approved-by", default="")
+    ms.add_argument("--confirm", default=""); ms.add_argument("--model", default="")
+    ms.add_argument("--input-usd-per-million", type=float); ms.add_argument("--output-usd-per-million", type=float)
+    ms.add_argument("--source", default="")
+    ac = sub.add_parser("activation")
+    ac.add_argument("action", nargs="?", choices=["prepare", "run", "status", "release"], default=None)
+    ac.add_argument("--prepare", type=int, metavar="SIZE", help="prépare le palier cumulatif SIZE")
+    ac.add_argument("--run", metavar="CAMPAIGN_ID", help="exécute une campagne préparée")
+    ac.add_argument("--status", action="store_true", help="état d'activation (défaut)")
+    ac.add_argument("--release-quarantine", metavar="AGENT_ID", help="levée après revue humaine")
+    ac.add_argument("--model", default=None)
+    ac.add_argument("--size", type=int, default=5); ac.add_argument("--id", default=None)
+    ac.add_argument("--provider", default="mistral"); ac.add_argument("--budget-usd", type=float, default=None)
+    ac.add_argument("--per-agent-usd", type=float, default=0.01); ac.add_argument("--max-agents", type=int, default=None)
+    ac.add_argument("--agent-id", default=""); ac.add_argument("--evidence", default=""); ac.add_argument("--confirm", default="")
     wk = sub.add_parser("worker")
     wk.add_argument("--once", action="store_true")
     wk.add_argument("--interval", type=float, default=1.0)
@@ -99,6 +138,10 @@ def main(argv=None):
 
     if args.cmd == "providers":
         from .providers import configured_providers, write_secrets_template
+        if args.connect:
+            from .credentials import store_interactive
+            print(json.dumps(store_interactive(args.connect, replace=args.replace), ensure_ascii=False, indent=1))
+            return 0
         if args.init_secrets:
             path = write_secrets_template()
             print(json.dumps({"secrets_template": path, "permissions": "0600",
@@ -107,19 +150,45 @@ def main(argv=None):
                              ensure_ascii=False, indent=1))
             return 0
         if args.check:
-            from .router import ModelRouter
-            r = ModelRouter(allow_network=True)
-            results = r.check_availability()
+            from .api import bootstrap
+            core = bootstrap(evaluate=False)
+            results = core.router.check_availability()
             print(json.dumps({"availability": results,
-                              "note": "available = appel HTTP réel réussi ; aucun fournisseur déclaré opérationnel sans preuve."},
+                              "verification": core.router.control.summary() if core.router.control else {},
+                              "note": "external_api réussi = preuve réelle ; local_test = stub local, jamais fournisseur connecté."},
                              ensure_ascii=False, indent=1))
             return 0
+        if args.verify or args.sync_models or args.set_prices or args.authorize or args.revoke:
+            from .api import bootstrap
+            from .provider_control import ProviderControl
+            core = bootstrap(evaluate=False)
+            control = core.router.control or ProviderControl(core.conn, core.budget)
+            if args.verify or args.sync_models:
+                res = core.router.discover_provider(args.verify or args.sync_models)
+                print(json.dumps(res, ensure_ascii=False, indent=1))
+                return 0 if res.get("ok") else 1
+            if args.set_prices:
+                print(json.dumps(control.set_price(args.set_prices, args.model,
+                                                   input_usd_per_million=args.input_per_million,
+                                                   output_usd_per_million=args.output_per_million,
+                                                   source_url=args.source, confirm=args.confirm),
+                                 ensure_ascii=False, indent=1))
+                return 0
+            if args.authorize:
+                print(json.dumps(control.authorize(args.authorize, max_total_usd=args.budget_usd,
+                                                   max_calls=args.max_calls, hours=args.hours,
+                                                   approved_by=args.approved_by, confirm=args.confirm),
+                                 ensure_ascii=False, indent=1))
+                return 0
+            if args.revoke:
+                print(json.dumps(control.revoke(args.revoke, confirm=args.confirm), ensure_ascii=False, indent=1))
+                return 0
         conf = configured_providers()
         print(json.dumps({"providers": conf,
                           "configured_count": sum(1 for x in conf if x["configured"]),
                           "priority_order": [x["name"] for x in sorted(conf, key=lambda y: y["priority"])],
-                          "secure_config": "Clés via env (MISTRAL_API_KEY, ...) ou var/supreme/providers.json (0600, gitignoré).",
-                          "note": "Configuré != opérationnel. Seul un appel API réel réussi rend un fournisseur opérationnel."},
+                          "secure_config": "Saisie CLI masquée (--connect), env, *_FILE, ou fichier runtime privé 0600. Aucun secret affiché.",
+                          "note": "Configuré != connecté != opérationnel. Découverte GET réussie = connecté ; inférence réelle exploitable = agent opérationnel."},
                          ensure_ascii=False, indent=1))
         return 0
 
@@ -136,6 +205,63 @@ def main(argv=None):
         return 0 if report.get("ok") else 1
 
     core = bootstrap(evaluate=False)
+    if args.cmd == "mistral":
+        from .credentials import status as credential_status
+        from .provider_control import ProviderControl
+        control = core.router.control or ProviderControl(core.conn, core.budget)
+        if args.action == "status":
+            print(json.dumps({"credential": credential_status("mistral"), "control": control.status("mistral"),
+                              "discovered_models": control.discovered_models("mistral"),
+                              "verification": control.summary(),
+                              "note": "Découverte GET ≠ génération réussie ; inférence fermée par défaut."}, ensure_ascii=False, indent=1))
+            return 0
+        if args.action == "discover":
+            res = core.router.discover_provider("mistral")
+            print(json.dumps(res, ensure_ascii=False, indent=1))
+            return 0 if res.get("ok") else 1
+        if args.action == "authorize":
+            print(json.dumps(control.authorize("mistral", max_total_usd=args.max_usd, max_calls=args.max_calls,
+                                               hours=args.hours, approved_by=args.approved_by, confirm=args.confirm),
+                             ensure_ascii=False, indent=1))
+            return 0
+        if args.action == "price":
+            print(json.dumps(control.set_price("mistral", args.model, input_usd_per_million=args.input_usd_per_million,
+                                               output_usd_per_million=args.output_usd_per_million,
+                                               source_url=args.source, confirm=args.confirm), ensure_ascii=False, indent=1))
+            return 0
+        if args.action == "revoke":
+            print(json.dumps(control.revoke("mistral", confirm=args.confirm), ensure_ascii=False, indent=1))
+            return 0
+    if args.cmd == "activation":
+        from .activation import ActivationManager
+        action = args.action
+        if args.prepare is not None:
+            action = "prepare"; args.size = args.prepare
+        elif args.run:
+            action = "run"; args.id = args.run
+        elif args.release_quarantine:
+            action = "release"; args.agent_id = args.release_quarantine
+        elif args.status or action is None:
+            action = "status"
+        manager = ActivationManager(core.conn, core.registry, core.router)
+        if action == "prepare":
+            print(json.dumps(manager.prepare(args.size, provider=args.provider, model=args.model,
+                                             budget_usd=args.budget_usd, per_agent_usd=args.per_agent_usd),
+                             ensure_ascii=False, indent=1))
+            return 0
+        if action == "run":
+            if not args.id:
+                print(json.dumps({"error": "--id ou --run requis"})); return 1
+            stop = _stop_event_with_signals()
+            result = manager.run(args.id, max_agents=args.max_agents, stop_event=stop)
+            print(json.dumps(result, ensure_ascii=False, indent=1))
+            return 0 if result.get("campaign", {}).get("status") == "completed" else 1
+        if action == "release":
+            print(json.dumps(manager.release_quarantine(args.agent_id, evidence=args.evidence, confirm=args.confirm),
+                             ensure_ascii=False, indent=1))
+            return 0
+        print(json.dumps(manager.status(args.id), ensure_ascii=False, indent=1))
+        return 0
     if args.cmd == "worker":
         from .worker import run_worker
         stop = _stop_event_with_signals()

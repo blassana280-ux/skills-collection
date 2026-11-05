@@ -16,7 +16,7 @@ from typing import Any, Iterator
 
 from .config import DB_PATH, ensure_dirs
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 _local = threading.local()
 _tx_local = threading.local()
 _lock = threading.RLock()
@@ -198,6 +198,53 @@ CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, level TEXT NOT NULL, component TEXT NOT NULL,
     mission_id TEXT, message TEXT NOT NULL, data_json TEXT NOT NULL DEFAULT '{}'
 );
+CREATE TABLE IF NOT EXISTS provider_controls (
+    provider TEXT PRIMARY KEY, inference_enabled INTEGER NOT NULL DEFAULT 0,
+    approved_by TEXT, approved_at TEXT, expires_at REAL NOT NULL DEFAULT 0,
+    max_total_usd REAL NOT NULL DEFAULT 0, max_calls INTEGER NOT NULL DEFAULT 0,
+    pricing_json TEXT NOT NULL DEFAULT '{}', updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS provider_models (
+    provider TEXT NOT NULL, model TEXT NOT NULL, capabilities_json TEXT NOT NULL DEFAULT '[]',
+    context INTEGER NOT NULL DEFAULT 0, tools INTEGER NOT NULL DEFAULT 0,
+    discovered_at TEXT NOT NULL, endpoint_host TEXT NOT NULL, request_id TEXT,
+    category TEXT NOT NULL, PRIMARY KEY(provider, model)
+);
+CREATE TABLE IF NOT EXISTS provider_verifications (
+    id TEXT PRIMARY KEY, provider TEXT NOT NULL, ok INTEGER NOT NULL, category TEXT NOT NULL,
+    http_status INTEGER NOT NULL DEFAULT 0, endpoint_host TEXT NOT NULL, request_id TEXT,
+    latency_ms REAL NOT NULL DEFAULT 0, models_json TEXT NOT NULL DEFAULT '[]',
+    error TEXT NOT NULL DEFAULT '', checked_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS activation_campaigns (
+    id TEXT PRIMARY KEY, target_size INTEGER NOT NULL, provider TEXT NOT NULL, model TEXT,
+    status TEXT NOT NULL DEFAULT 'prepared', budget_usd REAL NOT NULL,
+    per_agent_usd REAL NOT NULL, created_at TEXT NOT NULL, started_at TEXT, finished_at TEXT,
+    owner_worker_id TEXT, lease_token TEXT, lease_expires_at REAL NOT NULL DEFAULT 0,
+    heartbeat_at REAL, report_json TEXT, error TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS activation_members (
+    campaign_id TEXT NOT NULL REFERENCES activation_campaigns(id), agent_id TEXT NOT NULL,
+    position INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'pending', proof_id TEXT,
+    error TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL,
+    PRIMARY KEY(campaign_id, agent_id), UNIQUE(campaign_id, position)
+);
+CREATE TABLE IF NOT EXISTS activation_proofs (
+    id TEXT PRIMARY KEY, campaign_id TEXT REFERENCES activation_campaigns(id), agent_id TEXT NOT NULL,
+    category TEXT NOT NULL, provider TEXT NOT NULL, model TEXT NOT NULL,
+    http_status INTEGER NOT NULL, endpoint_host TEXT NOT NULL, request_id TEXT,
+    reservation_id TEXT, output_sha256 TEXT NOT NULL, usage_json TEXT NOT NULL,
+    cost_usd REAL NOT NULL, latency_ms REAL NOT NULL, usable INTEGER NOT NULL,
+    permissions_ok INTEGER NOT NULL, budget_ok INTEGER NOT NULL, checked_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS agent_quarantine (
+    agent_id TEXT PRIMARY KEY, reason TEXT NOT NULL, isolated_at TEXT NOT NULL,
+    review_required INTEGER NOT NULL DEFAULT 1, campaign_id TEXT, proof_id TEXT,
+    released_at TEXT, release_evidence TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_activation_one_active ON activation_campaigns(status) WHERE status='running';
+CREATE INDEX IF NOT EXISTS idx_activation_proofs_agent ON activation_proofs(agent_id, checked_at);
+CREATE INDEX IF NOT EXISTS idx_provider_verifications_provider ON provider_verifications(provider, checked_at);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_learning_one_running ON learning_runs(status) WHERE status='running';
 CREATE INDEX IF NOT EXISTS idx_missions_queue ON missions(state, priority, created_at);
 CREATE INDEX IF NOT EXISTS idx_budget_reservations_status ON budget_reservations(status);
@@ -219,7 +266,7 @@ def _add_columns(conn: sqlite3.Connection, table: str, columns: dict[str, str]) 
 
 
 def _migrate(conn: sqlite3.Connection) -> None:
-    """Migration additive v1 -> v2 : aucune suppression, aucune réécriture de données."""
+    """Migrations additives v1 -> v2 -> v3 : aucune suppression, aucune réécriture de données."""
     _add_columns(conn, "missions", {
         "owner_worker_id": "TEXT", "lease_token": "TEXT",
         "lease_expires_at": "REAL NOT NULL DEFAULT 0", "heartbeat_at": "REAL",
@@ -228,6 +275,7 @@ def _migrate(conn: sqlite3.Connection) -> None:
     })
     _add_columns(conn, "tasks", {"execution_token": "TEXT", "owner_worker_id": "TEXT"})
     _add_columns(conn, "budget_ledger", {"reservation_id": "TEXT", "call_key": "TEXT"})
+    _add_columns(conn, "activation_campaigns", {"model": "TEXT"})
 
 
 def init_db(conn: sqlite3.Connection) -> None:

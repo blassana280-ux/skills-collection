@@ -1,4 +1,4 @@
-# Architecture OMNIBRAIN SUPREME 1000 — version 1.2.1
+# Architecture OMNIBRAIN SUPREME 1000 — version 1.3.0
 
 Racine dépôt : `skills-collection/`. Framework : `skills-collection/omni-agents-framework/`.
 Dans les tableaux ci-dessous, `supreme/...` signifie
@@ -21,8 +21,8 @@ télémétrie V4 plutôt que de les réécrire. Python 3.11+ **stdlib uniquement
 | 5 | Agent Factory | `supreme/factory.py` | Implémenté, testé |
 | 6 | Agent Orchestrator | `supreme/orchestrator.py` (DAG, états, reprises) | Implémenté, testé |
 | 7 | Division Managers | 20 profils `kind=manager` + outil `division_report` | Implémenté, testé |
-| 8 | Intelligent Model Router | `supreme/router.py` | Implémenté ; **0 fournisseur configuré** |
-| 9 | Multi-Model Council | `supreme/council.py` | Implémenté ; nécessite fournisseurs |
+| 8 | Intelligent Model Router | `supreme/router.py` + `providers.py` + `credentials.py` + `provider_control.py` | Implémenté, testé localement ; **0 fournisseur connecté réellement** |
+| 9 | Multi-Model Council | `supreme/council.py` (preuves référencées, second avis borné, `needs_review`) | Implémenté, testé ; nécessite fournisseurs réels |
 | 10 | Shared Memory Engine | `supreme/memory.py` (central/division/collective) | Implémenté, testé |
 | 11 | Individual Memory Engine | `supreme/memory.py` (individual) | Implémenté, testé |
 | 12 | Knowledge Graph | `supreme/memory.py` `relate/neighbors` | Implémenté, testé |
@@ -45,12 +45,33 @@ télémétrie V4 plutôt que de les réécrire. Python 3.11+ **stdlib uniquement
 | 29 | Administrative Interface | `supreme/dashboard/index.html` | Implémenté, testé |
 | 30 | Reporting Engine | `supreme/reporting.py` | Implémenté, testé |
 
+## Composants ajoutés/durcis en 1.3.0
+| Module | Rôle | Garde-fou |
+| --- | --- | --- |
+| `credentials.py` | env → `*_FILE` → fichier runtime privé 0600 → legacy 0600 | TTY/getpass pour saisie, pas de secret dans statuts/logs |
+| `provider_control.py` | autorisation/révocation inférence, prix attestés, vérification, modèles découverts | fermé par défaut, ≤24 h, plafond USD/appels, prix ≤30 j |
+| `activation.py` | campagnes 5→20→60→100→…→960, preuves, quarantaine, reprise | `external_api` obligatoire, bail fencé, revue humaine |
+| `planner.py` | mode LLM explicite, cross-division, vérificateur indépendant | pas de substitut local simulé pour un agent LLM |
+| `memory.py` | contradictions `subject_key`/`claim_key`/`claim_value` | pas de contradiction sur simple formulation |
+| `learning.py` | comparaison mesurée avant/après entre cycles | baseline ≠ gain, pas de modification noyau |
+| `db.py` v3 | 7 tables additives fournisseurs/activation | migration sans suppression, audit |
+
 ## Flux d'une mission
 ```
-objectif → MissionPlanner (classification + DAG) → Registry (sélection agents)
-→ OmniBrainCore.run (vagues parallèles, WorkerPool) → outils déterministes réels
-→ validation sortie → Bus (messages) → Memory (collectif, provenance)
-→ Budget (coût) → Observability (métriques) → Reporting (rapport)
+objectif → MissionPlanner (classification + DAG, cross-division si complexe)
+→ Registry (sélection agents, vérificateur indépendant)
+→ OmniBrainCore.run (vagues parallèles, WorkerPool)
+→ outils déterministes réels OU inférence externe autorisée (jamais de stub activant)
+→ validation sortie → Council si complexe (preuves, second avis borné, needs_review)
+→ Bus (messages) → Memory (provenance ; central seulement si vérifié)
+→ Budget (usage réel/exposition) → Observability → Reporting
+```
+
+## Flux d'activation LLM
+```
+clé privée → découverte GET réelle → modèles persistés → prix attestés → autorisation humaine bornée
+→ campagne palier suivant → par agent : permissions/budget/garde → POST réel → JSON exploitable + usage
+→ preuve privée + activation atomique ; échec isolé → quarantaine ; panne fournisseur → arrêt campagne
 ```
 
 ## Séparation profil / instance (1000 agents ≠ 1000 processus)
@@ -65,7 +86,7 @@ Aucun processus permanent par agent ; activation à la demande, concurrence born
 - `validated` : 7 contrôles offline OK (mission représentative réussie ou différée).
 - `operational` : mission représentative **réellement exécutée avec succès**.
 - `monitored` : operational + performances suivies.
-État réel 1.2.1 : **1020 profils enregistrés** ; statuts SQLite `registered=0`,
+État réel 1.3.0 : **1020 profils enregistrés** ; statuts SQLite `registered=0`,
 `validated=960`, `monitored=60`, `operational=0`. Les **60 agents locaux** (40 spécialistes
 outil + 20 chefs) sont réellement opérationnels en local sur preuve et marqués `monitored`.
 Les 960 autres ont une mission représentative LLM **différée** (aucun fournisseur réel connecté)
@@ -77,7 +98,7 @@ Les 960 autres ont une mission représentative LLM **différée** (aucun fournis
 ← `planner` ← `orchestrator` ← {`api`, `__main__`}. `tools` est autonome.
 `router`/`council`/`evaluation`/`learning`/`observability`/`reporting`/`backup` au-dessus.
 
-## Compléments v1.1–1.2.1
+## Compléments v1.1–1.3.0
 - `supreme/providers.py` : client HTTP multi-fournisseurs réel (composant Model Router étendu).
 - `supreme/worker.py` + `supreme/leases.py` : workers séparés, file SQLite, propriétaire,
   bail expirant, heartbeat, fencing, récupération exclusive, idempotence `task_executions`.
