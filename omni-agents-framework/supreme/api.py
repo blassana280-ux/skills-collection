@@ -203,6 +203,21 @@ def make_handler(state: APIState):
                 if path == "/api/models":
                     c["router"].detect()
                     return self._send(200, c["router"].status())
+                if path == "/api/providers":
+                    from .providers import configured_providers
+                    c["router"].detect()
+                    conf = configured_providers()
+                    # Statut vérifié (si check_availability déjà lancé) par fournisseur.
+                    verified = {p.name: p.status for p in c["router"].providers}
+                    for item in conf:
+                        item["verified_status"] = verified.get(item["name"], "not_checked")
+                    return self._send(200, {
+                        "providers": conf,
+                        "configured_count": sum(1 for x in conf if x["configured"]),
+                        "priority_order": [x["name"] for x in sorted(conf, key=lambda y: y["priority"])],
+                        "secure_config": "Clés via variables d'environnement ou var/supreme/providers.json (0600, gitignoré). Jamais dans le dépôt.",
+                        "note": "Un fournisseur configuré n'est opérationnel qu'après un appel API réel réussi.",
+                    })
                 if path == "/api/quotas":
                     return self._send(200, {"totals": c["budget"].totals(),
                                             "quotas": [dict(r) for r in c["conn"].execute("SELECT * FROM quotas")]})
@@ -222,6 +237,32 @@ def make_handler(state: APIState):
                     return self._send(200, reporting.global_report())
                 if path == "/api/backups":
                     return self._send(200, {"backups": state.backup.list_backups()})
+                if path == "/api/alerts":
+                    from .security import redact
+                    rows = c["conn"].execute(
+                        "SELECT at,level,component,mission_id,message FROM events "
+                        "WHERE level IN ('warning','error','critical') ORDER BY id DESC LIMIT 50").fetchall()
+                    alerts = [{"at": c["at"], "level": c["level"], "component": c["component"],
+                               "mission_id": c["mission_id"], "message": redact(c["message"])} for c in rows]
+                    return self._send(200, {"alerts": alerts, "count": len(alerts)})
+                if path == "/api/security":
+                    from .security import redact
+                    logp = VAR_DIR / "access.log"
+                    tail = []
+                    if logp.is_file():
+                        lines = logp.read_text(encoding="utf-8", errors="ignore").splitlines()[-30:]
+                        tail = [redact(ln) for ln in lines]
+                    tokp = VAR_DIR / "api_token.txt"
+                    perms = oct(tokp.stat().st_mode & 0o777) if tokp.is_file() else "absent"
+                    return self._send(200, {
+                        "access_log_tail": tail,
+                        "token_file_permissions": perms,
+                        "secrets_file_present": (VAR_DIR / "providers.json").is_file(),
+                        "anon_read": state.anon_read,
+                        "posture": "moindre privilège, anti-injection, ACL bus/mémoire, rédaction secrets, "
+                                   "actions protégées sur approbation humaine, journal d'accès expurgé",
+                        "note": "Aucun secret n'est exposé par cet endpoint.",
+                    })
                 if path.startswith("/api/trace/"):
                     return self._send(200, obs.mission_trace(path.split("/")[-1]))
                 return self._send(404, {"error": "route inconnue"})

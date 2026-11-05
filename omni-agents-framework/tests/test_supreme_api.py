@@ -169,3 +169,42 @@ class TestApiSecurity(TestAPI):
 
     def test_token_file_permissions_on_load(self):
         self.assertEqual((self._var / "api_token.txt").stat().st_mode & 0o777, 0o600)
+
+
+class TestApiObservability(TestAPI):
+    def test_providers_endpoint_no_secret(self):
+        code, data = self._get("/api/providers")
+        self.assertEqual(code, 200)
+        self.assertIn("providers", data)
+        self.assertIn("configured_count", data)
+        self.assertEqual(data["priority_order"][0], "mistral")  # Vide prioritaire
+        # Aucune VALEUR secrète exposée. Le nom de variable d'env (env_var) est public et utile.
+        for p in data["providers"]:
+            self.assertNotIn("secret", p)
+            self.assertNotIn("key_value", p)
+            self.assertNotIn("api_key", p)  # pas de champ valeur de clé
+            # env_var ne contient qu'un NOM de variable (majuscules), jamais une valeur
+            self.assertEqual(p["env_var"], p["env_var"].upper())
+
+    def test_alerts_endpoint(self):
+        code, data = self._get("/api/alerts")
+        self.assertEqual(code, 200)
+        self.assertIn("alerts", data)
+        self.assertIsInstance(data["alerts"], list)
+
+    def test_security_endpoint_no_secret(self):
+        code, data = self._get("/api/security")
+        self.assertEqual(code, 200)
+        self.assertIn("posture", data)
+        self.assertIn("token_file_permissions", data)
+        # le jeton de test ne doit jamais apparaître
+        self.assertNotIn("test-token", json.dumps(data))
+
+    def test_dashboard_serves_new_tabs(self):
+        import urllib.request
+        with urllib.request.urlopen(f"http://127.0.0.1:{self.port}/", timeout=10) as r:
+            html = r.read().decode()
+        self.assertIn("tab-quotas", html)
+        self.assertIn("tab-security", html)
+        self.assertIn("loadQuotas", html)
+        self.assertIn("loadSecurity", html)

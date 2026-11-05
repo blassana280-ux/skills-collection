@@ -10,6 +10,8 @@ Usage : python3 -m supreme <commande>
   backup                 sauvegarde la base
   report                 rapport global
   rotate-token           régénère le jeton API (0600, jamais affiché) ; redémarrer serve ensuite
+  providers [--check]    statut des fournisseurs IA (sans clés) ; --check = appel réel de disponibilité
+  providers --init-secrets  crée un modèle de fichier de secrets vide (0600, gitignoré)
 """
 from __future__ import annotations
 
@@ -30,6 +32,9 @@ def main(argv=None):
     sub.add_parser("backup")
     sub.add_parser("report")
     sub.add_parser("rotate-token")
+    pv = sub.add_parser("providers")
+    pv.add_argument("--check", action="store_true")
+    pv.add_argument("--init-secrets", action="store_true")
     args = ap.parse_args(argv)
 
     if args.cmd == "catalog":
@@ -53,6 +58,32 @@ def main(argv=None):
         if meta["env_override"]:
             print("ATTENTION : SUPREME_API_TOKEN est défini dans l'environnement et "
                   "prend le pas sur le fichier ; retirez-le pour utiliser le nouveau jeton.")
+        return 0
+
+    if args.cmd == "providers":
+        from .providers import configured_providers, write_secrets_template
+        if args.init_secrets:
+            path = write_secrets_template()
+            print(json.dumps({"secrets_template": path, "permissions": "0600",
+                              "note": "Fichier vide créé (gitignoré). Remplissez-le HORS dépôt, "
+                                      "ou utilisez les variables d'environnement. Aucune clé n'est affichée."},
+                             ensure_ascii=False, indent=1))
+            return 0
+        if args.check:
+            from .router import ModelRouter
+            r = ModelRouter(allow_network=True)
+            results = r.check_availability()
+            print(json.dumps({"availability": results,
+                              "note": "available = appel HTTP réel réussi ; aucun fournisseur déclaré opérationnel sans preuve."},
+                             ensure_ascii=False, indent=1))
+            return 0
+        conf = configured_providers()
+        print(json.dumps({"providers": conf,
+                          "configured_count": sum(1 for x in conf if x["configured"]),
+                          "priority_order": [x["name"] for x in sorted(conf, key=lambda y: y["priority"])],
+                          "secure_config": "Clés via env (MISTRAL_API_KEY, ...) ou var/supreme/providers.json (0600, gitignoré).",
+                          "note": "Configuré != opérationnel. Seul un appel API réel réussi rend un fournisseur opérationnel."},
+                         ensure_ascii=False, indent=1))
         return 0
 
     from .api import bootstrap

@@ -58,9 +58,11 @@
     <button data-tab="divisions" onclick="tab('divisions')">Divisions</button>
     <button data-tab="agents" onclick="tab('agents')">Agents</button>
     <button data-tab="models" onclick="tab('models')">Modèles</button>
+    <button data-tab="quotas" onclick="tab('quotas')">Coûts</button>
     <button data-tab="kpis" onclick="tab('kpis')">KPIs</button>
     <button data-tab="memory" onclick="tab('memory')">Mémoire</button>
     <button data-tab="approvals" onclick="tab('approvals')">Approbations</button>
+    <button data-tab="security" onclick="tab('security')">Sécurité</button>
   </div>
 
   <section id="tab-missions">
@@ -69,9 +71,9 @@
       <input id="objective" placeholder="Objectif de la mission…" style="flex:1;min-width:220px">
       <button onclick="submitMission()">Lancer</button>
     </div>
-    <div class="muted" style="margin:8px 0">Les missions s'exécutent avec les outils déterministes réels. Les tâches nécessitant un LLM sont bloquées tant qu'aucun fournisseur n'est configuré.</div>
+    <div class="muted" style="margin:8px 0">Les missions s'exécutent avec les outils déterministes réels. Les tâches LLM s'exécutent via un fournisseur configuré (Mistral/Vide prioritaire) ; sinon elles sont bloquées honnêtement.</div>
     <h2 style="margin-top:14px">Historique des missions</h2>
-    <div class="scroll"><table id="missionsTable"><thead><tr><th>ID</th><th>Objectif</th><th>État</th><th>Créée</th></tr></thead><tbody></tbody></table></div>
+    <div class="scroll"><table id="missionsTable"><thead><tr><th>ID</th><th>Objectif</th><th>État</th><th>Créée</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
   </section>
 
   <section id="tab-divisions" class="hidden">
@@ -91,9 +93,26 @@
 
   <section id="tab-models" class="hidden">
     <h2>Fournisseurs IA</h2>
-    <div class="muted" style="margin-bottom:8px">Statut réel détecté depuis l'environnement. Aucune connexion simulée.</div>
-    <div class="scroll"><table id="modelsTable"><thead><tr><th>Fournisseur</th><th>Statut</th><th>Modèles déclarés</th></tr></thead><tbody></tbody></table></div>
+    <div class="muted" style="margin-bottom:8px">Statut réel détecté depuis l'environnement. <b>Configuré ≠ opérationnel</b> : seul un appel API réel réussi rend un fournisseur opérationnel. Mistral/Vide est prioritaire.</div>
+    <div class="scroll"><table id="modelsTable"><thead><tr><th>Prio</th><th>Fournisseur</th><th>Configuré</th><th>Vérifié</th></tr></thead><tbody></tbody></table></div>
     <button onclick="checkProviders()" style="margin-top:10px">Vérifier la disponibilité réelle</button>
+    <div class="muted" id="providersNote" style="margin-top:8px"></div>
+  </section>
+
+  <section id="tab-quotas" class="hidden">
+    <h2>Quotas &amp; coûts réels</h2>
+    <div class="muted" style="margin-bottom:8px">Dépenses réelles uniquement (0 pour les outils locaux). Aucune valeur fabriquée.</div>
+    <div id="quotaTotals" class="grid" style="margin-bottom:12px"></div>
+    <div class="scroll"><table id="quotasTable"><thead><tr><th>Périmètre</th><th>ID</th><th>Limite (USD)</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section id="tab-security" class="hidden">
+    <h2>Sécurité &amp; alertes</h2>
+    <div id="securityPosture" class="muted" style="margin-bottom:10px"></div>
+    <h2 style="font-size:1rem">Alertes récentes</h2>
+    <div id="alerts"></div>
+    <h2 style="font-size:1rem;margin-top:14px">Journal d'accès (expurgé)</h2>
+    <div class="scroll" style="max-height:220px"><pre id="accessLog" style="font-size:.72rem;white-space:pre-wrap"></pre></div>
   </section>
 
   <section id="tab-kpis" class="hidden">
@@ -133,18 +152,21 @@ async function loadStatus(){const s=await api('/api/status');const a=s.agents||{
  ['Terminées',s.missions?.completed||0,'ok'],['Échouées',s.missions?.failed||0,'bad'],
  ['Coût total USD',Object.values(s.budget_totals||{}).reduce((x,y)=>x+y,0).toFixed(4),'mut']];
  $('#cards').innerHTML=cards.map(([l,v,c])=>`<div class="card"><div class="v ${c}">${v}</div><div class="l">${l}</div></div>`).join('');}
-async function loadMissions(){const d=await api('/api/missions');const tb=$('#missionsTable tbody');tb.innerHTML=(d.missions||[]).map(m=>`<tr><td>${m.id}</td><td>${m.objective.slice(0,60)}</td><td>${pill(m.state)}</td><td>${(m.created_at||'').slice(0,16)}</td></tr>`).join('')||'<tr><td colspan=4 class=empty>Aucune mission</td></tr>';}
+async function loadMissions(){const d=await api('/api/missions');const tb=$('#missionsTable tbody');tb.innerHTML=(d.missions||[]).map(m=>{const term=['completed','failed','cancelled'].includes(m.state);const act=term?`<button onclick="missionAction('${m.id}','run')" style="padding:4px 8px">Relancer</button>`:`<button onclick="missionAction('${m.id}','cancel')" style="padding:4px 8px;background:var(--bad)">Annuler</button>`;return `<tr><td>${m.id}</td><td>${m.objective.slice(0,60)}</td><td>${pill(m.state)}</td><td>${(m.created_at||'').slice(0,16)}</td><td>${act}</td></tr>`;}).join('')||'<tr><td colspan=5 class=empty>Aucune mission</td></tr>';}
+async function missionAction(id,action){if(!TOKEN)return toast('Jeton admin requis');const d=await api(`/api/missions/${id}/${action}`,{method:'POST',body:'{}'});toast(d.error?('Erreur: '+d.error):('Mission '+(d.state||action)));refreshAll();}
 async function loadDivisions(){const d=await api('/api/divisions');const tb=$('#divTable tbody');tb.innerHTML=(d.divisions||[]).map(x=>`<tr><td>${x.division}</td><td>${x.total}</td><td>${x.status_counts.validated}</td><td>${x.status_counts.monitored+x.status_counts.operational}</td><td>${x.manager_status?pill(x.manager_status):'—'}</td></tr>`).join('');
  const sel=$('#divFilter');if(sel.options.length<=1){(d.divisions||[]).forEach(x=>{const o=document.createElement('option');o.value=x.division;o.textContent=x.division;sel.appendChild(o);});}}
 async function loadAgents(){const div=$('#divFilter').value,st=$('#statusFilter').value;const d=await api(`/api/agents?division=${div}&status=${st}`);const tb=$('#agentsTable tbody');tb.innerHTML=(d.agents||[]).slice(0,300).map(a=>`<tr><td>${a.id}</td><td>${a.name}</td><td>${a.division}</td><td>${pill(a.status)}</td><td>${a.risk}</td></tr>`).join('');$('#agentsCount').textContent=`${d.count} agents (300 affichés max)`;}
-async function loadModels(){const d=await api('/api/models');const tb=$('#modelsTable tbody');tb.innerHTML=(d.providers||[]).map(p=>`<tr><td>${p.name}</td><td>${pill(p.status)}</td><td>${(p.models||[]).join(', ')}</td></tr>`).join('');}
+async function loadModels(){const d=await api('/api/providers');const tb=$('#modelsTable tbody');const ps=(d.providers||[]).slice().sort((a,b)=>a.priority-b.priority);tb.innerHTML=ps.map(p=>`<tr><td>${p.priority}</td><td>${p.display_name||p.name}</td><td>${p.configured?'<span class="pill p-ok">oui</span>':'<span class="pill p-mut">non</span>'}</td><td>${pill(p.verified_status||'not_checked')}</td></tr>`).join('');$('#providersNote').textContent=`${d.configured_count||0} fournisseur(s) configurés. ${(d.configured_count||0)===0?'Aucun fournisseur connecté : les tâches LLM sont bloquées. Connectez Mistral/Vide via MISTRAL_API_KEY (env) sans exposer la clé.':''}`;}
+async function loadQuotas(){const d=await api('/api/quotas');const t=d.totals||{};$('#quotaTotals').innerHTML=Object.entries(t).map(([k,v])=>`<div class="card"><div class="v mut">${(typeof v==='number'?v.toFixed(4):v)}</div><div class="l">${k}</div></div>`).join('')||'<div class="empty">Aucune dépense</div>';const tb=$('#quotasTable tbody');tb.innerHTML=(d.quotas||[]).map(q=>`<tr><td>${q.scope}</td><td>${q.scope_id}</td><td>${q.limit_usd}</td></tr>`).join('')||'<tr><td colspan=3 class=empty>Aucun quota défini</td></tr>';}
+async function loadSecurity(){const s=await api('/api/security');$('#securityPosture').innerHTML=`<div class="card">${s.posture||''}<div class="muted" style="margin-top:6px">Jeton : ${s.token_file_permissions} · fichier secrets : ${s.secrets_file_present?'présent':'absent'} · lecture anonyme : ${s.anon_read?'oui':'non'}</div></div>`;$('#accessLog').textContent=(s.access_log_tail||[]).join('\n')||'(journal vide)';const a=await api('/api/alerts');$('#alerts').innerHTML=(a.alerts||[]).map(x=>`<div class="card" style="margin-bottom:6px"><div>${pill(x.level)} <b>${x.component}</b> <span class="muted">${(x.at||'').slice(0,19)}</span></div><div>${x.message}</div></div>`).join('')||'<div class=empty>Aucune alerte récente</div>';}
 async function loadKpis(){const d=await api('/api/kpis');$('#kpis').innerHTML=Object.entries(d).filter(([k])=>!k.startsWith('_')).map(([k,v])=>`<div class="kpi"><span>${k}</span><span>${v===null?'<span class=muted>indisponible</span>':(typeof v==='object'?JSON.stringify(v):v)}</span></div>`).join('');}
 async function searchMemory(){const q=$('#memQuery').value;const d=await api('/api/memory/search?q='+encodeURIComponent(q));$('#memResults').innerHTML=(d.results||[]).map(r=>`<div class="card" style="margin-bottom:8px"><div class="muted">${r.level}/${r.kind} · confiance ${r.confidence} · ${r.created_at}</div><div>${r.content.slice(0,300)}</div></div>`).join('')||'<div class=empty>Aucun résultat</div>';}
 async function loadApprovals(){const d=await api('/api/approvals');$('#approvals').innerHTML=(d.pending||[]).map(a=>`<div class="card" style="margin-bottom:8px"><div>${a.action} ${pill(a.risk)}</div><div class="muted">${a.requested_by} · ${a.created_at}</div><div class="row" style="margin-top:8px"><button onclick="decide('${a.id}',true)">Approuver</button><button onclick="decide('${a.id}',false)" style="background:var(--bad)">Rejeter</button></div></div>`).join('')||'<div class=empty>Aucune approbation en attente</div>';}
 async function decide(id,ok){await api(`/api/approvals/${id}/decide`,{method:'POST',body:JSON.stringify({approved:ok,decided_by:'Lassana'})});toast('Décision enregistrée');loadApprovals();}
 async function submitMission(){const o=$('#objective').value.trim();if(!o)return toast('Objectif requis');if(!TOKEN)return toast('Jeton admin requis pour lancer une mission');const d=await api('/api/missions',{method:'POST',body:JSON.stringify({objective:o,run:true})});if(d.error){toast('Erreur: '+d.error);}else{toast('Mission '+(d.result?.state||'soumise'));$('#objective').value='';refreshAll();}}
 async function checkProviders(){if(!TOKEN)return toast('Jeton admin requis');const d=await api('/api/providers/check',{method:'POST',body:'{}'});toast('Vérification effectuée');loadModels();}
-async function refreshAll(){await Promise.all([loadStatus(),loadMissions(),loadDivisions(),loadModels(),loadKpis(),loadApprovals()]);loadAgents();}
+async function refreshAll(){await Promise.all([loadStatus(),loadMissions(),loadDivisions(),loadModels(),loadQuotas(),loadKpis(),loadApprovals(),loadSecurity()]);loadAgents();}
 refreshAll();setInterval(refreshAll,15000);
 </script>
 </body>
