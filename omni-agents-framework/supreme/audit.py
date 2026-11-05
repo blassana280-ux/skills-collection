@@ -65,6 +65,17 @@ def _tests_count() -> int:
     return suite.countTestCases()
 
 
+def _guardian_summary(conn, registry) -> dict:
+    """État Guardian en lecture seule : l'audit ne déclenche pas de scan concurrent."""
+    from .guardian import GuardianEngine
+    engine = GuardianEngine(conn, registry=registry)
+    status = engine.status()
+    return {"ready": status["ready"], "blocking_findings": status["blocking_findings"],
+            "open_by_severity": status["open_by_severity"],
+            "recent_runs": status["recent_runs"][:3],
+            "note": "constats persistés ; lancer `python3 -m supreme guardian` pour un scan frais"}
+
+
 def run_audit(save: bool = True, conn=None) -> dict:
     from . import SUPREME_VERSION
     from .backup import BackupManager
@@ -128,14 +139,18 @@ def run_audit(save: bool = True, conn=None) -> dict:
         "budget": budget_audit,
         "backups": {"count": len(backups),
                     "latest": backups[-1]["id"] if backups else None,
-                    "latest_integrity": backups[-1].get("integrity") if backups else None},
+                    "latest_integrity": backups[-1].get("integrity") if backups else None,
+                    "verification": BackupManager().verify_all()},
         "kpis": obs.kpis(),
         "tests_discovered": _tests_count(),
+        "guardian": _guardian_summary(conn, registry),
         "distinctions": ["enregistré != opérationnel", "connecteur écrit != fournisseur connecté",
                          "serveur local != déploiement cloud", "test simulé != intégration réelle"],
     }
+    report["schema_version"] = reliability["schema_version"]
     report["ok"] = (report["catalog"]["ok"] and report["security"]["ok"]
-                    and reliability["ok"] and budget_audit["ok"])
+                    and reliability["ok"] and budget_audit["ok"]
+                    and report["guardian"]["blocking_findings"] == 0)
     if save:
         ensure_dirs()
         p = VAR_DIR / f"audit-{now().replace(':', '').replace('-', '')[:15]}-{uuid.uuid4().hex[:8]}.json"

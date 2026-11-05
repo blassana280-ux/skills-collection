@@ -1,11 +1,11 @@
 # 🧠 OMNIBRAIN SUPREME 1000
 
-**Version SUPREME : 1.3.0** · Un cerveau central · 20 divisions · 1000 spécialistes · une intelligence collective mesurable.
+**Version SUPREME : 1.4.0** · Un cerveau central · 20 divisions · 1000 spécialistes · une intelligence collective mesurable.
 
 Couche multi-agents construite au-dessus du framework OmniBrain V4 existant, dans
 `skills-collection/omni-agents-framework/supreme/`. Python stdlib + SQLite, démarrage **gratuit**,
 sans service externe requis. Le paquet V4 historique `omnibrain-framework` reste à `1.0.0` ;
-la version de livraison de la couche SUPREME est **1.3.0**.
+la version de livraison de la couche SUPREME est **1.4.0**.
 
 ## Démarrage rapide
 Depuis `skills-collection/omni-agents-framework/` :
@@ -38,7 +38,7 @@ Arrêt propre des workers et de l'apprentissage périodique : `SIGINT` / `SIGTER
   fallback, conseil sans contournement du routeur. Voir
   [PROVIDERS.md](omni-agents-framework/docs/supreme/PROVIDERS.md).
 
-## Activation intelligence réelle 1.3.0
+## Activation intelligence réelle 1.4.0
 - **Mistral/Vide prioritaire** : adaptateur officiel, découverte de modèles, clé via terminal privé/env/fichier 0600,
   autorisation d'inférence humaine bornée, prix attestés, quotas, erreurs/délais, POST non rejoué automatiquement.
 - **Activation progressive** : 5 → 20 → 60 → 100 → … → 960 agents LLM ; chaque agent exige une preuve

@@ -99,7 +99,17 @@ def write_secrets_template() -> str:
 
 
 def build_request(kind: str, base_url: str, model: str, messages: list[dict],
-                  api_key: str, max_tokens: int, temperature: float) -> tuple[str, dict, dict]:
+                  api_key: str, max_tokens: int, temperature: float,
+                  json_mode: bool = False) -> tuple[str, dict, dict]:
+    """Construit la requête de transport.
+
+    `json_mode` est **opt-in et désactivé par défaut** : le JSON est normalement
+    obtenu par contrat de prompt puis validation stricte côté serveur, ce qui
+    fonctionne sur toutes les familles d'API. Quand il est activé, le paramètre
+    natif n'est envoyé que pour les familles qui le documentent (openai/mistral,
+    gemini) ; il est ignoré ailleurs plutôt que d'envoyer un champ non supporté.
+    L'acceptation par un fournisseur réel reste à vérifier avec une clé.
+    """
     base = base_url.rstrip("/")
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     if kind in ("openai", "mistral"):
@@ -108,6 +118,8 @@ def build_request(kind: str, base_url: str, model: str, messages: list[dict],
             headers["Authorization"] = f"Bearer {api_key}"
         payload = {"model": model, "messages": messages, "max_tokens": max_tokens,
                    "temperature": temperature, "stream": False}
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
     elif kind == "anthropic":
         url = base + "/messages"
         headers["x-api-key"] = api_key
@@ -128,7 +140,10 @@ def build_request(kind: str, base_url: str, model: str, messages: list[dict],
             else:
                 contents.append({"role": "model" if m.get("role") == "assistant" else "user",
                                  "parts": [{"text": m["content"]}]})
-        payload = {"contents": contents, "generationConfig": {"maxOutputTokens": max_tokens, "temperature": temperature}}
+        generation = {"maxOutputTokens": max_tokens, "temperature": temperature}
+        if json_mode:
+            generation["responseMimeType"] = "application/json"
+        payload = {"contents": contents, "generationConfig": generation}
         if system:
             payload["systemInstruction"] = {"parts": [{"text": "\n".join(system)}]}
     elif kind == "ollama":
@@ -400,7 +415,21 @@ class ProviderClient:
                     caps += ["vision"]
                 context, tools = int(item.get("max_context_length", 0) or 0), bool(c.get("function_calling"))
             else:
-                caps, context, tools = ["general"], int(item.get("context_window", 0) or 0), False
+                # OpenAI/DeepSeek n'exposent pas le contexte dans /models ; OpenRouter expose
+                # context_length. Un contexte inconnu reste 0 : il devra être attesté par
+                # l'opérateur (provider_control.attest_model) avant tout routage payant.
+                caps, tools = ["general"], False
+                context = 0
+                for field in ("context_window", "context_length", "max_context_length", "max_tokens"):
+                    try:
+                        value = int(item.get(field) or 0)
+                    except (TypeError, ValueError):
+                        continue
+                    if value > 0:
+                        context = value
+                        break
+                if isinstance(item.get("supported_parameters"), list) and "tools" in item["supported_parameters"]:
+                    caps, tools = ["general", "tools"], True
             out["models"].append({"id": mid, "capabilities": caps, "context": context, "tools": tools})
         out["models"].sort(key=lambda m: m["id"])
         return out

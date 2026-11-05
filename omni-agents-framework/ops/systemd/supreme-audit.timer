@@ -1,0 +1,11 @@
+[Unit]
+Description=Audit quotidien OMNIBRAIN SUPREME
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=600
+Persistent=true
+Unit=supreme-audit.service
+
+[Install]
+WantedBy=timers.target

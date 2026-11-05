@@ -87,8 +87,17 @@ class TestSchemaMigration(unittest.TestCase):
             self.assertTrue({"reservation_id", "call_key"} <= bcols)
             self.assertEqual(conn.execute("SELECT objective FROM missions WHERE id='m-old'").fetchone()[0], "ancienne mission")
             self.assertEqual(conn.execute("SELECT state FROM tasks WHERE id='t-old'").fetchone()[0], "done")
-            self.assertEqual(conn.execute("SELECT value FROM schema_meta WHERE key='version'").fetchone()[0], "3")
-            self.assertIsNotNone(conn.execute("SELECT name FROM sqlite_master WHERE name='activation_campaigns'").fetchone())
+            # La migration est additive jusqu'au schéma courant : toutes les étapes
+            # v1→v2→v3→v4 doivent aboutir sans perte des données préexistantes.
+            from supreme.db import SCHEMA_VERSION
+            self.assertEqual(conn.execute("SELECT value FROM schema_meta WHERE key='version'").fetchone()[0],
+                             str(SCHEMA_VERSION))
+            for table in ("activation_campaigns", "activation_proofs", "agent_quarantine",
+                          "guardian_runs", "security_findings", "integrity_baseline"):
+                self.assertIsNotNone(conn.execute("SELECT name FROM sqlite_master WHERE name=?", (table,)).fetchone(),
+                                     table)
+            pmcols = {r[1] for r in conn.execute("PRAGMA table_info(provider_models)")}
+            self.assertTrue({"context_attested", "context_source", "context_attested_at"} <= pmcols)
             conn.close()
 
 

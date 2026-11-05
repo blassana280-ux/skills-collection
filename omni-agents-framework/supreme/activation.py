@@ -1,6 +1,6 @@
 """Campagnes d'activation progressives, sur preuves d'inférence externe uniquement.
 
-Paliers cumulatifs : 5 -> 20 -> 60 -> 100 -> +100 -> 960 spécialistes LLM.
+Paliers cumulatifs : 5 -> 20 -> 60 -> 100 -> 200 -> 400 -> 600 -> 800 -> 960 spécialistes LLM.
 Les 60 agents outils locaux ne sont pas comptés dans ces 960. Une préparation est
 locale et gratuite ; l'exécution exige une autorisation d'inférence humaine, une
 clé, des prix attestés, des quotas et une réponse externe exploitable. Un échec
@@ -22,8 +22,10 @@ from .provider_control import ProviderControl
 from .security import redact, scan_injection
 from .tools import TOOLS
 
-MILESTONES = [5, 20, 60, 100] + list(range(200, 901, 100)) + [960]
+MILESTONES = [5, 20, 60, 100, 200, 400, 600, 800, 960]
 PROBE_ID = "probe-1"
+QUARANTINE_RELEASE_CONFIRM = "REVUE HUMAINE EFFECTUEE"
+RESPECIFY_CONFIRM = "RECONFIGURER CAMPAGNE"
 
 
 def representative(profile: dict) -> dict:
@@ -81,14 +83,18 @@ class ActivationManager:
         return out
 
     def activated_ids(self) -> set[str]:
+        # Une preuve antérieure à une quarantaine ne recompte jamais : après levée,
+        # l'agent doit être re-prouvé (release_quarantine l'annonce explicitement).
         rows = self.conn.execute(
             """SELECT DISTINCT p.agent_id FROM activation_proofs p
                JOIN agents a ON a.id=p.agent_id
                JOIN budget_reservations r ON r.id=p.reservation_id
-               LEFT JOIN agent_quarantine q ON q.agent_id=p.agent_id AND q.review_required=1
+               LEFT JOIN agent_quarantine q ON q.agent_id=p.agent_id
                WHERE p.category='external_api' AND p.http_status=200 AND p.usable=1
                  AND p.permissions_ok=1 AND p.budget_ok=1 AND r.status='settled'
-                 AND a.kind='specialist' AND q.agent_id IS NULL""").fetchall()
+                 AND a.kind='specialist'
+                 AND (q.agent_id IS NULL
+                      OR (q.review_required=0 AND q.released_at IS NOT NULL AND p.checked_at > q.released_at))""").fetchall()
         llm_ids = {a["id"] for a in self.llm_agents()}
         return {r["agent_id"] for r in rows if r["agent_id"] in llm_ids}
 
@@ -142,16 +148,152 @@ class ActivationManager:
         log_event(self.conn, "info", "activation", f"campagne préparée : {target} agents cumulatifs", data={"campaign_id": cid, "new_agents": needed})
         return self.status(cid)
 
+    def respecify(self, campaign_id: str, *, provider: str | None = None, model: str | None = None,
+                  budget_usd: float | None = None, per_agent_usd: float | None = None,
+                  confirm: str = "", approved_by: str = "") -> dict:
+        """Re-définit fournisseur/modèle/budget d'une campagne NON commencée.
+
+        Une campagne `prepared`/`blocked`/`interrupted` sans aucun membre activé
+        pouvait rester figée sur un fournisseur indisponible : il fallait pouvoir
+        la re-cibler sans recréer un palier ni contourner la progression. Refusé
+        dès qu'une preuve externe existe (une dépense a pu avoir lieu) ou pendant
+        qu'un worker détient le bail. Aucun appel externe n'est effectué ici.
+        """
+        if confirm != RESPECIFY_CONFIRM or not approved_by.strip():
+            raise PermissionError(f"re-spécification refusée : --confirm '{RESPECIFY_CONFIRM}' et --approved-by requis")
+        row = self.conn.execute("SELECT * FROM activation_campaigns WHERE id=?", (campaign_id,)).fetchone()
+        if row is None:
+            raise KeyError(f"campagne inconnue : {campaign_id}")
+        if row["status"] not in ("prepared", "blocked", "interrupted"):
+            raise ValueError(f"re-spécification impossible : statut {row['status']}")
+        if self.conn.execute(
+                "SELECT 1 FROM activation_members WHERE campaign_id=? AND status IN ('activated','running')",
+                (campaign_id,)).fetchone():
+            raise ValueError("re-spécification refusée : des membres sont déjà activés/en cours")
+        if self.conn.execute("SELECT 1 FROM activation_proofs WHERE campaign_id=?", (campaign_id,)).fetchone():
+            raise ValueError("re-spécification refusée : des preuves externes existent déjà (exposition possible)")
+        if row["status"] == "interrupted" and row["lease_expires_at"] and float(row["lease_expires_at"]) > epoch():
+            raise ValueError("re-spécification refusée : bail encore vivant")
+        new_provider = (provider or row["provider"]).strip()
+        new_model = ((model if model is not None else row["model"]) or "").strip() or None
+        new_per_agent = float(per_agent_usd) if per_agent_usd is not None else float(row["per_agent_usd"])
+        if not math.isfinite(new_per_agent) or new_per_agent <= 0:
+            raise ValueError("per_agent_usd doit être fini et positif")
+        pending = self.conn.execute(
+            "SELECT COUNT(*) c FROM activation_members WHERE campaign_id=? AND status!='activated'",
+            (campaign_id,)).fetchone()["c"]
+        new_budget = float(budget_usd) if budget_usd is not None else round(pending * new_per_agent, 9)
+        if not math.isfinite(new_budget) or new_budget < pending * new_per_agent - 1e-12:
+            raise ValueError("budget de campagne insuffisant pour les bornes par agent")
+        previous = {"provider": row["provider"], "model": row["model"],
+                    "budget_usd": row["budget_usd"], "per_agent_usd": row["per_agent_usd"],
+                    "status": row["status"]}
+        with transaction(self.conn, immediate=True):
+            self.conn.execute(
+                """UPDATE activation_campaigns SET provider=?, model=?, budget_usd=?, per_agent_usd=?,
+                     status='prepared', error='', owner_worker_id=NULL, lease_token=NULL,
+                     lease_expires_at=0, heartbeat_at=NULL WHERE id=?""",
+                (new_provider, new_model, new_budget, new_per_agent, campaign_id))
+            self.conn.execute("INSERT OR REPLACE INTO quotas(scope,scope_id,limit_usd,period) VALUES('mission',?,?,'total')",
+                              (campaign_id, new_budget))
+        log_event(self.conn, "warning", "activation",
+                  f"campagne re-spécifiée par {approved_by}",
+                  data=json.dumps({"campaign_id": campaign_id, "previous": previous,
+                                   "provider": new_provider, "model": new_model,
+                                   "budget_usd": new_budget, "per_agent_usd": new_per_agent}))
+        return self.status(campaign_id) | {"respecified_by": approved_by, "previous": previous}
+
+    def reconcile_member(self, campaign_id: str, agent_id: str, *, resolution: str, evidence: str,
+                         acknowledged_by: str, confirm: str, retry: bool = False) -> dict:
+        """Réconciliation humaine d'un membre `failed`/`deferred` resté bloquant.
+
+        Sans cette voie, un membre en échec empêchait définitivement d'atteindre
+        son palier. L'humain tranche, preuve à l'appui : soit `waived` (le membre
+        est écarté du palier, qui peut alors se terminer), soit remise en `pending`
+        pour une nouvelle tentative autorisée. Aucune exposition budgétaire
+        incertaine n'est effacée : la décision est journalisée, pas substituée.
+        """
+        if confirm != QUARANTINE_RELEASE_CONFIRM:
+            raise PermissionError(f"réconciliation refusée : --confirm '{QUARANTINE_RELEASE_CONFIRM}' requis")
+        if not resolution.strip() or not evidence.strip() or not acknowledged_by.strip():
+            raise PermissionError("réconciliation refusée : resolution, evidence et acknowledged-by requis")
+        camp = self.conn.execute("SELECT * FROM activation_campaigns WHERE id=?", (campaign_id,)).fetchone()
+        if camp is None:
+            raise KeyError(f"campagne inconnue : {campaign_id}")
+        if camp["status"] == "running" and camp["lease_expires_at"] and float(camp["lease_expires_at"]) > epoch():
+            raise ValueError("réconciliation refusée : campagne en cours sous bail vivant")
+        member = self.conn.execute(
+            "SELECT * FROM activation_members WHERE campaign_id=? AND agent_id=?", (campaign_id, agent_id)).fetchone()
+        if member is None:
+            raise KeyError(f"membre inconnu : {agent_id}")
+        if member["status"] not in ("failed", "deferred"):
+            raise ValueError(f"réconciliation inutile : statut {member['status']}")
+        uncertain = self.conn.execute(
+            """SELECT r.id FROM budget_reservations r JOIN activation_members m ON m.campaign_id=r.mission_id
+               WHERE m.campaign_id=? AND m.agent_id=? AND r.status IN ('reserved','interrupted')""",
+            (campaign_id, agent_id)).fetchone()
+        if uncertain and retry:
+            raise ValueError("nouvelle tentative refusée : réservation incertaine, réconcilier le budget d'abord")
+        target_status = "pending" if retry else "waived"
+        replacement = None
+        if not retry:
+            # Écarter un membre ne doit jamais faire « sauter » un palier : le
+            # cumul exigé reste le même, donc un candidat neuf prend sa place.
+            activated = self.activated_ids()
+            already = {r["agent_id"] for r in self.conn.execute(
+                "SELECT agent_id FROM activation_members WHERE campaign_id=?", (campaign_id,))}
+            for candidate in self.llm_agents():
+                cid_agent = candidate["id"]
+                if cid_agent in activated or cid_agent in already:
+                    continue
+                if self.conn.execute("SELECT 1 FROM agent_quarantine WHERE agent_id=? AND review_required=1",
+                                     (cid_agent,)).fetchone():
+                    continue
+                replacement = cid_agent
+                break
+            if replacement is None:
+                raise ValueError("aucun candidat de remplacement disponible : le palier ne peut pas être écourté")
+        with transaction(self.conn, immediate=True):
+            self.conn.execute(
+                "UPDATE activation_members SET status=?, error=?, updated_at=? WHERE campaign_id=? AND agent_id=?",
+                (target_status, f"réconcilié par {acknowledged_by} : {resolution}"[:500], now(), campaign_id, agent_id))
+            if replacement:
+                pos = self.conn.execute("SELECT COALESCE(MAX(position),0)+1 p FROM activation_members WHERE campaign_id=?",
+                                        (campaign_id,)).fetchone()["p"]
+                self.conn.execute(
+                    "INSERT INTO activation_members(campaign_id,agent_id,position,status,updated_at) VALUES(?,?,?,'pending',?)",
+                    (campaign_id, replacement, pos, now()))
+            if camp["status"] in ("blocked", "interrupted", "needs_review"):
+                self.conn.execute(
+                    "UPDATE activation_campaigns SET status='prepared', error='' WHERE id=?", (campaign_id,))
+        log_event(self.conn, "warning", "activation",
+                  f"membre réconcilié par {acknowledged_by}",
+                  data=json.dumps({"campaign_id": campaign_id, "agent_id": agent_id,
+                                   "previous_status": member["status"], "new_status": target_status,
+                                   "resolution": resolution, "evidence": evidence,
+                                   "uncertain_reservation": uncertain["id"] if uncertain else None}))
+        return self.status(campaign_id) | {"reconciled": {"agent_id": agent_id, "status": target_status,
+                                                        "by": acknowledged_by, "evidence": evidence,
+                                                        "replacement_agent_id": replacement,
+                                                        "target_unchanged": int(camp["target_size"])}}
+
     def _member_update(self, cid, aid, status, proof_id=None, error=""):
         with transaction(self.conn, immediate=True):
             token = getattr(self._local, "token", None)
-            row = self.conn.execute("SELECT lease_token FROM activation_campaigns WHERE id=? AND status='running' AND lease_token=?", (cid, token)).fetchone()
+            row = self.conn.execute(
+                """SELECT lease_token, owner_worker_id, lease_expires_at FROM activation_campaigns
+                   WHERE id=? AND status='running' AND lease_token=?""", (cid, token)).fetchone()
             if not row:
                 raise RuntimeError("bail de campagne perdu")
+            if float(row["lease_expires_at"]) <= epoch():
+                raise RuntimeError("bail de campagne expiré : écriture refusée (fencing)")
             self.conn.execute("UPDATE activation_members SET status=?,proof_id=?,error=?,updated_at=? WHERE campaign_id=? AND agent_id=?",
                               (status, proof_id, redact(error)[:500], now(), cid, aid))
             self.conn.execute("UPDATE activation_campaigns SET heartbeat_at=?,lease_expires_at=? WHERE id=? AND status='running'",
                               (epoch(), epoch() + 300, cid))
+            # Heartbeat du processus propriétaire : la reprise ne doit pas viser un worker vivant.
+            self.conn.execute("UPDATE workers SET last_heartbeat=? WHERE worker_id=? AND state='alive'",
+                              (epoch(), row["owner_worker_id"]))
 
     def _isolate(self, cid, aid, reason, proof_id=None):
         with transaction(self.conn, immediate=True):
@@ -191,8 +333,13 @@ class ActivationManager:
                 and bool(profile["forbidden_tasks"]) and len(profile["quality_criteria"]) >= 2)
 
     def _recover_expired(self):
+        """Reprise exclusive : bail expiré ET propriétaire arrêté/silencieux (comme les missions)."""
         with transaction(self.conn, immediate=True):
-            expired = self.conn.execute("SELECT id FROM activation_campaigns WHERE status='running' AND lease_expires_at<=?", (epoch(),)).fetchall()
+            expired = self.conn.execute(
+                """SELECT c.id FROM activation_campaigns c LEFT JOIN workers w ON w.worker_id=c.owner_worker_id
+                   WHERE c.status='running' AND c.lease_expires_at<=?
+                     AND (w.state='stopped' OR w.last_heartbeat IS NULL OR w.last_heartbeat <= c.lease_expires_at)""",
+                (epoch(),)).fetchall()
             for row in expired:
                 cid = row["id"]
                 members = self.conn.execute("SELECT agent_id FROM activation_members WHERE campaign_id=? AND status='running'", (cid,)).fetchall()
@@ -316,8 +463,8 @@ class ActivationManager:
                               (status, now(), json.dumps(report, ensure_ascii=False), redact(error)[:500], cid, token))
 
     def release_quarantine(self, agent_id: str, *, evidence: str, confirm: str) -> dict:
-        if confirm != "REVUE HUMAINE EFFECTUEE" or not evidence.strip():
-            raise PermissionError("revue humaine documentée requise")
+        if confirm != QUARANTINE_RELEASE_CONFIRM or not evidence.strip():
+            raise PermissionError(f"revue humaine documentée requise (confirm='{QUARANTINE_RELEASE_CONFIRM}')")
         with transaction(self.conn, immediate=True):
             cur = self.conn.execute("UPDATE agent_quarantine SET review_required=0,released_at=?,release_evidence=? WHERE agent_id=? AND review_required=1",
                                     (now(), redact(evidence)[:500], agent_id))

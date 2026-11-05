@@ -1,11 +1,27 @@
 # Suivi durable OMNIBRAIN SUPREME 1000
 
-**Dernière mise à jour : 2026-11-05** · **Version SUPREME : 1.3.0** · Branche :
+**Dernière mise à jour : 2026-11-05** · **Version SUPREME : 1.4.0** · Branche :
 `arena/ffc77bf1-skills-collection` · PR #5 ouverte, non fusionnée · PR #2 non modifiée.
 Racine dépôt : `skills-collection/`. Framework : `skills-collection/omni-agents-framework/`.
 Ce document permet une reprise sans perdre le contexte. Aucune fusion de PR n'est autorisée implicitement.
 
-## État actuel vérifié
+## État actuel vérifié (1.4.0)
+- Couche SUPREME **1.4.0** : protection continue (Guardian), arbitrage mémoire, reprise d'activation
+  (re-spécification/réconciliation), contexte modèle attesté, API durcie, exploitation `ops/`.
+  Rapport de livraison courant : **`FINAL-COMPLETION-REPORT.md`** ; runbook : **`RUNBOOK.md`**.
+- **Schéma SQLite live v4** (33 tables déclarées), migration additive depuis v3, données préservées.
+- Audit CLI 1.4.0 : version `1.4.0`, `schema_version=4`, **442 tests découverts**.
+- Tests : **442 découverts = 105 V4/non-SUPREME + 337 SUPREME** ; 441 locaux verts + 1 opt-in ignoré.
+- Missions réelles cumulées : **13 completed**, **44 tâches done**, **9 divisions**, **18 agents distincts**,
+  88 messages bus, 44 mémoires, **0 USD**. Preuves : `validation/missions-real-140-*.json`.
+- Répartition exacte clarifiée : **40 spécialistes outil + 20 chefs outil = 60 `monitored`** ;
+  **960 spécialistes LLM `validated`** ; 0 `operational` strict.
+- Guardian : 11 contrôles ; les constats `core_file_modified` de la livraison 1.4.0 restent ouverts
+  jusqu'à re-baseline humaine documentée (`--rebaseline-core --confirm 'REVUE HUMAINE EFFECTUEE'`).
+- Sauvegardes durcies **0600/0700** (20 fichiers existants corrigés), 4 sauvegardes intégrité `ok` ;
+  vérification `backup --verify` et rétention opt-in `backup --prune N` (simulation par défaut).
+
+## Historique 1.3.0 (conservé)
 - Couche SUPREME **1.3.0** : fournisseurs/intelligence/activation progressive/CLI/API/dashboard mobile,
   sans reconstruire les composants 1.2.1 stabilisés.
 - **Schéma SQLite live v3** appliqué après sauvegarde v2 :
@@ -28,7 +44,19 @@ Ce document permet une reprise sans perdre le contexte. Aucune fusion de PR n'es
   Journaux : `validation/full-suite-130-final.log`, `validation/supreme-suite-130-final.log`,
   `validation/v4-suite-130-final.log`.
 
-## Modules 1.3.0 à connaître
+## Modules 1.4.0 à connaître
+- `supreme/guardian.py` : 11 contrôles de protection continue, dédup par empreinte, bail unique,
+  ordonnanceur périodique, résolution et re-baseline humaines tracées ; ne modifie jamais le noyau.
+- `supreme/memory.py` : `resolve_contradiction` (versionnement + provenance + relation `supersedes`,
+  aucune ligne effacée) et `open_contradictions`.
+- `supreme/activation.py` : paliers 5→20→60→100→200→400→600→800→960, `respecify`, `reconcile_member`
+  (remplacement obligatoire pour préserver le palier), preuve post-quarantaine, fencing + heartbeat.
+- `supreme/backup.py` : permissions 0600/0700, `verify_all`, `prune` opt-in, `_integrity` sans exception.
+- `supreme/api.py` : corps borné (413), JSON invalide 400, validation numérique, endpoints
+  guardian/divisions.detail/collaborations/activity/quarantine/respecify/reconcile.
+- `ops/` : `supreme-ctl.sh`, 8 unités systemd, Dockerfile, compose.yaml, healthcheck.py, env.example.
+
+## Modules 1.3.0 (conservés)
 - `supreme/credentials.py` : env → `*_FILE` → fichier runtime privé 0600 → legacy 0600 ;
   saisie TTY/getpass, pas de secret dans les statuts.
 - `supreme/provider_control.py` : autorisation/révocation inférence, prix attestés, preflight,

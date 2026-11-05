@@ -3,6 +3,9 @@
 Vérifie que les documents de livraison courante affichent la même version SUPREME
 et le même nombre de tests que la découverte unittest réelle. Les sections
 historiques du changelog peuvent conserver leurs anciens décomptes.
+
+`EXECUTION-REPORT.md` reste le procès-verbal historique de la livraison 1.3.0 et
+n'est pas réécrit : le rapport de livraison courant est `FINAL-COMPLETION-REPORT.md`.
 """
 import re
 import unittest
@@ -37,7 +40,7 @@ class TestDocsCoherence(unittest.TestCase):
         docs = [
             REPO_ROOT / "OMNIBRAIN-SUPREME.md",
             REPO_ROOT / "AGENTS.md",
-            FRAMEWORK_ROOT / "docs/supreme/EXECUTION-REPORT.md",
+            FRAMEWORK_ROOT / "docs/supreme/FINAL-COMPLETION-REPORT.md",
             FRAMEWORK_ROOT / "docs/supreme/TEST-MATRIX.md",
             FRAMEWORK_ROOT / "docs/supreme/CONTINUITY.md",
             FRAMEWORK_ROOT / "docs/supreme/ECOSYSTEM.md",
@@ -45,6 +48,32 @@ class TestDocsCoherence(unittest.TestCase):
         ]
         for p in docs:
             self.assertIn(SUPREME_VERSION, p.read_text(encoding="utf-8"), f"version absente dans {p}")
+
+    def test_historical_execution_report_is_preserved(self):
+        """Le PV 1.3.0 reste consultable et daté : pas de réécriture d'historique."""
+        text = (FRAMEWORK_ROOT / "docs/supreme/EXECUTION-REPORT.md").read_text(encoding="utf-8")
+        self.assertIn("livraison 1.3.0", text)
+        self.assertIn("2026-11-05", text)
+
+    def test_confirmation_phrases_match_between_code_and_docs(self):
+        """Une consigne humaine documentée doit être exactement celle exigée par le code.
+
+        Le CLI transmet `--confirm` sans le coder en dur : on vérifie donc les
+        constantes du code contre les documents, et que le CLI expose bien l'option.
+        """
+        from supreme.activation import QUARANTINE_RELEASE_CONFIRM
+        from supreme.provider_control import AUTH_CONFIRM, CONTEXT_CONFIRM, PRICE_CONFIRM
+        from supreme.guardian import RESOLVE_CONFIRM
+        docs = "\n".join(p.read_text(encoding="utf-8") for p in
+                         (FRAMEWORK_ROOT / "docs/supreme").glob("*.md"))
+        cli = (FRAMEWORK_ROOT / "supreme/__main__.py").read_text(encoding="utf-8")
+        for phrase in (QUARANTINE_RELEASE_CONFIRM, AUTH_CONFIRM, CONTEXT_CONFIRM, PRICE_CONFIRM,
+                       "REVOQUER INFERENCE"):
+            self.assertIn(phrase, docs, f"confirmation absente des docs : {phrase}")
+        self.assertIn('"--confirm"', cli)
+        self.assertEqual(RESOLVE_CONFIRM, QUARANTINE_RELEASE_CONFIRM)
+        self.assertNotIn("JE CONFIRME LA REVUE", docs + cli,
+                         "ancienne phrase de confirmation encore documentée")
 
     def test_test_matrix_counts_match_real_discovery(self):
         total, v4, supreme = _discover_counts()

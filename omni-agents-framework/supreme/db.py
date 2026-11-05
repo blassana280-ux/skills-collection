@@ -16,7 +16,7 @@ from typing import Any, Iterator
 
 from .config import DB_PATH, ensure_dirs
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 _local = threading.local()
 _tx_local = threading.local()
 _lock = threading.RLock()
@@ -208,7 +208,9 @@ CREATE TABLE IF NOT EXISTS provider_models (
     provider TEXT NOT NULL, model TEXT NOT NULL, capabilities_json TEXT NOT NULL DEFAULT '[]',
     context INTEGER NOT NULL DEFAULT 0, tools INTEGER NOT NULL DEFAULT 0,
     discovered_at TEXT NOT NULL, endpoint_host TEXT NOT NULL, request_id TEXT,
-    category TEXT NOT NULL, PRIMARY KEY(provider, model)
+    category TEXT NOT NULL, context_attested INTEGER NOT NULL DEFAULT 0,
+    context_source TEXT NOT NULL DEFAULT '', context_attested_at TEXT,
+    PRIMARY KEY(provider, model)
 );
 CREATE TABLE IF NOT EXISTS provider_verifications (
     id TEXT PRIMARY KEY, provider TEXT NOT NULL, ok INTEGER NOT NULL, category TEXT NOT NULL,
@@ -237,6 +239,30 @@ CREATE TABLE IF NOT EXISTS activation_proofs (
     cost_usd REAL NOT NULL, latency_ms REAL NOT NULL, usable INTEGER NOT NULL,
     permissions_ok INTEGER NOT NULL, budget_ok INTEGER NOT NULL, checked_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS guardian_runs (
+    id TEXT PRIMARY KEY, trigger TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'running',
+    started_at TEXT NOT NULL, finished_at TEXT, checks_json TEXT NOT NULL DEFAULT '{}',
+    findings INTEGER NOT NULL DEFAULT 0, critical INTEGER NOT NULL DEFAULT 0,
+    owner_worker_id TEXT, lease_token TEXT, lease_expires_at REAL NOT NULL DEFAULT 0,
+    heartbeat_at REAL, error TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS security_findings (
+    id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL UNIQUE, code TEXT NOT NULL,
+    severity TEXT NOT NULL, component TEXT NOT NULL, detail TEXT NOT NULL,
+    evidence_json TEXT NOT NULL DEFAULT '{}', status TEXT NOT NULL DEFAULT 'open',
+    first_seen_at TEXT NOT NULL, last_seen_at TEXT NOT NULL, occurrences INTEGER NOT NULL DEFAULT 1,
+    resolved_at TEXT, resolution TEXT NOT NULL DEFAULT '', acknowledged_by TEXT
+);
+CREATE TABLE IF NOT EXISTS guardian_schedulers (
+    id TEXT PRIMARY KEY, interval_seconds REAL NOT NULL, owner_worker_id TEXT,
+    lease_token TEXT, lease_expires_at REAL NOT NULL DEFAULT 0, heartbeat_at REAL,
+    next_run_at REAL NOT NULL DEFAULT 0, state TEXT NOT NULL DEFAULT 'active',
+    cycles INTEGER NOT NULL DEFAULT 0, last_error TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS integrity_baseline (
+    path TEXT PRIMARY KEY, sha256 TEXT NOT NULL, size_bytes INTEGER NOT NULL, recorded_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS agent_quarantine (
     agent_id TEXT PRIMARY KEY, reason TEXT NOT NULL, isolated_at TEXT NOT NULL,
     review_required INTEGER NOT NULL DEFAULT 1, campaign_id TEXT, proof_id TEXT,
@@ -246,6 +272,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_activation_one_active ON activation_campai
 CREATE INDEX IF NOT EXISTS idx_activation_proofs_agent ON activation_proofs(agent_id, checked_at);
 CREATE INDEX IF NOT EXISTS idx_provider_verifications_provider ON provider_verifications(provider, checked_at);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_learning_one_running ON learning_runs(status) WHERE status='running';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_guardian_one_running ON guardian_runs(status) WHERE status='running';
+CREATE INDEX IF NOT EXISTS idx_findings_status ON security_findings(status, severity);
+CREATE INDEX IF NOT EXISTS idx_findings_code ON security_findings(code, last_seen_at);
 CREATE INDEX IF NOT EXISTS idx_missions_queue ON missions(state, priority, created_at);
 CREATE INDEX IF NOT EXISTS idx_budget_reservations_status ON budget_reservations(status);
 CREATE INDEX IF NOT EXISTS idx_budget_reservation_scopes ON budget_reservation_scopes(scope, scope_id);
@@ -266,7 +295,7 @@ def _add_columns(conn: sqlite3.Connection, table: str, columns: dict[str, str]) 
 
 
 def _migrate(conn: sqlite3.Connection) -> None:
-    """Migrations additives v1 -> v2 -> v3 : aucune suppression, aucune réécriture de données."""
+    """Migrations additives v1 -> v2 -> v3 -> v4 : aucune suppression, aucune réécriture de données."""
     _add_columns(conn, "missions", {
         "owner_worker_id": "TEXT", "lease_token": "TEXT",
         "lease_expires_at": "REAL NOT NULL DEFAULT 0", "heartbeat_at": "REAL",
@@ -276,6 +305,12 @@ def _migrate(conn: sqlite3.Connection) -> None:
     _add_columns(conn, "tasks", {"execution_token": "TEXT", "owner_worker_id": "TEXT"})
     _add_columns(conn, "budget_ledger", {"reservation_id": "TEXT", "call_key": "TEXT"})
     _add_columns(conn, "activation_campaigns", {"model": "TEXT"})
+    # v4 : contexte attesté par l'opérateur quand l'API ne l'expose pas (OpenAI/DeepSeek).
+    _add_columns(conn, "provider_models", {
+        "context_attested": "INTEGER NOT NULL DEFAULT 0",
+        "context_source": "TEXT NOT NULL DEFAULT ''",
+        "context_attested_at": "TEXT",
+    })
 
 
 def init_db(conn: sqlite3.Connection) -> None:

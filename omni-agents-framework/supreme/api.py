@@ -119,6 +119,91 @@ class APIState:
         return tok
 
 
+def _divisions_detail(c: dict) -> list[dict]:
+    """État réel par division : profils, chef, statuts, outils locaux, preuves externes."""
+    from .activation import ActivationManager, representative
+    registry, conn = c["registry"], c["conn"]
+    activated = ActivationManager(conn, registry, c["router"]).activated_ids()
+    perf = {r["division"]: dict(r) for r in conn.execute(
+        """SELECT a.division, COUNT(m.id) n, AVG(m.value) success_rate FROM metrics m
+           JOIN agents a ON a.id=m.agent_id WHERE m.name='task_success' GROUP BY a.division""")}
+    costs = {r["scope_id"]: r["cost"] for r in conn.execute(
+        "SELECT scope_id, SUM(cost_usd) cost FROM budget_ledger WHERE scope='division' GROUP BY scope_id")}
+    quarantined = {r["agent_id"] for r in conn.execute(
+        "SELECT agent_id FROM agent_quarantine WHERE review_required=1")}
+    out = []
+    for summary in registry.divisions_summary():
+        div = summary["division"]
+        members = registry.list(division=div, kind="specialist")
+        # Le mode de l'évaluation représentative décide : un agent LLM peut avoir des
+        # outils autorisés sans être exécutable localement pour autant.
+        llm = sum(1 for m in members if representative(m["profile"])["mode"] == "llm")
+        manager = registry.get(summary["manager"]) if summary.get("manager") else None
+        manager_local = bool(manager and representative(manager["profile"])["mode"] == "tool")
+        out.append(summary | {
+            "local_tool_agents": len(members) - llm,
+            "llm_agents": llm,
+            "manager_local_tool": manager_local,
+            "locally_proven_total": (len(members) - llm) + int(manager_local),
+            "externally_activated": sum(1 for m in members if m["id"] in activated),
+            "quarantined": sum(1 for m in members if m["id"] in quarantined),
+            "measured_tasks": int(perf.get(div, {}).get("n") or 0),
+            "success_rate": perf.get(div, {}).get("success_rate"),
+            "cost_usd": round(float(costs.get(div, 0.0)), 9),
+            "cross_division_links": sorted({d for m in members
+                                            for d in (m["profile"].get("collaborators", {}).get("cross_division") or [])}),
+        })
+    return out
+
+
+MAX_BODY_BYTES = 1_048_576  # 1 Mio : largement suffisant pour un objectif de mission.
+
+
+def _int_field(body: dict, name: str, default, *, minimum=None):
+    """Valide un entier de requête : refuse booléens, flottants non entiers, chaînes non numériques."""
+    if name not in body or body[name] is None:
+        return default
+    value = body[name]
+    if isinstance(value, bool):
+        raise BodyError(f"{name} doit être un entier")
+    if isinstance(value, float) and not value.is_integer():
+        raise BodyError(f"{name} doit être un entier")
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        raise BodyError(f"{name} doit être un entier") from None
+    if minimum is not None and number < minimum:
+        raise BodyError(f"{name} doit être >= {minimum}")
+    return number
+
+
+def _float_field(body: dict, name: str, default, *, minimum=None):
+    """Valide un montant : refuse NaN/Inf, booléens et valeurs non numériques."""
+    import math
+    if name not in body or body[name] is None:
+        return default
+    value = body[name]
+    if isinstance(value, bool):
+        raise BodyError(f"{name} doit être un nombre")
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        raise BodyError(f"{name} doit être un nombre") from None
+    if not math.isfinite(number):
+        raise BodyError(f"{name} doit être fini")
+    if minimum is not None and number < minimum:
+        raise BodyError(f"{name} doit être >= {minimum}")
+    return number
+
+
+class BodyError(ValueError):
+    """Corps de requête invalide → HTTP 400."""
+
+
+class BodyTooLarge(ValueError):
+    """Corps de requête trop volumineux → HTTP 413."""
+
+
 def make_handler(state: APIState):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
@@ -157,13 +242,33 @@ def make_handler(state: APIState):
             return None
 
         def _body(self) -> dict:
-            length = int(self.headers.get("Content-Length", 0))
-            if not length:
+            """Corps JSON borné. Lève `BodyError` (400) ou `BodyTooLarge` (413).
+
+            Sans borne, un client pouvait épuiser la mémoire du serveur local.
+            Un corps invalide doit produire 400, jamais 500 ni un `{}` silencieux
+            qui ferait passer une action sans ses paramètres.
+            """
+            raw = self.headers.get("Content-Length")
+            if raw is None:
                 return {}
             try:
-                return json.loads(self.rfile.read(length))
-            except json.JSONDecodeError:
+                length = int(raw)
+            except (TypeError, ValueError):
+                raise BodyError("Content-Length invalide") from None
+            if length < 0:
+                raise BodyError("Content-Length négatif")
+            if length > MAX_BODY_BYTES:
+                raise BodyTooLarge(f"corps limité à {MAX_BODY_BYTES} octets")
+            if not length:
                 return {}
+            payload = self.rfile.read(length)
+            try:
+                data = json.loads(payload)
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                raise BodyError("corps JSON invalide") from None
+            if not isinstance(data, dict):
+                raise BodyError("le corps JSON doit être un objet")
+            return data
 
         def do_GET(self):
             parsed = urlparse(self.path)
@@ -266,6 +371,24 @@ def make_handler(state: APIState):
                     costs = {r["scope_id"]: r["cost"] for r in c["conn"].execute("SELECT scope_id, SUM(cost_usd) cost FROM budget_ledger WHERE scope='division' GROUP BY scope_id")}
                     return self._send(200, {"divisions": [{"division": r["division"], "measured_tasks": r["n"],
                                                            "success_rate": r["success_rate"], "cost_usd": costs.get(r["division"], 0.0)} for r in rows]})
+                if path == "/api/guardian":
+                    from .guardian import GuardianEngine
+                    engine = GuardianEngine(c["conn"], registry=c["registry"], budget=c["budget"])
+                    return self._send(200, engine.status() | {"findings": engine.findings("open", 50)})
+                if path == "/api/divisions/detail":
+                    return self._send(200, {"divisions": _divisions_detail(c)})
+                if path == "/api/collaborations":
+                    return self._send(200, {"messages": c["bus"].history(limit=100), "stats": c["bus"].stats()})
+                if path == "/api/activity":
+                    from .security import redact
+                    rows = c["conn"].execute(
+                        "SELECT at,level,component,mission_id,message FROM events ORDER BY id DESC LIMIT 100").fetchall()
+                    return self._send(200, {"activity": [{"at": r["at"], "level": r["level"],
+                                                          "component": r["component"], "mission_id": r["mission_id"],
+                                                          "message": redact(r["message"])} for r in rows]})
+                if path == "/api/quarantine":
+                    rows = c["conn"].execute("SELECT * FROM agent_quarantine ORDER BY isolated_at DESC LIMIT 100").fetchall()
+                    return self._send(200, {"quarantine": [dict(r) for r in rows]})
                 if path == "/api/quotas":
                     return self._send(200, {"totals": c["budget"].totals(),
                                             "exposure_totals": c["budget"].exposure_totals(),
@@ -330,7 +453,12 @@ def make_handler(state: APIState):
             role = self._auth(write=True)
             if role != "admin":
                 return self._send(401, {"error": "jeton admin requis pour les écritures"})
-            body = self._body()
+            try:
+                body = self._body()
+            except BodyTooLarge as exc:
+                return self._send(413, {"error": str(exc), "max_bytes": MAX_BODY_BYTES})
+            except BodyError as exc:
+                return self._send(400, {"error": str(exc)})
             core = state.core
             c = core._c()
             try:
@@ -359,27 +487,62 @@ def make_handler(state: APIState):
                     provider = body.get("provider")
                     results = [c["router"].discover_provider(provider)] if provider else c["router"].check_availability()
                     return self._send(200, {"results": results})
+                if path == "/api/guardian/scan":
+                    from .guardian import GuardianEngine
+                    if body.get("confirm") != "LANCER SCAN SECURITE":
+                        return self._send(400, {"error": "confirmation LANCER SCAN SECURITE requise"})
+                    engine = GuardianEngine(c["conn"], registry=c["registry"], budget=c["budget"])
+                    return self._send(200, engine.scan(trigger="api"))
                 if path == "/api/activation/prepare":
                     from .activation import ActivationManager
                     if body.get("confirm") != "PREPARER CAMPAGNE":
                         return self._send(400, {"error": "confirmation PREPARER CAMPAGNE requise"})
                     manager = ActivationManager(c["conn"], c["registry"], c["router"])
-                    return self._send(201, manager.prepare(int(body.get("size", 5)), provider=body.get("provider", "mistral"),
-                                                           model=body.get("model"), budget_usd=body.get("budget_usd"),
-                                                           per_agent_usd=float(body.get("per_agent_usd", 0.01))))
+                    size = _int_field(body, "size", 5, minimum=1)
+                    per_agent = _float_field(body, "per_agent_usd", 0.01, minimum=0.0)
+                    budget = body.get("budget_usd")
+                    if budget is not None:
+                        budget = _float_field(body, "budget_usd", None, minimum=0.0)
+                    return self._send(201, manager.prepare(size, provider=body.get("provider", "mistral"),
+                                                           model=body.get("model"), budget_usd=budget,
+                                                           per_agent_usd=per_agent))
+                if path.startswith("/api/activation/") and path.endswith("/respecify"):
+                    from .activation import ActivationManager
+                    manager = ActivationManager(c["conn"], c["registry"], c["router"])
+                    budget = body.get("budget_usd")
+                    if budget is not None:
+                        budget = _float_field(body, "budget_usd", None, minimum=0.0)
+                    per_agent = body.get("per_agent_usd")
+                    if per_agent is not None:
+                        per_agent = _float_field(body, "per_agent_usd", None, minimum=0.0)
+                    return self._send(200, manager.respecify(
+                        path.split("/")[3], provider=body.get("provider"), model=body.get("model"),
+                        budget_usd=budget, per_agent_usd=per_agent,
+                        confirm=body.get("confirm", ""), approved_by=body.get("approved_by", "")))
+                if path.startswith("/api/activation/") and path.endswith("/reconcile"):
+                    from .activation import ActivationManager
+                    manager = ActivationManager(c["conn"], c["registry"], c["router"])
+                    return self._send(200, manager.reconcile_member(
+                        path.split("/")[3], body.get("agent_id", ""),
+                        resolution=body.get("resolution", ""), evidence=body.get("evidence", ""),
+                        acknowledged_by=body.get("acknowledged_by", ""), confirm=body.get("confirm", ""),
+                        retry=bool(body.get("retry", False))))
                 if path.startswith("/api/activation/") and path.endswith("/run"):
                     from .activation import ActivationManager
                     if body.get("confirm") != "ACTIVER CAMPAGNE":
                         return self._send(400, {"error": "confirmation ACTIVER CAMPAGNE requise ; autorisation d'inférence CLI distincte obligatoire"})
                     manager = ActivationManager(c["conn"], c["registry"], c["router"])
-                    return self._send(200, manager.run(path.split("/")[3], max_agents=body.get("max_agents")))
+                    max_agents = body.get("max_agents")
+                    if max_agents is not None:
+                        max_agents = _int_field(body, "max_agents", None, minimum=1)
+                    return self._send(200, manager.run(path.split("/")[3], max_agents=max_agents))
                 return self._send(404, {"error": "route inconnue"})
             except PermissionError as e:
                 from .security import redact
                 return self._send(403, {"error": redact(str(e))})
             except LeaseLostError as e:
                 return self._send(409, {"error": str(e)})
-            except (KeyError, ValueError) as e:
+            except (KeyError, ValueError, TypeError) as e:
                 from .security import redact
                 return self._send(400, {"error": redact(str(e))})
             except Exception as e:

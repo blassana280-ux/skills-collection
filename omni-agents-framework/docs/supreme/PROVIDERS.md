@@ -8,7 +8,11 @@
 
 ## 1. Priorité Mistral — ce qui est implémenté
 - Adaptateur HTTP JSON vers l'API officielle `https://api.mistral.ai/v1` :
-  `GET /models`, `POST /chat/completions` non streamé, `response_format=json_object`.
+  `GET /models`, `POST /chat/completions` non streamé. Le JSON est obtenu par
+  **contrat de prompt + validation stricte** côté SUPREME, pas par `response_format` :
+  ce paramètre natif est **opt-in** (`build_request(..., json_mode=True)`) et désactivé
+  par défaut, car il n'est pas documenté pour toutes les familles d'API. Son acceptation
+  par un fournisseur réel n'est pas vérifiée faute de clé (voir rapport final).
 - Authentification `Authorization: Bearer …` uniquement en en-tête, jamais dans l'URL.
 - Parsing des cartes modèles : `id`, `capabilities`, `max_context_length`, `aliases`, `owned_by`.
 - Sélection d'un modèle compatible chat + sortie JSON, contexte suffisant pour la tâche.
@@ -97,7 +101,7 @@ Paliers cumulatifs stricts : **5 → 20 → 60 → 100 → 200 → … → 900 �
 python3 -m supreme activation --status
 python3 -m supreme activation --prepare 5 --provider mistral --model MODELE_DECOUVERT
 python3 -m supreme activation --run CAMPAGNE_ID
-python3 -m supreme activation --release-quarantine AGENT_ID --confirm 'JE CONFIRME LA REVUE'
+python3 -m supreme activation --release-quarantine AGENT_ID --confirm 'REVUE HUMAINE EFFECTUEE'
 ```
 Pour chaque agent : permissions `inference:call` + modèle autorisé, budget réservé, appel réel `external_api`,
 HTTP 200, texte JSON exploitable, usage/coût soldé, preuve privée 0600, activation atomique avec bail fencé.
@@ -133,3 +137,28 @@ un modèle découvert, des prix attestés et une autorisation. Aucun fournisseur
 - Les prix ne sont pas codés en dur : ils doivent être attestés par l'opérateur depuis une source officielle fraîche.
 - Les modèles disponibles changent ; SUPREME les découvre au lieu d'inventer une liste.
 - « Local » dans les tests signifie SQLite/subprocess/HTTP loopback, jamais cloud.
+
+
+## Contexte modèle attesté (1.4.0)
+Certains fournisseurs n'exposent pas la fenêtre de contexte dans leur liste de modèles.
+Sans contexte connu, le routeur refuse le modèle : c'est volontaire. Deux voies :
+1. la découverte GET fournit `context_window` / `context_length` / `max_context_length` / `max_tokens` ;
+2. sinon, attestation humaine depuis la documentation officielle :
+```bash
+python3 -m supreme providers --attest-context openai --model gpt-x \
+  --context-tokens 128000 --source-url https://plateforme.exemple/modeles \
+  --confirm 'JE CONFIRME LE CONTEXTE'
+```
+Contraintes : modèle déjà découvert, source HTTPS, 512..10 000 000 jetons, attestation valable 90 jours.
+Le contexte découvert prime toujours sur l'attestation. Aucune valeur inventée.
+
+## Protection continue (Guardian, 1.4.0)
+```bash
+python3 -m supreme guardian                     # scan ponctuel, lecture seule
+python3 -m supreme guardian --findings          # constats ouverts
+python3 -m supreme guardian --periodic --interval 900
+python3 -m supreme guardian --resolve FND_ID --resolution 'revue documentée' \
+  --acknowledged-by humain --confirm 'REVUE HUMAINE EFFECTUEE'
+```
+Le Guardian détecte et alerte ; il ne modifie jamais les permissions, les secrets ni le noyau.
+Le contrôle des permissions GitHub est opt-in (`--allow-github`) car il lit l'API GitHub.

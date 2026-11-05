@@ -1,3 +1,64 @@
+# Changelog SUPREME
+
+## 1.4.0 — 2026-11-05 — complétion finale : protection continue et exploitation durable
+
+### Ajouté
+- **`supreme/guardian.py`** : protection continue, 11 contrôles réels (secrets versionnés,
+  permissions des fichiers secrets, intégrité du noyau, dépendances non stdlib, actions/injections,
+  anomalies budget, doubles exécutions, sauvegardes, quarantaines, dérive fournisseur,
+  permissions GitHub opt-in). Dédup par empreinte, occurrences, bail unique fencé, ordonnanceur
+  périodique à arrêt propre. **Ne modifie jamais** permissions, politiques ni noyau.
+- **Re-baseline d'intégrité** et **clôture de constat** sur revue humaine documentée
+  (`REVUE HUMAINE EFFECTUEE`), empreintes précédentes journalisées dans `events`.
+- **`memory.resolve_contradiction`** : arbitrage versionné avec provenance et relation `supersedes`,
+  sans suppression physique ; `open_contradictions` ignore les valeurs supersédées.
+- **`activation.respecify`** : re-ciblage fournisseur/modèle/budget d'une campagne non commencée.
+- **`activation.reconcile_member`** : réconciliation humaine d'un membre `failed`/`deferred`,
+  avec **remplacement obligatoire** pour ne jamais rétrécir un palier.
+- **Contexte modèle attesté** (`providers --attest-context`, `mistral context`) : source HTTPS,
+  ≤90 jours, 512…10 M jetons, modèle déjà découvert ; le contexte découvert prime.
+- **`backup --verify`** et **`backup --prune N`** : vérification intégrité/permissions, rétention
+  opt-in en simulation par défaut ; sauvegarde corrompue jamais supprimée.
+- **`ops/`** : `supreme-ctl.sh`, 8 unités systemd utilisateur durcies, `Dockerfile` non-root,
+  `compose.yaml` local-only read-only, `healthcheck.py`, `env.example` sans secret.
+- **`docs/supreme/RUNBOOK.md`** et **`docs/supreme/FINAL-COMPLETION-REPORT.md`**.
+- Dashboard : onglets **Protection**, **Collaboration**, **Historique/Quarantaines** ; vue divisions
+  détaillée ; paliers 5→960 dans le sélecteur. API : `/api/guardian`, `/api/guardian/scan`,
+  `/api/divisions/detail`, `/api/collaborations`, `/api/activity`, `/api/quarantine`,
+  `/api/activation/{id}/respecify`, `/api/activation/{id}/reconcile`.
+- Schéma **v4** additif : `guardian_runs`, `security_findings`, `guardian_schedulers`,
+  `integrity_baseline`, colonnes `provider_models.context_attested/context_source/context_attested_at`.
+- **64 tests** dans `tests/test_supreme_final_140.py` + 2 tests de cohérence documentaire.
+
+### Corrigé
+- Sauvegardes créées en `0644` → **`0600`/`0700`** ; 20 fichiers existants durcis, intégrité revérifiée.
+- `_integrity` levait une exception sur base corrompue → motif d'échec, ouverture lecture seule.
+- Corps HTTP non borné → **413** au-delà de 1 Mio ; JSON invalide → **400** (plus de `{}` silencieux) ;
+  `int`/`float` invalides (bool, NaN, Inf, négatif) → **400** au lieu de 500.
+- Découverte modèles : `context_length`/`max_context_length`/`max_tokens` et `supported_parameters`
+  désormais parsés (OpenAI, DeepSeek, Groq, OpenRouter, Anthropic étaient non routables).
+- Activation : preuve antérieure à une quarantaine ne recompte plus après levée ; propriétaire
+  vivant non dépossédé ; écriture refusée sous bail expiré + heartbeat worker.
+- Paliers alignés sur **5→20→60→100→200→400→600→800→960** (code, CLI, dashboard).
+- Vue divisions : les agents locaux sont comptés par mode représentatif (**40 spécialistes + 20 chefs**),
+  non par présence d'outils autorisés.
+- `response_format` : documentation alignée ; paramètre natif rendu **opt-in** (`json_mode`),
+  envoyé seulement aux familles qui le documentent.
+- `PROVIDERS.md` : phrase de confirmation de quarantaine corrigée ; test de cohérence code↔docs ajouté.
+- Audit : inclut `schema_version`, vérification des sauvegardes et état Guardian.
+
+### Validation
+- **442 tests découverts = 105 V4 + 337 SUPREME** ; 441 locaux verts + 1 opt-in réel ignoré.
+- 3 missions réelles multi-divisions supplémentaires : cumul **13 missions**, **44 tâches**,
+  **9 divisions**, **18 agents distincts**, **0 USD**.
+- 2 cycles d'apprentissage réels : 0 proposition, `improvement_proven=false` (aucun gain inventé).
+- Migration live **v3 → v4** additive, données préservées.
+
+### Inchangé / non connecté
+- **0 fournisseur connecté**, 0 inférence externe, 0 agent LLM opérationnel, 0 cloud, **0 dépense**.
+- PR #5 ouverte non fusionnée ; PR #2 intacte ; `master` non modifié directement.
+- `EXECUTION-REPORT.md` (PV 1.3.0) préservé tel quel et protégé par un test.
+
 # Changelog OMNIBRAIN SUPREME
 
 Version de livraison courante : **SUPREME 1.3.0**. Le paquet V4 historique

@@ -33,7 +33,7 @@ existante.
 6. **Respect de l'upstream** — `CONTRIBUTING.md` du dépôt prévaut, y compris
    pour la déclaration d'assistance IA.
 
-## Couche OMNIBRAIN SUPREME 1000 (2026-11-05, version 1.3.0)
+## Couche OMNIBRAIN SUPREME 1000 (2026-11-05, version 1.4.0)
 
 > Source de vérité : `skills-collection/omni-agents-framework/supreme/` +
 > `skills-collection/omni-agents-framework/docs/supreme/`.
@@ -46,7 +46,7 @@ existante.
 - **Aucun fournisseur IA supposé connecté** ; détection réelle, aucune connexion simulée.
 - Reprise du travail : `omni-agents-framework/docs/supreme/CONTINUITY.md`.
 - Tests : `cd omni-agents-framework && python3 -m unittest discover -s tests` (**378 découverts = 105 V4 + 273 SUPREME ; 377 locaux verts + 1 opt-in réel ignoré**).
-- Activation 1.3.0 : Mistral/Vide, découverte réelle, autorisation humaine bornée, paliers 5→20→60→100→…→960,
+- Activation 1.4.0 : Mistral/Vide, découverte réelle, autorisation humaine bornée, paliers 5→20→60→100→…→960,
   preuve `external_api` obligatoire, quarantaine isolée. Aucun stub local ne peut activer un agent LLM.
 - Durcissement 1.2.1 conservé : workers à baux/heartbeat/fencing, apprentissage périodique persistant,
   budget réservé avant appel, conseil sans contournement du routeur. Aucune fusion de PR sans accord.

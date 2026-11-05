@@ -14,6 +14,8 @@ Usage : python3 -m supreme <commande>
                          --verify/--sync-models PROVIDER = découverte GET réelle ;
                          --set-prices/--authorize/--revoke PROVIDER = actions humaines bornées
   providers --init-secrets  crée un modèle de fichier de secrets vide (0600, gitignoré)
+  guardian [--periodic]  protection continue : secrets, intégrité, budget, baux, sauvegardes ;
+                         --status, --findings, --resolve ID (revue humaine), arrêt propre SIGINT/SIGTERM
   activation [--status]  paliers 5→20→60→100→…→960 ; --prepare SIZE, --run ID,
                          --release-quarantine AGENT_ID (revue humaine)
   worker [--once]        processus worker séparé, bail/heartbeat/fencing, arrêt propre (SIGINT/SIGTERM)
@@ -51,7 +53,11 @@ def main(argv=None):
     sub.add_parser("status")
     m = sub.add_parser("mission"); m.add_argument("objective"); m.add_argument("--no-run", action="store_true")
     sv = sub.add_parser("serve"); sv.add_argument("--port", type=int, default=8765); sv.add_argument("--host", default="0.0.0.0")
-    sub.add_parser("backup")
+    bk = sub.add_parser("backup")
+    bk.add_argument("--verify", action="store_true", help="vérifie intégrité/permissions de toutes les sauvegardes")
+    bk.add_argument("--prune", type=int, metavar="KEEP", help="rétention : nombre de sauvegardes à conserver")
+    bk.add_argument("--apply", action="store_true", help="applique la rétention (défaut : simulation)")
+    bk.add_argument("--confirm", default="")
     sub.add_parser("report")
     sub.add_parser("rotate-token")
     pv = sub.add_parser("providers")
@@ -63,6 +69,8 @@ def main(argv=None):
     pv.add_argument("--verify", metavar="PROVIDER", help="découverte GET réelle du catalogue, sans inférence payante")
     pv.add_argument("--sync-models", metavar="PROVIDER", help="alias de --verify : persiste les modèles découverts")
     pv.add_argument("--set-prices", metavar="PROVIDER", help="atteste les prix d'un modèle découvert")
+    pv.add_argument("--attest-context", metavar="PROVIDER", help="atteste le contexte d'un modèle découvert qui ne l'expose pas")
+    pv.add_argument("--context-tokens", type=int)
     pv.add_argument("--authorize", metavar="PROVIDER", help="autorise une fenêtre d'inférence bornée")
     pv.add_argument("--revoke", metavar="PROVIDER", help="révoque l'autorisation d'inférence")
     pv.add_argument("--model", default="")
@@ -75,14 +83,24 @@ def main(argv=None):
     pv.add_argument("--hours", type=float, default=1.0)
     pv.add_argument("--approved-by", default="")
     ms = sub.add_parser("mistral")
-    ms.add_argument("action", choices=["status", "discover", "authorize", "price", "revoke"])
+    ms.add_argument("action", choices=["status", "discover", "authorize", "price", "context", "revoke"])
     ms.add_argument("--max-usd", type=float); ms.add_argument("--max-calls", type=int)
     ms.add_argument("--hours", type=float, default=1.0); ms.add_argument("--approved-by", default="")
     ms.add_argument("--confirm", default=""); ms.add_argument("--model", default="")
     ms.add_argument("--input-usd-per-million", type=float); ms.add_argument("--output-usd-per-million", type=float)
-    ms.add_argument("--source", default="")
+    ms.add_argument("--source", default=""); ms.add_argument("--context-tokens", type=int)
     ac = sub.add_parser("activation")
-    ac.add_argument("action", nargs="?", choices=["prepare", "run", "status", "release"], default=None)
+    ac.add_argument("action", nargs="?", choices=["prepare", "run", "status", "release",
+                                                  "respecify", "reconcile"], default=None)
+    ac.add_argument("--respecify", metavar="CAMPAIGN_ID", help="re-cible fournisseur/modèle/budget (humain)")
+    ac.add_argument("--reconcile", metavar="CAMPAIGN_ID", help="réconcilie un membre failed/deferred (humain)")
+    ac.add_argument("--member", default="", help="agent membre à réconcilier")
+    ac.add_argument("--resolution", default="")
+    ac.add_argument("--acknowledged-by", default="")
+    ac.add_argument("--approved-by", default="")
+    ac.add_argument("--retry", action="store_true", help="remet le membre en pending au lieu de l'écarter")
+    ac.add_argument("--new-provider", default=None, help="fournisseur cible pour --respecify")
+    ac.add_argument("--new-per-agent-usd", type=float, default=None)
     ac.add_argument("--prepare", type=int, metavar="SIZE", help="prépare le palier cumulatif SIZE")
     ac.add_argument("--run", metavar="CAMPAIGN_ID", help="exécute une campagne préparée")
     ac.add_argument("--status", action="store_true", help="état d'activation (défaut)")
@@ -100,6 +118,26 @@ def main(argv=None):
     wk.add_argument("--worker-id", default=None)
     wk.add_argument("--lease-seconds", type=float, default=30.0)
     wk.add_argument("--heartbeat-seconds", type=float, default=None)
+    gd = sub.add_parser("guardian")
+    gd.add_argument("--periodic", action="store_true")
+    gd.add_argument("--interval", type=float, default=900.0)
+    gd.add_argument("--max-cycles", type=int, default=None)
+    gd.add_argument("--scheduler-id", default="default")
+    gd.add_argument("--lease-seconds", type=float, default=60.0)
+    gd.add_argument("--heartbeat-seconds", type=float, default=None)
+    gd.add_argument("--status", action="store_true")
+    gd.add_argument("--findings", action="store_true")
+    gd.add_argument("--all", action="store_true")
+    gd.add_argument("--allow-github", action="store_true")
+    gd.add_argument("--rebaseline-core", action="store_true",
+                    help="ré-enregistre la baseline après changement légitime revu (humain)")
+    gd.add_argument("--approved-by", default="")
+    gd.add_argument("--reason", default="")
+    gd.add_argument("--evidence", default="")
+    gd.add_argument("--resolve", metavar="FINDING_ID")
+    gd.add_argument("--resolution", default="")
+    gd.add_argument("--acknowledged-by", default="")
+    gd.add_argument("--confirm", default="")
     ad = sub.add_parser("audit")
     ad.add_argument("--no-save", action="store_true")
     ln = sub.add_parser("learn")
@@ -158,7 +196,7 @@ def main(argv=None):
                               "note": "external_api réussi = preuve réelle ; local_test = stub local, jamais fournisseur connecté."},
                              ensure_ascii=False, indent=1))
             return 0
-        if args.verify or args.sync_models or args.set_prices or args.authorize or args.revoke:
+        if args.verify or args.sync_models or args.set_prices or args.attest_context or args.authorize or args.revoke:
             from .api import bootstrap
             from .provider_control import ProviderControl
             core = bootstrap(evaluate=False)
@@ -172,6 +210,12 @@ def main(argv=None):
                                                    input_usd_per_million=args.input_per_million,
                                                    output_usd_per_million=args.output_per_million,
                                                    source_url=args.source, confirm=args.confirm),
+                                 ensure_ascii=False, indent=1))
+                return 0
+            if args.attest_context:
+                print(json.dumps(control.attest_context(args.attest_context, args.model,
+                                                        context_tokens=args.context_tokens,
+                                                        source_url=args.source, confirm=args.confirm),
                                  ensure_ascii=False, indent=1))
                 return 0
             if args.authorize:
@@ -229,6 +273,10 @@ def main(argv=None):
                                                output_usd_per_million=args.output_usd_per_million,
                                                source_url=args.source, confirm=args.confirm), ensure_ascii=False, indent=1))
             return 0
+        if args.action == "context":
+            print(json.dumps(control.attest_context("mistral", args.model, context_tokens=args.context_tokens,
+                                                    source_url=args.source, confirm=args.confirm), ensure_ascii=False, indent=1))
+            return 0
         if args.action == "revoke":
             print(json.dumps(control.revoke("mistral", confirm=args.confirm), ensure_ascii=False, indent=1))
             return 0
@@ -241,6 +289,10 @@ def main(argv=None):
             action = "run"; args.id = args.run
         elif args.release_quarantine:
             action = "release"; args.agent_id = args.release_quarantine
+        elif args.respecify:
+            action = "respecify"; args.id = args.respecify
+        elif args.reconcile:
+            action = "reconcile"; args.id = args.reconcile
         elif args.status or action is None:
             action = "status"
         manager = ActivationManager(core.conn, core.registry, core.router)
@@ -260,8 +312,55 @@ def main(argv=None):
             print(json.dumps(manager.release_quarantine(args.agent_id, evidence=args.evidence, confirm=args.confirm),
                              ensure_ascii=False, indent=1))
             return 0
+        if action == "respecify":
+            if not args.id:
+                print(json.dumps({"error": "--respecify CAMPAIGN_ID requis"})); return 1
+            print(json.dumps(manager.respecify(args.id, provider=args.new_provider,
+                                               model=args.model, budget_usd=args.budget_usd,
+                                               per_agent_usd=args.new_per_agent_usd, confirm=args.confirm,
+                                               approved_by=args.approved_by), ensure_ascii=False, indent=1))
+            return 0
+        if action == "reconcile":
+            if not args.id or not args.member:
+                print(json.dumps({"error": "--reconcile CAMPAIGN_ID et --member AGENT_ID requis"})); return 1
+            print(json.dumps(manager.reconcile_member(args.id, args.member, resolution=args.resolution,
+                                                      evidence=args.evidence, acknowledged_by=args.acknowledged_by,
+                                                      confirm=args.confirm, retry=args.retry),
+                             ensure_ascii=False, indent=1))
+            return 0
         print(json.dumps(manager.status(args.id), ensure_ascii=False, indent=1))
         return 0
+    if args.cmd == "guardian":
+        from .guardian import GuardianEngine, GuardianScheduler
+        engine = GuardianEngine(core.conn, registry=core.registry, budget=core.budget,
+                                allow_github=args.allow_github)
+        if args.status:
+            sched = GuardianScheduler(core.conn, engine, scheduler_id=args.scheduler_id,
+                                      interval_seconds=args.interval, lease_seconds=args.lease_seconds,
+                                      heartbeat_interval=args.heartbeat_seconds)
+            print(json.dumps(sched.status(), ensure_ascii=False, indent=1)); return 0
+        if args.rebaseline_core:
+            print(json.dumps(engine.rebaseline_core(confirm=args.confirm, approved_by=args.approved_by,
+                                                    reason=args.reason, evidence=args.evidence),
+                             ensure_ascii=False, indent=1)); return 0
+        if args.findings:
+            print(json.dumps({"findings": engine.findings(None if args.all else "open")},
+                             ensure_ascii=False, indent=1)); return 0
+        if args.resolve:
+            print(json.dumps(engine.resolve(args.resolve, resolution=args.resolution,
+                                            acknowledged_by=args.acknowledged_by, confirm=args.confirm),
+                             ensure_ascii=False, indent=1)); return 0
+        if args.periodic:
+            sched = GuardianScheduler(core.conn, engine, scheduler_id=args.scheduler_id,
+                                      interval_seconds=args.interval, lease_seconds=args.lease_seconds,
+                                      heartbeat_interval=args.heartbeat_seconds)
+            stop = _stop_event_with_signals()
+            print(json.dumps(sched.run(max_cycles=args.max_cycles, stop_event=stop), ensure_ascii=False, indent=1))
+            return 0
+        stop = _stop_event_with_signals()
+        report = engine.scan(trigger="cli", stop_event=stop, lease_seconds=args.lease_seconds)
+        print(json.dumps(report, ensure_ascii=False, indent=1))
+        return 0 if report.get("ok") else 1
     if args.cmd == "worker":
         from .worker import run_worker
         stop = _stop_event_with_signals()
@@ -307,7 +406,15 @@ def main(argv=None):
             print(json.dumps({"mission_id": sub["mission_id"]}, ensure_ascii=False)); return 0
         print(json.dumps(core.run(sub["mission_id"]), ensure_ascii=False, indent=1)); return 0
     if args.cmd == "backup":
-        print(json.dumps(BackupManager().backup("cli"), ensure_ascii=False, indent=1)); return 0
+        manager = BackupManager()
+        if args.verify:
+            result = manager.verify_all()
+            print(json.dumps(result, ensure_ascii=False, indent=1))
+            return 0 if result["all_integrity_ok"] else 1
+        if args.prune is not None:
+            print(json.dumps(manager.prune(keep=args.prune, confirm=args.confirm, dry_run=not args.apply),
+                             ensure_ascii=False, indent=1)); return 0
+        print(json.dumps(manager.backup("cli"), ensure_ascii=False, indent=1)); return 0
     if args.cmd == "report":
         obs = ObservabilityEngine(core.conn, core.registry, core.budget, core.router)
         rep = ReportingEngine(core.conn, core.registry, obs).global_report()

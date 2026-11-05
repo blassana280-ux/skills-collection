@@ -12,6 +12,7 @@ on:
       - "omni-agents-framework/tests/test_supreme_*.py"
       - "omni-agents-framework/tests/_supreme_worker_helper.py"
       - "omni-agents-framework/docs/supreme/**"
+      - "omni-agents-framework/ops/**"
       - "OMNIBRAIN-SUPREME.md"
       - "AGENTS.md"
       - ".github/workflows/omnibrain-supreme.yml"
@@ -21,6 +22,7 @@ on:
       - "omni-agents-framework/tests/test_supreme_*.py"
       - "omni-agents-framework/tests/_supreme_worker_helper.py"
       - "omni-agents-framework/docs/supreme/**"
+      - "omni-agents-framework/ops/**"
       - "OMNIBRAIN-SUPREME.md"
       - "AGENTS.md"
       - ".github/workflows/omnibrain-supreme.yml"
@@ -55,6 +57,34 @@ jobs:
 
       - name: Run full suite (V4 + SUPREME, non-régression)
         run: python3 -m unittest discover -s tests
+
+      - name: Validate operations scripts (bash/systemd/compose syntax, no secret)
+        run: |
+          bash -n ops/supreme-ctl.sh
+          test -x ops/supreme-ctl.sh
+          python3 -c "import ast,pathlib; ast.parse(pathlib.Path('ops/healthcheck.py').read_text())"
+          grep -q 'SUPREME_BIND:-127.0.0.1' ops/supreme-ctl.sh
+          grep -q '127.0.0.1:8765:8765' ops/compose.yaml
+          for unit in ops/systemd/*.service; do grep -q 'UMask=0077' "$unit"; grep -q 'NoNewPrivileges=true' "$unit"; done
+          python3 - <<'PYEOF'
+          from pathlib import Path
+          for line in Path('ops/env.example').read_text().splitlines():
+              line = line.strip()
+              if line.startswith('#') or '=' not in line:
+                  continue
+              key, value = line.split('=', 1)
+              if 'KEY' in key or 'TOKEN' in key:
+                  assert value.strip() == '', f"secret dans le modèle : {key}"
+          print("env.example sans secret : OK")
+          PYEOF
+
+      - name: CLI smoke — guardian + backup verify (lecture seule, sans clés)
+        run: |
+          python3 -m supreme guardian --findings
+          python3 -m supreme guardian --status
+          python3 -m supreme backup
+          python3 -m supreme backup --verify
+          python3 -m supreme backup --prune 3
 
       - name: CLI smoke — sync + providers/activation sans clés + mission réelle + worker + learn + audit
         run: |

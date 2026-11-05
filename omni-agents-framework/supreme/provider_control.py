@@ -20,6 +20,8 @@ PRICE_MAX_AGE_DAYS = 30
 CONNECTED_FRESH_SECONDS = 900
 AUTH_CONFIRM = "AUTORISER INFERENCE"
 PRICE_CONFIRM = "JE CONFIRME LES PRIX"
+CONTEXT_CONFIRM = "JE CONFIRME LE CONTEXTE"
+CONTEXT_MAX_AGE_DAYS = 90
 
 
 def _positive(value, name):
@@ -105,6 +107,36 @@ class ProviderControl:
         return {"provider": provider, "model": model, "pricing_attested": True,
                 "inference_enabled": bool(row.get("inference_enabled", 0))}
 
+    def attest_context(self, provider: str, model: str, *, context_tokens: int,
+                       source_url: str, confirm: str) -> dict:
+        """Atteste humainement le contexte d'un modèle découvert qui ne l'expose pas.
+
+        N'invente jamais un modèle : la ligne doit provenir d'une découverte externe
+        réelle. Sans contexte (découvert ou attesté), aucun routage payant n'est permis.
+        """
+        if confirm != CONTEXT_CONFIRM:
+            raise PermissionError("confirmation humaine du contexte requise")
+        src = urlparse(source_url)
+        if src.scheme != "https" or not src.hostname:
+            raise ValueError("source HTTPS requise pour attester le contexte")
+        try:
+            ctx = int(context_tokens)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("context_tokens invalide") from exc
+        if ctx < 512 or ctx > 10_000_000:
+            raise ValueError("context_tokens doit être entre 512 et 10000000")
+        with transaction(self.conn, immediate=True):
+            cur = self.conn.execute(
+                """UPDATE provider_models SET context_attested=?,context_source=?,context_attested_at=?
+                   WHERE provider=? AND model=? AND category='external_api'""",
+                (ctx, source_url, now(), provider, model))
+            if cur.rowcount != 1:
+                raise KeyError("modèle non découvert réellement : découverte GET requise avant attestation")
+        log_event(self.conn, "info", "provider-control", f"contexte attesté : {provider}/{model}",
+                  data={"context_tokens": ctx, "source": source_url})
+        return {"provider": provider, "model": model, "context_attested": ctx,
+                "attestation": "operator_declared_not_measured"}
+
     def price(self, provider: str, model: str) -> dict | None:
         row = self.row(provider)
         if not row:
@@ -186,10 +218,31 @@ class ProviderControl:
                          result.get("request_id"), category))
         return vid
 
+    def _fresh_context(self, row) -> int:
+        """Contexte utilisable : découvert par l'API, sinon attestation humaine fraîche."""
+        discovered = int(row["context"] or 0)
+        if discovered > 0:
+            return discovered
+        attested = int(row["context_attested"] or 0)
+        if attested <= 0 or not row["context_attested_at"]:
+            return 0
+        try:
+            age = (datetime.now(timezone.utc) - datetime.fromisoformat(row["context_attested_at"])).total_seconds()
+        except (TypeError, ValueError):
+            return 0
+        if age < 0 or age > CONTEXT_MAX_AGE_DAYS * 86400:
+            return 0
+        return attested
+
     def discovered_models(self, provider: str) -> list[dict]:
-        return [{"id": r["model"], "capabilities": json.loads(r["capabilities_json"]),
-                 "context": r["context"], "tools": bool(r["tools"]), "discovered_at": r["discovered_at"]}
-                for r in self.conn.execute("SELECT * FROM provider_models WHERE provider=? AND category='external_api' ORDER BY model", (provider,))]
+        out = []
+        for r in self.conn.execute("SELECT * FROM provider_models WHERE provider=? AND category='external_api' ORDER BY model", (provider,)):
+            out.append({"id": r["model"], "capabilities": json.loads(r["capabilities_json"]),
+                        "context": self._fresh_context(r), "context_discovered": int(r["context"] or 0),
+                        "context_attested": int(r["context_attested"] or 0),
+                        "context_source": r["context_source"] or "", "tools": bool(r["tools"]),
+                        "discovered_at": r["discovered_at"]})
+        return out
 
     def summary(self) -> dict:
         rows = self.conn.execute(

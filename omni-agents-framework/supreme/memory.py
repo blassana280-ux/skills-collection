@@ -272,6 +272,75 @@ class MemoryEngine:
                             "ids": [it["id"] for it in group], "distinct_values": len(values)})
         return out
 
+    def resolve_contradiction(self, actor: str, level: str, owner: str, subject_key: str,
+                              claim_key: str, winner_id: str, *, reason: str,
+                              evidence: str) -> dict:
+        """Arbitre une contradiction SANS supprimer aucune connaissance.
+
+        La valeur retenue est versionnée (provenance : auteur, motif, preuve) ;
+        l'ancienne version du gagnant est archivée par le versionnement existant
+        (`deleted=1`, ligne conservée, liée par `parent_id`). Les valeurs écartées
+        restent actives et lisibles, marquées `superseded_by` avec une relation de
+        graphe `supersedes`. Aucune ligne n'est physiquement effacée. Les
+        contradictions non arbitrées restent visibles via `open_contradictions()`.
+        """
+        if not reason.strip() or not evidence.strip():
+            raise ValueError("arbitrage refusé : reason et evidence (provenance) obligatoires")
+        if not self._can_write(actor, level, owner):
+            raise PermissionError(f"arbitrage mémoire refusé : {actor} -> {level}/{owner}")
+        group = [c for c in self.contradictions(actor, level, owner)
+                 if c["subject_key"] == subject_key and c["claim_key"] == claim_key]
+        if not group:
+            raise KeyError(f"aucune contradiction ouverte pour {subject_key}/{claim_key}")
+        ids = group[0]["ids"]
+        if winner_id not in ids:
+            raise ValueError("winner_id doit appartenir à la contradiction détectée")
+        winner = self._get_raw(winner_id)
+        meta = json.loads(winner["metadata_json"])
+        if meta.get("superseded_by"):
+            raise ValueError("la valeur retenue est elle-même supersédée")
+        losers = [i for i in ids if i != winner_id]
+        decided_at = now()
+        new_id = self.update(actor, winner_id, winner["content"], confidence=winner["confidence"],
+                             metadata={"decision": "contradiction_resolved",
+                                       "decided_by": actor, "decision_reason": redact(reason),
+                                       "decision_evidence": redact(evidence), "decided_at": decided_at,
+                                       "superseded_ids": losers})
+        with transaction(self.conn):
+            for loser in losers:
+                row = self._get_raw(loser)
+                lmeta = json.loads(row["metadata_json"])
+                lmeta.update({"superseded_by": new_id, "superseded_at": decided_at,
+                              "superseded_reason": redact(reason)})
+                self.conn.execute("UPDATE memory_items SET metadata_json=? WHERE id=?",
+                                  (json.dumps(lmeta, ensure_ascii=False), loser))
+                self.conn.execute("INSERT OR IGNORE INTO memory_relations(src,dst,relation) VALUES(?,?,?)",
+                                  (new_id, loser, "supersedes"))
+        log_event(self.conn, "info", "memory",
+                  f"contradiction arbitrée {subject_key}/{claim_key}",
+                  data=json.dumps({"winner": new_id, "superseded": losers, "by": actor}))
+        return {"resolved": True, "subject_key": subject_key, "claim_key": claim_key,
+                "winner_id": new_id, "previous_winner_id": winner_id, "superseded_ids": losers,
+                "decided_by": actor, "decided_at": decided_at,
+                # Exactitude : `update()` archive l'ancienne version du gagnant
+                # (deleted=1, ligne conservée et liée par parent_id). Les perdants
+                # restent actifs mais marqués supersédés. Aucune ligne n'est effacée.
+                "previous_winner_archived": True, "losers_archived": False,
+                "rows_physically_deleted": 0}
+
+    def open_contradictions(self, actor: str, level: str, owner: str) -> list[dict]:
+        """Contradictions non arbitrées : les valeurs supersédées ne comptent plus."""
+        items = {i["id"]: i for i in self.search(actor, level=level, owner=owner, limit=1000)["results"]}
+        out = []
+        for c in self.contradictions(actor, level, owner):
+            live = [i for i in c["ids"] if not items[i]["metadata"].get("superseded_by")
+                    and items[i]["metadata"].get("decision") != "contradiction_resolved"]
+            values = {json.dumps(items[i]["metadata"].get("claim_value", items[i]["content"]),
+                                 ensure_ascii=False, sort_keys=True, default=str) for i in live}
+            if len(values) > 1:
+                out.append(c | {"ids": live, "distinct_values": len(values)})
+        return out
+
     def stats(self) -> dict:
         total = self.conn.execute("SELECT COUNT(*) c FROM memory_items WHERE deleted=0").fetchone()["c"]
         by_level = {r["level"]: r["c"] for r in self.conn.execute(

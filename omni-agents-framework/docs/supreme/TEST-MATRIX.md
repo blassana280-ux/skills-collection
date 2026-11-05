@@ -1,20 +1,20 @@
-# Matrice des tests OMNIBRAIN SUPREME 1.3.0
+# Matrice des tests OMNIBRAIN SUPREME 1.4.0
 
 Racine dépôt : `skills-collection/`. Framework : `skills-collection/omni-agents-framework/`.
-Dernière exécution réelle locale : **378 tests découverts** = **105 V4/non-SUPREME + 273 SUPREME**.
-Résultat : **377 tests locaux exécutés verts + 1 test fournisseur réel opt-in ignoré** (`OK (skipped=1)`).
+Dernière exécution réelle locale : **442 tests découverts** = **105 V4/non-SUPREME + 337 SUPREME**.
+Résultat : **441 tests locaux exécutés verts + 1 test fournisseur réel opt-in ignoré** (`OK (skipped=1)`).
 
 Commandes exécutées depuis `skills-collection/omni-agents-framework/` :
 ```bash
-python3 -m unittest discover -s tests                              # 378 découverts, OK (skipped=1)
-python3 -m unittest discover -s tests -p "test_supreme_*.py"       # 273 découverts, OK (skipped=1)
+python3 -m unittest discover -s tests                              # 442 découverts, OK (skipped=1)
+python3 -m unittest discover -s tests -p "test_supreme_*.py"       # 337 découverts, OK (skipped=1)
 # V4/non-SUPREME : 105 OK (sélection des modules non test_supreme_*)
 python3 -m unittest tests.test_supreme_hardening                   # 20 OK
-python3 -m supreme audit                                           # ok=true, version 1.3.0, schéma 3
+python3 -m supreme audit                                           # ok=true, version 1.4.0, schéma 4
 ```
 Journaux locaux gitignorés : `omni-agents-framework/var/supreme/validation/`
-(`full-suite-130-final.log`, `supreme-suite-130-final.log`, `v4-suite-130-final.log`,
-`130-new-tests.log`, `audit-130-cli.json`).
+(`full-suite-140-final.log`, `supreme-suite-140-final.log`, `v4-suite-140-final.log`,
+`final-140-new-tests.log`, `audit-140-cli.json`).
 CI : `.github/workflows/omnibrain-supreme.yml` + `.github/workflows/omnibrain-v4.yml`
 (Python 3.11/3.12/3.13). Les contrôles GitHub sont vérifiés sur la branche de la PR #5.
 
@@ -40,23 +40,24 @@ CI : `.github/workflows/omnibrain-supreme.yml` + `.github/workflows/omnibrain-v4
 | `omni-agents-framework/tests/test_supreme_security_audit.py` | anti-fuite dépôt, fichiers secrets non suivis, isolation profils, anti-injection, actions protégées, stdlib | 15 |
 | `omni-agents-framework/tests/test_supreme_intelligence.py` | explicabilité, arbitrage conseil, non-activation LLM sur stub local, échec/différé honnête | 9 |
 | `omni-agents-framework/tests/test_supreme_operations.py` | worker subprocess, audit exécutable, cycle d'apprentissage, noyau protégé | 9 |
-| `omni-agents-framework/tests/test_supreme_hardening.py` | **1.3.0** : migration v1→v2, deux workers réels, SIGKILL/SIGTERM, fencing, apprentissage périodique/CLI, budget conseil/quotas concurrents | 20 |
-| `omni-agents-framework/tests/test_supreme_docs_coherence.py` | version courante dans les documents de livraison ; décompte TEST-MATRIX égal à la découverte unittest réelle | 2 |
+| `omni-agents-framework/tests/test_supreme_hardening.py` | migration additive v1→v4, deux workers réels, SIGKILL/SIGTERM, fencing, apprentissage périodique/CLI, budget conseil/quotas concurrents | 20 |
+| `omni-agents-framework/tests/test_supreme_docs_coherence.py` | version courante dans les documents de livraison ; PV historique 1.3.0 préservé ; phrases de confirmation code↔docs ; décompte TEST-MATRIX égal à la découverte unittest réelle | 4 |
 | `omni-agents-framework/tests/test_supreme_activation_130.py` | **1.3.0** : credentials sécurisés, adaptateur Mistral local, autorisation/prix/quotas, campagnes progressives, quarantaine, conseil/second avis, mémoire/apprentissage, API/dashboard ; inclut 1 test réel opt-in ignoré sans clé | 38 |
 | `omni-agents-framework/tests/test_supreme_e2e.py` | mission réelle → mémoire → télémétrie → rapport → traçabilité | 1 |
-| **Total SUPREME** | | **273** |
+| `omni-agents-framework/tests/test_supreme_final_140.py` | **1.4.0** : Guardian (11 contrôles, dédup, bail concurrent, résolution humaine, non-mutation, re-baseline tracée), paliers 5→960, preuve post-quarantaine, reprise propriétaire vivant/mort, re-spécification campagne, réconciliation membre avec remplacement, contexte attesté HTTPS, parsing `context_length`, arbitrage mémoire sans suppression, ACL, corps API borné 413/400, validation numérique, contrat JSON opt-in, sauvegardes 0600/0700 + vérification + rétention opt-in, endpoints exploitation, scripts ops/systemd | 64 |
+| **Total SUPREME** | | **337** |
 | **V4/non-SUPREME** | modules historiques `test_catalog`, `test_classifier`, `test_cli`, `test_dispatcher`, `test_frontmatter`, `test_gates`, `test_parallel`, `test_registry`, `test_router`, `test_wrapper`, `test_v4_*` | **105** |
-| **Total général** | | **378** |
+| **Total général** | | **442** |
 
 ## Catégories strictement séparées
-| Catégorie | Description | État 1.3.0 |
+| Catégorie | Description | État 1.4.0 |
 | --- | --- | --- |
 | **Tests simulés (fixtures)** | Données injectées explicitement, aucun réseau | conseil avec analyses fixtures, routage fixture |
-| **Tests locaux réels** | SQLite, subprocess, signaux POSIX, outils déterministes, HTTP vers stub 127.0.0.1 | **377 exécutés verts** ; stub ≠ fournisseur IA réel |
+| **Tests locaux réels** | SQLite, subprocess, signaux POSIX, outils déterministes, HTTP vers stub 127.0.0.1 | **441 exécutés verts** ; stub ≠ fournisseur IA réel |
 | **Tests fournisseurs IA réels** | Appel API réel avec clé vers fournisseur externe | **0 exécuté** ; 1 test opt-in ignoré ; aucune clé, egress sandbox limité |
 | **Tests cloud réels** | Déploiement cloud vérifié | **0** : aucun cloud déployé |
 
-## Durcissement 1.3.0 — scénarios obligatoires couverts
+## Durcissement 1.3.0 — scénarios obligatoires couverts (conservés)
 - Worker A commence une mission ; worker B démarre pendant l'exécution : B ne récupère
   pas la mission active, A termine, **un seul résultat commité** (`task_executions=1`).
 - Arrêt brutal `SIGKILL` de A puis redémarrage : bail expiré + worker silencieux,
@@ -68,7 +69,7 @@ CI : `.github/workflows/omnibrain-supreme.yml` + `.github/workflows/omnibrain-v4
 - Conseil : réservation avant HTTP, budget individuel/collectif, quota central, tokens,
   erreur 500 incertaine conservée en réservation, 401 libéré, réservations concurrentes.
 
-## Activation intelligence réelle 1.3.0 — scénarios couverts
+## Activation intelligence réelle 1.3.0 — scénarios couverts (conservés)
 - Clé saisie sans écho dans un terminal privé ; fichier 0600/répertoire 0700 ; env prioritaire ;
   `*_FILE` supporté ; permissions trop larges/symlinks refusés ; aucun secret dans les métadonnées.
 - Adaptateur Mistral local : `/models`, capacités/contexte, `/chat/completions` non streamé, usage,
