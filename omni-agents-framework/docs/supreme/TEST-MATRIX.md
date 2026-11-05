@@ -1,7 +1,7 @@
 # Matrice des tests OMNIBRAIN SUPREME
 
-Suite : `python3 -m unittest discover -s tests` → **231 tests** (105 V4 + 126 SUPREME), tous verts.
-Suite SUPREME seule : `python3 -m unittest discover -s tests -p "test_supreme_*.py"` → **126 tests**.
+Suite : `python3 -m unittest discover -s tests` → **244 tests** (105 V4 + 139 SUPREME), tous verts.
+Suite SUPREME seule : `python3 -m unittest discover -s tests -p "test_supreme_*.py"` → **139 tests**.
 CI : `.github/workflows/omnibrain-supreme.yml` (Python 3.11/3.12/3.13).
 
 | Fichier | Couverture | Tests |
@@ -21,12 +21,12 @@ CI : `.github/workflows/omnibrain-supreme.yml` (Python 3.11/3.12/3.13).
 | `test_supreme_learning.py` | collecte, analyse, stratégies, gain, rollback, noyau protégé | 6 |
 | `test_supreme_observability.py` | KPIs réels/null, anti-doublons, traces, pas de secrets | 7 |
 | `test_supreme_backup.py` | sauvegarde/restauration, intégrité, refus corruption | 2 |
-| `test_supreme_api.py` | auth, lecture anonyme, écritures protégées, données réelles, dashboard, **API threaded concurrente** | 17 |
+| `test_supreme_api.py` | auth, lecture anonyme, écritures protégées, données réelles, dashboard, API threaded concurrente, **sécurité : journal expurgé, rotation/révocation jeton, permissions 0600, non-affichage** | 30 |
 | `test_supreme_e2e.py` | mission réelle → mémoire → télémétrie → rapport → traçabilité | 1 |
 
-> `test_supreme_api.py` contient `TestAPI` (8) et `TestApiConcurrency` qui hérite de `TestAPI`
-> (8 rejoués + 1 test de concurrence) = 17. Les tests de concurrence rejouent la couverture API
-> sous charge multi-thread (régression « database is locked »).
+> `test_supreme_api.py` contient `TestAPI` (8), `TestApiConcurrency` (8 rejoués + 1 concurrence = 9)
+> et `TestApiSecurity` (8 rejoués + 5 sécurité = 13) = 30. Les classes héritées rejouent la
+> couverture API sous charge multi-thread et valident la sécurité (journal sans secret, rotation).
 
 ## Tests particuliers des agents (7 par profil, exécutés sur 1020 profils)
 load, config, representative (outil réel ou différé), structured_output, permissions, errors, quality.

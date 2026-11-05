@@ -9,6 +9,7 @@ Usage : python3 -m supreme <commande>
   serve [--port N]       démarre l'API + tableau de bord
   backup                 sauvegarde la base
   report                 rapport global
+  rotate-token           régénère le jeton API (0600, jamais affiché) ; redémarrer serve ensuite
 """
 from __future__ import annotations
 
@@ -28,6 +29,7 @@ def main(argv=None):
     sv = sub.add_parser("serve"); sv.add_argument("--port", type=int, default=8765); sv.add_argument("--host", default="0.0.0.0")
     sub.add_parser("backup")
     sub.add_parser("report")
+    sub.add_parser("rotate-token")
     args = ap.parse_args(argv)
 
     if args.cmd == "catalog":
@@ -41,6 +43,17 @@ def main(argv=None):
         if errors:
             print("\n".join(errors)); return 1
         print(f"Catalogue écrit : {n} profils"); return 0
+
+    if args.cmd == "rotate-token":
+        from .api import rotate_token
+        meta = rotate_token()
+        # N'affiche jamais le jeton : uniquement des métadonnées non sensibles.
+        print(json.dumps({k: v for k, v in meta.items() if k != "fingerprint_sha256_12"},
+                         ensure_ascii=False, indent=1))
+        if meta["env_override"]:
+            print("ATTENTION : SUPREME_API_TOKEN est défini dans l'environnement et "
+                  "prend le pas sur le fichier ; retirez-le pour utiliser le nouveau jeton.")
+        return 0
 
     from .api import bootstrap
     from .evaluation import EvaluationEngine
@@ -70,9 +83,10 @@ def main(argv=None):
         print(json.dumps(rep, ensure_ascii=False, indent=1)); return 0
     if args.cmd == "serve":
         from .api import serve
+        from .config import VAR_DIR
         server, state = serve(args.host, args.port, evaluate=True)
         print(f"API + dashboard sur http://{args.host}:{args.port}")
-        print(f"Jeton admin : {state.admin_token}")
+        print(f"Jeton admin : stocké dans {VAR_DIR / 'api_token.txt'} (0600, jamais affiché)")
         try:
             server.serve_forever()
         except KeyboardInterrupt:

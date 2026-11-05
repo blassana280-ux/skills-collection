@@ -23,7 +23,7 @@
 - API Gateway (auth par jeton, rôles) + tableau de bord mobile (données réelles).
 - Reporting Engine (missions, divisions, global, markdown).
 - 41 outils déterministes réels + Skill Registry (860 skills documentaires indexés).
-- **126 tests SUPREME** (+ 105 V4 = 231 verts). CI dédiée Python 3.11/3.12/3.13.
+- **139 tests SUPREME** (+ 105 V4 = 244 verts). CI dédiée Python 3.11/3.12/3.13.
 - Documentation complète + suivi durable (CONTINUITY.md).
 
 ### Réutilisé (V4, non réécrit)
@@ -41,3 +41,16 @@
   `database is locked` sous charge multi-missions / API multi-thread.
 - 2 tests de régression ajoutés (missions parallèles, API concurrente) → **126 tests SUPREME / 231 total**.
 - Documentation : décomptes réels (41 outils, 231 tests) corrigés.
+
+## 1.0.2 — 2026-11-05 (sécurité : jeton API + journal d'accès)
+- **Rotation de jeton sûre** : `python3 -m supreme rotate-token` / `api.rotate_token()` génère un
+  jeton 256 bits (`secrets.token_urlsafe(32)`), l'écrit en `0600` (atomique), ne renvoie jamais le
+  secret (métadonnées + empreinte SHA-256 tronquée uniquement).
+- **Jeton jamais affiché** : suppression de tout `print` du jeton au démarrage (`api.py` + CLI) ;
+  seul le chemin du fichier est imprimé.
+- **Journal d'accès expurgé** : `var/supreme/access.log` (`0600`, gitignoré) — méthode, chemin,
+  statut, IP ; `?token=…` → `REDACTED` ; ni jeton, ni en-têtes, ni corps journalisés.
+- Permissions `0600` renforcées à chaque chargement du jeton.
+- 13 tests de sécurité API ajoutés (journal expurgé, rotation, révocation, permissions, non-affichage)
+  → **139 tests SUPREME / 244 total**.
+- Procédure de rotation/révocation documentée dans `SECURITY.md`.

@@ -1,9 +1,12 @@
-"""Tests API : auth, lecture anonyme, écritures protégées, données réelles."""
+"""Tests API : auth, lecture anonyme, écritures protégées, données réelles, sécurité."""
 import json
 import threading
 import urllib.request
 import urllib.error
+from pathlib import Path
+from unittest import mock
 
+import supreme.api as api_mod
 from supreme.api import APIState, make_handler
 from http.server import ThreadingHTTPServer
 from tests._supreme_util import SupremeTestCase
@@ -12,6 +15,11 @@ from tests._supreme_util import SupremeTestCase
 class TestAPI(SupremeTestCase):
     def setUp(self):
         super().setUp()
+        # Isole le stockage (jeton + journal d'accès) dans un répertoire temporaire.
+        self._var = Path(self._tmp.name) / "var"
+        self._var.mkdir(parents=True, exist_ok=True)
+        self._var_patch = mock.patch.object(api_mod, "VAR_DIR", self._var)
+        self._var_patch.start()
         self.state = APIState(self.core)
         self.state.admin_token = "test-token"
         self.state.anon_read = True
@@ -23,6 +31,7 @@ class TestAPI(SupremeTestCase):
     def tearDown(self):
         self.server.shutdown()
         self.server.server_close()
+        self._var_patch.stop()
         super().tearDown()
 
     def _get(self, path, token=None):
@@ -111,3 +120,52 @@ class TestApiConcurrency(TestAPI):
             missions = list(ex.map(submit_mission, range(4)))
         self.assertTrue(all(c == 200 for c in reads), reads)
         self.assertTrue(all(c == 201 and s == "completed" for c, s in missions), missions)
+
+
+class TestApiSecurity(TestAPI):
+    def test_access_log_written_and_token_redacted(self):
+        secret = "SUPERSECRETVALUE123"
+        # GET avec jeton dans l'URL (lecture anonyme) + POST avec jeton en en-tête.
+        self._get(f"/api/status?token={secret}")
+        self._post("/api/missions", {"objective": "Vérifier Python JSON"}, token="test-token")
+        log = (self._var / "access.log").read_text(encoding="utf-8")
+        self.assertIn("/api/status", log)
+        self.assertIn("/api/missions", log)
+        self.assertIn("REDACTED", log)
+        # Aucun secret ne doit jamais apparaître dans le journal.
+        self.assertNotIn(secret, log)
+        self.assertNotIn("test-token", log)
+        # Chaque ligne est un JSON valide avec les champs attendus.
+        for line in log.strip().splitlines():
+            entry = json.loads(line)
+            self.assertIn("method", entry)
+            self.assertIn("path", entry)
+            self.assertIn("status", entry)
+            self.assertNotIn("token", entry)  # pas de champ jeton
+
+    def test_access_log_permissions(self):
+        self._get("/api/health")
+        p = self._var / "access.log"
+        self.assertTrue(p.exists())
+        self.assertEqual(p.stat().st_mode & 0o777, 0o600)
+
+    def test_rotate_token_returns_no_secret(self):
+        meta = api_mod.rotate_token()
+        # Le jeton en clair ne doit JAMAIS être renvoyé.
+        tok = (self._var / "api_token.txt").read_text().strip()
+        self.assertNotIn(tok, json.dumps(meta))
+        self.assertEqual(meta["length"], len(tok))
+        self.assertEqual(meta["permissions"], "0600")
+        self.assertEqual(len(meta["fingerprint_sha256_12"]), 12)
+        self.assertEqual((self._var / "api_token.txt").stat().st_mode & 0o777, 0o600)
+
+    def test_rotate_token_changes_and_revokes_old(self):
+        before = (self._var / "api_token.txt").read_text().strip()
+        m1 = api_mod.rotate_token()
+        after = (self._var / "api_token.txt").read_text().strip()
+        self.assertNotEqual(before, after)  # ancien jeton révoqué sur disque
+        m2 = api_mod.rotate_token()
+        self.assertNotEqual(m1["fingerprint_sha256_12"], m2["fingerprint_sha256_12"])
+
+    def test_token_file_permissions_on_load(self):
+        self.assertEqual((self._var / "api_token.txt").stat().st_mode & 0o777, 0o600)

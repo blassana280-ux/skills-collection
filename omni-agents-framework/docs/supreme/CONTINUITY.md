@@ -6,9 +6,13 @@ Ce document permet à un autre agent IA de reprendre le travail sans perdre le c
 ## État actuel
 - Couche SUPREME 1.0.0 livrée dans `omni-agents-framework/supreme/`.
 - **1000 spécialistes + 20 chefs** générés, validés ; **60 opérationnels/surveillés** sur preuve réelle.
-- **231 tests verts** (105 V4 + 126 SUPREME). CI dédiée ajoutée.
+- **244 tests verts** (105 V4 + 139 SUPREME). CI dédiée ajoutée.
 - API + tableau de bord mobile fonctionnels sur données réelles.
 - 0 fournisseur IA configuré (honnête) ; routeur/conseil implémentés mais indisponibles sans clés.
+- **Sécurité (1.0.2)** : jeton API régénéré (rotation), stocké uniquement dans
+  `var/supreme/api_token.txt` (`0600`, gitignoré, jamais commité, jamais affiché). Journal d'accès
+  expurgé `var/supreme/access.log`. Rotation : `python3 -m supreme rotate-token` puis redémarrer
+  `serve`. Le secret n'est communiqué à personne et n'apparaît dans aucun rapport. Voir `SECURITY.md`.
 
 ## Architecture retenue
 Voir `ARCHITECTURE.md`. Python stdlib + SQLite, couche au-dessus de V4, 30 composants implémentés.
@@ -38,7 +42,7 @@ Source de vérité des profils : `supreme/divisions/divNN.py` → `supreme/catal
 - PR #2 `omni-research-100` : projet parallèle non fusionné, non touché.
 
 ## Tests
-`cd omni-agents-framework && python3 -m unittest discover -s tests` → 231 verts.
+`cd omni-agents-framework && python3 -m unittest discover -s tests` → 244 verts.
 CI : `.github/workflows/omnibrain-supreme.yml`.
 
 ## Problèmes / permissions manquantes

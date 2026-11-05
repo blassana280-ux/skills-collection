@@ -3,13 +3,15 @@ rôles, données 100% réelles. Bind 0.0.0.0 pour le preview. Aucun secret expos
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import secrets
 import threading
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 from .config import DASHBOARD_DIR, VAR_DIR, ensure_dirs
 from .evaluation import EvaluationEngine
@@ -19,6 +21,62 @@ from .reporting import ReportingEngine
 from .skills_registry import SkillRegistry
 from .backup import BackupManager
 from .tools import TOOLS
+
+# ---------------------------------------------------------------- journal d'accès
+# Journal d'accès HTTP expurgé : aucun jeton, en-tête ni corps n'est jamais écrit.
+# Le paramètre d'URL ?token=… est remplacé par REDACTED. Fichier en 0600, gitignoré.
+_access_lock = threading.Lock()
+
+
+def _redact_path(path: str) -> str:
+    u = urlparse(path)
+    qs = parse_qs(u.query, keep_blank_values=True)
+    if "token" in qs:
+        qs["token"] = ["REDACTED"]
+    q = urlencode(qs, doseq=True)
+    return u.path + ("?" + q if q else "")
+
+
+def _access_log(entry: dict) -> None:
+    try:
+        ensure_dirs()
+        p = VAR_DIR / "access.log"
+        line = json.dumps(entry, ensure_ascii=False) + "\n"
+        with _access_lock:
+            new = not p.exists()
+            with open(p, "a", encoding="utf-8") as f:
+                f.write(line)
+            if new:
+                try:
+                    os.chmod(p, 0o600)
+                except OSError:
+                    pass
+    except Exception:
+        pass  # la journalisation ne doit jamais faire échouer une requête
+
+
+def rotate_token() -> dict:
+    """Génère un nouveau jeton aléatoire sûr (256 bits), l'écrit en 0600 (atomique).
+
+    Ne renvoie JAMAIS le jeton en clair — uniquement des métadonnées non sensibles
+    (chemin, longueur, empreinte SHA-256 tronquée). L'ancien jeton est révoqué sur
+    disque ; redémarrer le serveur pour le révoquer aussi en mémoire.
+    """
+    ensure_dirs()
+    p = VAR_DIR / "api_token.txt"
+    tok = secrets.token_urlsafe(32)
+    tmp = p.with_name("api_token.txt.tmp")
+    tmp.write_text(tok)
+    os.chmod(tmp, 0o600)
+    os.replace(tmp, p)
+    return {
+        "path": str(p),
+        "length": len(tok),
+        "permissions": "0600",
+        "fingerprint_sha256_12": hashlib.sha256(tok.encode()).hexdigest()[:12],
+        "env_override": bool(os.environ.get("SUPREME_API_TOKEN")),
+        "note": "Redémarrer le serveur pour révoquer l'ancien jeton en mémoire.",
+    }
 
 
 def bootstrap(evaluate: bool = True) -> OmniBrainCore:
@@ -46,8 +104,12 @@ class APIState:
         ensure_dirs()
         p = VAR_DIR / "api_token.txt"
         if p.is_file():
+            try:
+                os.chmod(p, 0o600)  # renforce les permissions à chaque chargement
+            except OSError:
+                pass
             return p.read_text().strip()
-        tok = secrets.token_urlsafe(24)
+        tok = secrets.token_urlsafe(32)
         p.write_text(tok)
         try:
             os.chmod(p, 0o600)
@@ -60,6 +122,16 @@ def make_handler(state: APIState):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
             pass
+
+        def log_request(self, code="-", size="-"):
+            # Journal d'accès expurgé (méthode, chemin sans jeton, statut, IP).
+            _access_log({
+                "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "ip": self.client_address[0] if self.client_address else "-",
+                "method": self.command,
+                "path": _redact_path(self.path),
+                "status": int(code) if str(code).isdigit() else code,
+            })
 
         def _send(self, code: int, data, content_type="application/json"):
             body = data if isinstance(data, bytes) else json.dumps(data, ensure_ascii=False, default=str).encode()
@@ -218,7 +290,7 @@ if __name__ == "__main__":
     args = ap.parse_args()
     server, state = serve(args.host, args.port, evaluate=not args.no_eval)
     print(f"OMNIBRAIN SUPREME API sur http://{args.host}:{args.port}")
-    print(f"Jeton admin : {state.admin_token}")
+    print(f"Jeton admin : stocké dans {VAR_DIR / 'api_token.txt'} (0600, jamais affiché)")
     print(f"Lecture anonyme : {'oui' if state.anon_read else 'non'}")
     try:
         server.serve_forever()

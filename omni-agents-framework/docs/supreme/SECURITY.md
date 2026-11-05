@@ -23,9 +23,38 @@
 ## API
 - Authentification par jeton (`X-API-Token` / Bearer). Écritures = jeton admin requis.
 - Lecture anonyme possible uniquement si `SUPREME_ALLOW_ANON_READ=1` (opt-in explicite, preview).
-- Jeton généré aléatoirement (`secrets.token_urlsafe`), stocké `var/api_token.txt` (chmod 600),
-  jamais commité (var/ ignoré).
 - Validation des entrées de mission (`validate_mission_input`).
+
+## Gestion du jeton API (secret)
+- **Génération** : `secrets.token_urlsafe(32)` (256 bits d'entropie).
+- **Stockage sécurisé uniquement** : `var/supreme/api_token.txt`, permissions `0600`,
+  répertoire `var/` gitignoré. Le fichier n'est **jamais** suivi par Git (vérifié : aucun
+  commit dans l'historique, aucune correspondance dans les fichiers suivis).
+- **Jamais affiché** : ni au démarrage du serveur, ni dans les rapports, ni dans les journaux.
+  Le serveur n'imprime que le chemin du fichier. Aucune chaîne `print(... admin_token ...)`.
+- **Pas en clair dans l'environnement par défaut** : `SUPREME_API_TOKEN` peut surcharger le
+  fichier (usage avancé) ; s'il est défini, il prend le pas et doit être géré comme un secret.
+
+### Rotation / révocation (procédure)
+```bash
+cd omni-agents-framework
+python3 -m supreme rotate-token   # écrit un nouveau jeton 0600, n'affiche que des métadonnées
+# puis redémarrer le serveur pour révoquer l'ancien jeton EN MÉMOIRE :
+python3 -m supreme serve --port 8765
+```
+- `rotate_token()` renvoie uniquement des métadonnées non sensibles (chemin, longueur,
+  empreinte SHA-256 tronquée) — **jamais le jeton en clair**.
+- L'ancien jeton est révoqué sur disque dès la rotation, et en mémoire au redémarrage.
+- Vérifier la révocation : une écriture avec l'ancien jeton doit renvoyer `401`.
+- Tout jeton ayant fuité (affiché, journalisé, commité) doit être considéré comme compromis
+  et révoqué immédiatement par rotation.
+
+## Journal d'accès (auditable, expurgé)
+- Chaque requête HTTP est journalisée dans `var/supreme/access.log` (`0600`, gitignoré) :
+  horodatage UTC, IP client, méthode, chemin, code statut.
+- **Aucun secret n'est jamais journalisé** : ni jeton, ni en-têtes, ni corps. Le paramètre
+  d'URL `?token=…` est remplacé par `REDACTED`. Testé (`test_access_log_written_and_token_redacted`).
+- La journalisation n'échoue jamais une requête (best-effort).
 
 ## Ce qui n'est PAS fait (honnête)
 - Pas de fournisseur IA connecté : aucune clé dans l'environnement, réseau sortant du sandbox
