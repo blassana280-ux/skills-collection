@@ -75,9 +75,10 @@ Ce document permet une reprise sans perdre le contexte. Aucune fusion de PR n'es
 ## Branches / PR / GitHub
 - Travail : `arena/ffc77bf1-skills-collection` (nom fixe de session).
 - Historique 1.2.1 : merge `b8b3978`, commits `df0c471`, `a46a30e`.
-- Livraison 1.3.0 : commit(s) de la branche courante, visibles dans PR #5 après push.
+- Livraison 1.3.0 : commit principal `5b226070ae856ef02ec24ca560f7865b8035eab2`, poussé et visible dans PR #5.
 - PR #5 : ouverte vers `master`, non fusionnée. PR #2 `omni-research-100` : non touchée.
-- CI : `.github/workflows/omnibrain-supreme.yml`, `.github/workflows/omnibrain-v4.yml`.
+- CI : `.github/workflows/omnibrain-supreme.yml`, `.github/workflows/omnibrain-v4.yml` ;
+  **6/6 pass** sur `5b22607` (runs `42091613321`, `42091613381`).
 - Permissions manquantes documentées : push dépôt autonome 403, création dépôt 403,
   lecture `optimiser-mes-agents-IA` 403 ; non contournées.
 

@@ -28,10 +28,12 @@ aucun secret demandé dans la conversation ni versionné.
 
 ## 2. Commits et livraison GitHub
 - Historique 1.2.1 conservé : `b8b3978` (merge master), `df0c471`, `a46a30e`.
-- Livraison 1.3.0 : commit(s) de la branche courante, visibles dans PR #5 après push.
+- Livraison 1.3.0 : commit principal `5b226070ae856ef02ec24ca560f7865b8035eab2`, poussé sur
+  `origin/arena/ffc77bf1-skills-collection` et visible dans PR #5.
 - Aucune fusion de PR. Aucune modification directe de `master`. PR #2 intacte.
-- CI : workflows Supreme et V4, Python 3.11/3.12/3.13 ; smoke CLI sync/providers/activation/mission/worker/learn/audit.
-  Les checks du dernier commit sont visibles dans PR #5 (`gh pr checks 5`).
+- CI sur `5b22607` : **6/6 pass**, runs Supreme `42091613321` et V4 `42091613381`,
+  Python 3.11/3.12/3.13 ; smoke CLI sync/providers/activation/mission/worker/learn/audit.
+  Preuves : `validation/ci-130-final.log`, `validation/ci-supreme-130-run.json`, `validation/ci-v4-130-run.json`.
 
 ## 3. Fichiers modifiés / ajoutés (chemins réels)
 ### Nouveaux modules 1.3.0
@@ -123,7 +125,7 @@ Journaux gitignorés : `omni-agents-framework/var/supreme/validation/`.
 | Correctifs model/campagne/API | **81 OK (skipped=1)** sur activation/providers/hardening | `validation/130-model-fix.log` |
 | Cohérence documentaire automatique | **2 OK** | `validation/docs-coherence-130.log` |
 | Audit exécutable complet | **ok=true**, version 1.3.0, schéma 3, 378 tests découverts | `validation/audit-130-cli.json` |
-| Contrôles CI GitHub | visibles sur le dernier commit de la branche | PR #5 / `gh pr checks 5` |
+| Contrôles CI GitHub | **6/6 pass** sur `5b22607` | `validation/ci-130-final.log`, runs `42091613321` / `42091613381` |
 
 Catégories strictement séparées :
 - **Tests locaux réels** : SQLite, subprocess, signaux POSIX, outils déterministes, HTTP vers stub 127.0.0.1.
