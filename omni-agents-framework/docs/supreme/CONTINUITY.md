@@ -21,6 +21,11 @@ Ce document permet une reprise sans perdre le contexte. Aucune fusion de PR n'es
 - Sauvegardes durcies **0600/0700** (20 fichiers existants corrigés), 4 sauvegardes intégrité `ok` ;
   vérification `backup --verify` et rétention opt-in `backup --prune N` (simulation par défaut).
 
+- CI **6/6 pass** sur `82262ce9e35496934753eb1f83f4d69342c6335d`
+  (runs `42115962570` Supreme, `42115962588` V4 ; Python 3.11/3.12/3.13).
+- Commits 1.4.0 : `e2c9628` (livraison) puis `82262ce` (tri de rétention déterministe
+  + réponse 413 fiable, défauts révélés par la CI et corrigés, aucun test désactivé).
+
 ## Historique 1.3.0 (conservé)
 - Couche SUPREME **1.3.0** : fournisseurs/intelligence/activation progressive/CLI/API/dashboard mobile,
   sans reconstruire les composants 1.2.1 stabilisés.
@@ -29,8 +34,9 @@ Ce document permet une reprise sans perdre le contexte. Aucune fusion de PR n'es
   Ancienne sauvegarde 1.2.1 conservée : `bk-20261105T163835-22f858`.
 - Audit CLI 1.3.0 : `ok=true`, version `1.3.0`, schéma `3`, **378 tests découverts**.
   Preuve : `omni-agents-framework/var/supreme/validation/audit-130-cli.json`.
-- Serveur local/preview 1.3.0 démarré sur `0.0.0.0:8765` ; santé `ok`, version `1.3.0`.
-  Ce n'est pas un déploiement cloud public.
+- Serveur local/preview **1.4.0** démarré sur `0.0.0.0:8765` ; santé `ok`, version `1.4.0`,
+  healthcheck `ok=true`, Guardian `ready=true` (0 bloquant), dashboard 14 onglets.
+  Sauvegarde préalable : `bk-20261105T215536-41908d`. Ce n'est pas un déploiement cloud public.
 - **1020 profils** : 1000 spécialistes + 20 chefs. Statuts live : `registered=0`, `validated=960`,
   `monitored=60`, `operational=0`. **60 outils déterministes locaux opérationnels sur preuve** ;
   **960 agents LLM en attente**.
