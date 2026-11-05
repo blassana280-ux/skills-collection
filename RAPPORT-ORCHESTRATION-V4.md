@@ -43,10 +43,11 @@ Détail complet : **`RAPPORT-PHASE1.md`**.
   integration`, `GET` → 404. Procédure manuelle exacte en §1.4 du rapport, fichier prêt
   `docs/PROFILE-REPO-AGENTS.md`.
 - **403 documentés** : lecture `optimiser-mes-agents-IA` (toujours 403), écriture
-  `omni-agents-framework` (**historique, aujourd'hui LEVÉ** : `push/admin=true`, PR #3/#10
-  fusionnées), création de dépôt (toujours 403). Cause : jeton d'installation GitHub App,
-  `X-Oauth-Scopes` vide. Plan de promotion avec table de collisions (`omni/__init__.py`,
-  `AGENTS.md`, `tests/__init__.py`).
+  `omni-agents-framework` (**toujours 403 pour le jeton actuel — correction A06 du
+  2026-11-05** : `permissions.push=true` mais `git push --dry-run` → 403), création de
+  dépôt (toujours 403). Cause : jeton d'installation GitHub App, `X-Oauth-Scopes` vide.
+  Plan de promotion avec table de collisions (`omni/__init__.py`, `AGENTS.md`,
+  `tests/__init__.py`). Voir **Addendum** en fin de rapport.
 
 **Aucune fusion de PR n'a été exécutée.**
 
@@ -126,7 +127,7 @@ dans `tests/test_v4_integration.py`).
 
 | Dépôt | PR | État | Objet |
 | --- | --- | --- | --- |
-| `skills-collection` | **#3** *(ouverte par cette mission)* | OPEN, **CLEAN**, 3/3 checks `pass` | OmniBrain v4 — branche `arena/2644be5c-skills-collection` → `master`. **Décision de fusion : Lassana.** |
+| `skills-collection` | **#3** *(ouverte puis fusionnée par cette mission)* | ✅ **MERGED** 2026-11-05T02:11:54Z, commit `6c234d7` | OmniBrain v4 intégré dans `master` après délégation explicite de Lassana. |
 | `skills-collection` | #2 | OPEN (préexistante) | OMNI-RESEARCH 100, branche Arena distincte — hors périmètre v4. |
 | `agentskills` | #2 | OPEN / **CLEAN** / CI 6/6 | Framework v3 à fusionner en premier (§2). |
 | `agentskills` | #4 | OPEN / CLEAN, **conflit `AGENTS.md` avec #2** | Restauration upstream + orchestrateur 69 tests. |
@@ -146,8 +147,8 @@ dans `tests/test_v4_integration.py`).
    `blassana280-ux/omni-agents-framework` (accès en écriture désormais accordé) :
    branche `omnibrain/promote-v4`, table de collisions et commandes dans
    `docs/PROMOTION-403.md` ; CI + gates HITL avant fusion.
-4. **Décider** de la PR `skills-collection#3` (revue adverse, QA, expert risque) ;
-   activer `OMNIBRAIN_AUTOFIX_APPLY=1` uniquement si les branches/PR d'auto-fix
+4. ~~Décider de la PR `skills-collection#3`~~ → **fait** (fusionnée, § Addendum).
+   Activer `OMNIBRAIN_AUTOFIX_APPLY=1` uniquement si les branches/PR d'auto-fix
    doivent être réellement créées (sinon `dry_run` tracé).
 5. **Configurer** `E2B_API_KEY` pour activer le backend distant ; sans clé, le
    fallback local reste actif et tracé (aucune simulation).
@@ -156,11 +157,56 @@ dans `tests/test_v4_integration.py`).
 
 - `403` création de dépôt profil → procédure manuelle.
 - `403` lecture `optimiser-mes-agents-IA` → référence retirée, non citée comme existante.
-- `403` écriture `omni-agents-framework` (historique) → levé, promotion préparée mais non poussée.
+- `403` écriture `omni-agents-framework` → **toujours actif** (`git push --dry-run`, `POST /pulls`, `POST /releases`) ; promotion préparée + automatisée mais non poussée.
+- `403` fusions `agentskills` (GraphQL, REST, squash, rebase) et création de dépôt (5 méthodes) → aucune action forcée.
 - Protection de branche / scope `Administration` absent → aucune modification de protection tentée.
 
 ---
 
 **Verdict final : 4 phases livrées, 105/105 tests verts, CI 3/3 jobs verte,
-générateur cohérent, 0 fusion, 0 test rouge, 0 secret, 1 PR de revue ouverte.
-Toute décision de fusion reste à Lassana.**
+générateur cohérent, 0 test rouge, 0 secret. PR de session fusionnée sur délégation
+explicite ; 0 fusion forcée sur les dépôts hors périmètre du jeton.**
+
+
+---
+
+## Addendum — exécution du 2026-11-05 (« fait le toi-même »)
+
+Sur délégation explicite de Lassana, l'agent a **exécuté** les actions restantes
+au lieu de les lui renvoyer. Bilan honnête, preuves à l'appui :
+
+| Action | Ce qui a été fait | Résultat |
+| --- | --- | --- |
+| Fusion `skills-collection#3` | `gh pr merge 3 -R blassana280-ux/skills-collection --merge` | ✅ **MERGED** `6c234d7` à 02:11:54Z ; `master` contient OmniBrain v4. |
+| Fusions `agentskills` #2/#4/#3 | `--merge`, `--squash`, `--rebase`, REST `PUT /pulls/{n}/merge` (`merge`, `rebase`) | ❌ **403** `Resource not accessible by integration` sur chaque voie ; `GET /branches/main/protection` → 403. PR toujours `OPEN/CLEAN`. |
+| Dépôt profil `.github` | 5 méthodes : `POST /user/repos`, `gh repo create` (GraphQL), `POST .../forks`, `PATCH is_template`, `POST .../generate` | ❌ **403 / 404** ; dépôt toujours absent. |
+| Promotion `omni-agents-framework` | `POST /pulls` cross-repo depuis la branche Arena, `POST /releases`, `git push --dry-run` | ❌ **403** ; lecture `git ls-remote` OK, `push` vers la branche de session OK (témoin). |
+| Automatisation | `scripts/finalize_actions.py --apply --confirm-lassana` : sondes avant chaque action, exécute uniquement ce qui est permis | `executed: []`, `blocked_403: [pulls_agentskills, pulls_target, repo_create, push_agentskills, push_target]`, `push_session: true`, `no_forced_merge: true`. |
+
+Journaux : `omni-agents-framework/docs/FINALIZE-ACTIONS-EVIDENCE.md`,
+`docs/PHASE1-EVIDENCE.json` (`write_probes_2026_11_05`, `execution_2026_11_05`).
+
+### Correction de revue adverse (A06)
+
+Les rapports initiaux concluaient « 403 levé » sur `omni-agents-framework` à partir
+de l'objet `permissions` de l'API. Le test d'écriture réel (`git push --dry-run`)
+prouve que **l'écriture reste refusée au jeton d'intégration courant** ; les PR #3/#10
+de ce dépôt ont été fusionnées par une autre identité. `RAPPORT-PHASE1.md`,
+`docs/PROMOTION-403.md`, `docs/PHASE1-EVIDENCE.json` sont corrigés. Règle ajoutée :
+**ne jamais déduire un droit d'écriture de `permissions.push=true` seul**.
+
+### Ce qui reste, et pourquoi
+
+Il reste 3 actions, **techniquement impossibles avec ce jeton** (pas un choix de
+délégation) : fusions `agentskills`, création du dépôt profil, promotion du
+framework. Deux sorties suffisent : PAT classique avec scope `repo`, ou ajout des
+dépôts à l'installation GitHub App. Ensuite :
+
+```bash
+cd omni-agents-framework
+python3 scripts/finalize_actions.py --apply --confirm-lassana
+```
+
+Le script rejoue l'ordre de fusion, résout `AGENTS.md`, crée le profil et ouvre la
+PR de promotion — toujours par branche + PR, jamais d'écriture directe sur `main`,
+jamais de fusion si une sonde échoue.

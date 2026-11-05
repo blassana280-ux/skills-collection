@@ -8,7 +8,7 @@ les permissions sont accordées **dépôt par dépôt**, pas au niveau du compte
 | # | Cible / opération | Relevé | État 2026-11-05 | Interprétation |
 | --- | --- | --- | --- | --- |
 | A | `GET /repos/blassana280-ux/optimiser-mes-agents-IA` | `403 Resource not accessible by integration` (PR #2 et PR #4 d'`agentskills`, 2026-10-28/29) | **Toujours 403** (re-vérifié) | dépôt hors périmètre de l'installation ; la fiche `specialized-omnibrain-orchestrator-agent.md` n'a jamais été lue. Ne plus citer. |
-| B | Écriture sur `blassana280-ux/omni-agents-framework` | PR #2 : « le token d'intégration n'a pas d'accès en écriture (403) » ; PR #4 : sonde `POST /git/refs` sur 41 dépôts → `agentskills` accepte, **40 renvoient 403** | **LEVÉ** : `permissions {admin:true, maintain:true, push:true, pull:true, triage:true}`, `default_branch=main`, `pushed_at=2026-11-05T01:33:48Z`, PR #3 et #10 fusionnées | l'accès en écriture a été accordé entre-temps ; la promotion est désormais techniquement possible. |
+| B | Écriture sur `blassana280-ux/omni-agents-framework` | PR #2 : « le token d'intégration n'a pas d'accès en écriture (403) » ; PR #4 : sonde sur 41 dépôts → 40 × 403 | **TOUJOURS 403 pour le jeton actuel** (correction A06) : `permissions` annonce `push/admin=true`, mais `git push --dry-run` → `403 Permission denied`, `POST /pulls` → 403, `POST /releases` → 403 | l'objet `permissions` décrit les droits de l'utilisateur, **pas** ceux délégués à l'installation GitHub App. Les PR #3/#10 ont été fusionnées par une autre identité. Promotion impossible sans PAT `repo` ou extension de l'installation. |
 | C | `POST /user/repos` (`name=.github`) | `403 Resource not accessible by integration` ; `GET /repos/blassana280-ux/.github` → `404` | **Toujours 403** | création d'un dépôt au niveau du compte non couverte par une installation repository-scoped → procédure manuelle (`RAPPORT-PHASE1.md` §1.4). |
 
 Commandes de preuve :
@@ -18,9 +18,19 @@ gh api repos/blassana280-ux/omni-agents-framework --jq '{permissions,default_bra
 gh api repos/blassana280-ux/optimiser-mes-agents-IA          # 403
 gh api -X POST user/repos -f name='.github'                  # 403
 gh api -i user | grep -i x-oauth-scopes                      # vide
+git push --dry-run https://github.com/blassana280-ux/omni-agents-framework.git HEAD:refs/heads/<branche>  # 403
+git push --dry-run origin arena/2644be5c-skills-collection    # OK (témoin)
 ```
 
-## Plan de promotion du framework (dès que l'accès est accordé — il l'est)
+### Correction de revue adverse (2026-11-05)
+
+La version initiale de ce document concluait « LEVÉ » à partir de l'objet
+`permissions` de l'API. Preuve d'écriture réelle ci-dessus : **le 403 subsiste**
+pour le jeton d'intégration. Ne jamais déduire un droit d'écriture de
+`permissions.push=true` seul : toujours sonder (`git push --dry-run`,
+`POST` à payload invalide).
+
+## Plan de promotion du framework (à exécuter dès que l'accès est réellement accordé)
 
 **Aucune promotion n'a été poussée par l'agent** : la branche de session est
 `arena/2644be5c-skills-collection`, et toute fusion reste à Lassana. Procédure à
