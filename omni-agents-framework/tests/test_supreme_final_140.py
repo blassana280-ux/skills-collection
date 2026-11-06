@@ -858,3 +858,42 @@ class TestProviderEnrollmentKit(unittest.TestCase):
         self.assertIn("Termux", text)
         self.assertIn("NON", text)
         self.assertNotIn("clé enregistrée avec succès", text)
+
+
+class TestCrossRepoAlignment(unittest.TestCase):
+    """Garde-fou documentaire : empêche de répéter l'erreur « SUPREME introuvable »."""
+
+    ROOT = Path(__file__).resolve().parent.parent
+
+    def test_alignment_doc_qualifies_repo_branch_and_pr(self):
+        text = (self.ROOT / "docs" / "supreme" / "ECOSYSTEM-ALIGNMENT.md").read_text()
+        self.assertIn("skills-collection", text)
+        self.assertIn("omni-agents-framework", text)
+        self.assertIn("arena/ffc77bf1-skills-collection", text)
+        self.assertIn("forks", text, "doit expliquer la limite de la recherche GitHub")
+        self.assertIn("Cette conclusion est inexacte", text)
+        self.assertIn("OPEN", text)
+        self.assertIn("MERGED", text)
+
+    def test_alignment_doc_claims_no_real_connection(self):
+        text = (self.ROOT / "docs" / "supreme" / "ECOSYSTEM-ALIGNMENT.md").read_text()
+        self.assertIn("personne n'a encore connecté", text)
+        self.assertIn("403", text, "accès refusés documentés")
+        self.assertIn("Aucune écriture dans", text)
+
+    def test_supreme_really_exists_on_this_branch(self):
+        # Preuve opposable à toute future conclusion « introuvable ».
+        module_dir = self.ROOT / "supreme"
+        self.assertTrue((module_dir / "activation.py").is_file())
+        self.assertTrue((module_dir / "guardian.py").is_file())
+        tracked = subprocess.run(["git", "ls-tree", "-d", "HEAD",
+                                  "omni-agents-framework/supreme"],
+                                 capture_output=True, text=True, cwd=self.ROOT.parent)
+        self.assertEqual(tracked.returncode, 0)
+        self.assertIn("omni-agents-framework/supreme", tracked.stdout,
+                      "SUPREME doit être versionné sur cette branche")
+
+    def test_enrollment_docs_are_cross_referenced(self):
+        for rel in ("CONTINUITY.md", "MISTRAL-ENROLLMENT.md", "ECOSYSTEM.md"):
+            text = (self.ROOT / "docs" / "supreme" / rel).read_text()
+            self.assertIn("ECOSYSTEM-ALIGNMENT", text, rel)

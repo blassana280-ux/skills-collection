@@ -335,20 +335,20 @@ journalisées dans `events` (`validation/guardian-rebaseline-140.json`). Le cons
 
 ## 8. Tests et CI
 
-**451 tests découverts = 105 V4/non-SUPREME + 346 SUPREME.**
-Dernière exécution complète : **`Ran 451 tests in 163.429s` → `OK (skipped=1)`**.
+**455 tests découverts = 105 V4/non-SUPREME + 350 SUPREME.**
+Dernière exécution complète : **`Ran 455 tests in 163.429s` → `OK (skipped=1)`**.
 Le test ignoré est le test fournisseur réel opt-in, faute de clé.
 
-Nouveaux tests de cette phase : **71** dans `tests/test_supreme_final_140.py`
+Nouveaux tests de cette phase : **75** dans `tests/test_supreme_final_140.py`
 (Guardian, concurrence de bail, non-mutation des permissions, re-baseline tracée,
 paliers, preuve post-quarantaine, reprise propriétaire vivant/mort,
 re-spécification, réconciliation avec remplacement, contexte attesté, parsing
 `context_length`, arbitrage mémoire + ACL, corps API 413/400, validation
 numérique, contrat JSON opt-in, sauvegardes privées + vérification + rétention,
 endpoints d'exploitation, ordre de rétention déterministe, scripts ops/systemd)
-plus **2** de cohérence documentaire supplémentaires, soit **73 nouveaux tests**.
+plus **2** de cohérence documentaire supplémentaires, soit **77 nouveaux tests**.
 
-Catégories strictement séparées : **450 tests locaux réels exécutés verts**
+Catégories strictement séparées : **454 tests locaux réels exécutés verts**
 (SQLite, subprocess, signaux POSIX, HTTP vers stub `127.0.0.1`) · **0 test
 fournisseur IA réel** · **0 test cloud réel**. Un stub local n'est jamais compté
 comme preuve d'exécution externe.
@@ -491,6 +491,15 @@ déploiement cloud public.**
 **Dépense réelle : 0,00 USD.** Aucun abonnement, aucun crédit, aucun appel payant.
 `budget_ledger` : somme `0.0`. Aucun service cloud souscrit.
 
+**Alignement inter-dépôts (2026-11-06)** : une session Mistral/Vide a livré
+`feature/mistral-connect-securise` dans le dépôt `omni-agents-framework` pour
+**OmniRouteLite** (Node), et son document de continuité déclarait SUPREME
+« introuvable ». Conclusion inexacte, corrigée avec preuves dans
+**`ECOSYSTEM-ALIGNMENT.md`** : SUPREME est dans `skills-collection` (fork non indexé
+par la recherche GitHub), sur une branche non par défaut, PR non fusionnée. Deux
+« PR #5 » distinctes existent. Aucune écriture n'a été faite dans l'autre dépôt.
+Les deux piles restent à **0 connexion Mistral réelle**.
+
 **GitHub** : branche `arena/ffc77bf1-skills-collection`, base `master`
 (`af4b9515`). Commits 1.4.0 poussés : **`e2c96282350cf1f7f372fbde223dbd1503a947af`**
 (livraison) puis **`82262ce9e35496934753eb1f83f4d69342c6335d`** (correctifs révélés
@@ -510,7 +519,7 @@ env.example), `docs/supreme/RUNBOOK.md`, ce rapport.
 
 ## 13. Conclusion
 
-SUPREME 1.4.0 est **implémenté, testé localement (451 tests), migré en v4 et
+SUPREME 1.4.0 est **implémenté, testé localement (455 tests), migré en v4 et
 exploitable localement** : 1 020 profils cohérents, 20 divisions, 60 agents à
 preuve locale réelle, 13 missions réelles réussies sur 9 divisions, mémoire et
 apprentissage mesurés, protection continue active, sauvegardes privées vérifiées,

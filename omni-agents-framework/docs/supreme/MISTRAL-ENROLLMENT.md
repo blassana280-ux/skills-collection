@@ -32,6 +32,11 @@ Preuves : `var/supreme/validation/mistral-egress-test.json`,
 
 ---
 
+Une implémentation parallèle existe pour **OmniRouteLite** (Node) dans le dépôt
+`omni-agents-framework`, branche `feature/mistral-connect-securise`. Elle cible une
+autre pile ; ne pas la confondre avec SUPREME. Comparaison détaillée et correction
+d'une erreur de continuité : **`ECOSYSTEM-ALIGNMENT.md`**.
+
 ## 1. Voie recommandée : Termux sur votre Android
 
 La clé ne quitte **jamais** votre téléphone : pas de proxy, pas de serveur tiers,

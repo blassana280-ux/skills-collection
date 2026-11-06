@@ -3,6 +3,10 @@
 **Date : 2026-11-05** · **Version SUPREME : 1.4.0** · Inspection réelle via `gh repo list` / `gh pr view`.
 Racine dépôt : `skills-collection/`. Framework : `skills-collection/omni-agents-framework/`.
 
+> Complément 2026-11-06 : **`ECOSYSTEM-ALIGNMENT.md`** documente la branche
+> `feature/mistral-connect-securise` du dépôt `omni-agents-framework`, la confusion
+> entre les deux « PR #5 », et la comparaison des deux enrôlements sécurisés.
+
 ## 1. Dépôts inspectés (46)
 - **1 dépôt propre** : `omni-agents-framework` (branche `main`, non fork). Le code SUPREME vit
   dans `omni-agents-framework/` **vendorisé dans `skills-collection`** (dépôt de travail de la

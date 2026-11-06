@@ -6,6 +6,11 @@ Racine dépôt : `skills-collection/`. Framework : `skills-collection/omni-agent
 Ce document permet une reprise sans perdre le contexte. Aucune fusion de PR n'est autorisée implicitement.
 
 ## État actuel vérifié (1.4.0)
+- **Alignement inter-dépôts** : voir `ECOSYSTEM-ALIGNMENT.md`. SUPREME vit dans
+  `skills-collection` (fork, branche Arena, PR #5 OPEN) ; le document Mistral du dépôt
+  `omni-agents-framework` le déclarait « introuvable » à cause de la recherche GitHub
+  (forks et branches non par défaut non indexés). Correction documentée avec preuves.
+  Deux « PR #5 » distinctes existent : toujours qualifier par le dépôt.
 - Couche SUPREME **1.4.0** : protection continue (Guardian), arbitrage mémoire, reprise d'activation
   (re-spécification/réconciliation), contexte modèle attesté, API durcie, exploitation `ops/`.
   Rapport de livraison courant : **`FINAL-COMPLETION-REPORT.md`** ; runbook : **`RUNBOOK.md`**.
