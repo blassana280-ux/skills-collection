@@ -1,0 +1,21 @@
+.env
+.env.*
+!.env.example
+*.db
+*.db-journal
+data/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.log
+.DS_Store
+# test-results/ est VOLONTAIREMENT suivi : les résultats de tests sont livrés.
+
+# Le catalogue des 100 agents doit être livré : le .gitignore racine ignore *_results.json
+!test-results/agent_results.json

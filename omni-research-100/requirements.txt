@@ -1,0 +1,19 @@
+# OMNI-RESEARCH 100 — dépendances épinglées (Python 3.11+)
+fastapi==0.115.6
+uvicorn==0.34.0
+pydantic==2.10.4
+email-validator==2.2.0
+httpx==0.28.1
+SQLAlchemy==2.0.36
+PyJWT==2.10.1
+python-dotenv==1.0.1
+PyYAML==6.0.2
+
+# Optionnels en production (aucun n'est obligatoire pour démarrer)
+# psycopg[binary]==3.2.3      # PostgreSQL, source de vérité
+# redis==5.2.1                # file de tâches distribuée
+# qdrant-client==1.12.1       # index vectoriel
+
+# Tests
+pytest==8.3.4
+pytest-asyncio==0.25.0
