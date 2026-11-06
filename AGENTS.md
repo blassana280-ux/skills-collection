@@ -27,8 +27,26 @@ existante.
    ligne de fichier ou réponse d'API. Verdict par défaut : « NEEDS WORK ».
 3. **Réutiliser avant de créer** — chercher dans `registry/skills.json`
    (`python3 -m omni skills <termes>`) avant d'inventer un agent.
-4. **Aucun secret dans le dépôt** — providers et tokens par variables
-   d'environnement uniquement.
+4. **Aucun secret dans le dépôt** — providers et tokens via environnement injecté,
+   `*_FILE` privé, ou stockage runtime 0600 hors Git ; jamais dans le chat/commit/log.
 5. **Jamais d'écriture directe sur `main`** — branche + Pull Request.
 6. **Respect de l'upstream** — `CONTRIBUTING.md` du dépôt prévaut, y compris
    pour la déclaration d'assistance IA.
+
+## Couche OMNIBRAIN SUPREME 1000 (2026-11-05, version 1.4.0)
+
+> Source de vérité : `skills-collection/omni-agents-framework/supreme/` +
+> `skills-collection/omni-agents-framework/docs/supreme/`.
+> Point d'entrée : [`OMNIBRAIN-SUPREME.md`](OMNIBRAIN-SUPREME.md).
+
+- 20 divisions × 50 spécialistes = **1000 profils** + 20 chefs ; registre SQLite, orchestrateur
+  DAG, bus, mémoire 4 niveaux, routeur multi-modèles, politique de risque, API + dashboard mobile.
+- **Activation sur preuve** : un agent n'est `operational` qu'après exécution réelle réussie.
+  Ne jamais présenter 1000 agents enregistrés comme 1000 opérationnels.
+- **Aucun fournisseur IA supposé connecté** ; détection réelle, aucune connexion simulée.
+- Reprise du travail : `omni-agents-framework/docs/supreme/CONTINUITY.md`.
+- Tests : `cd omni-agents-framework && python3 -m unittest discover -s tests` (**378 découverts = 105 V4 + 273 SUPREME ; 377 locaux verts + 1 opt-in réel ignoré**).
+- Activation 1.4.0 : Mistral/Vide, découverte réelle, autorisation humaine bornée, paliers 5→20→60→100→…→960,
+  preuve `external_api` obligatoire, quarantaine isolée. Aucun stub local ne peut activer un agent LLM.
+- Durcissement 1.2.1 conservé : workers à baux/heartbeat/fencing, apprentissage périodique persistant,
+  budget réservé avant appel, conseil sans contournement du routeur. Aucune fusion de PR sans accord.
