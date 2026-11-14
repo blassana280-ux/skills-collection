@@ -1,0 +1,47 @@
+.PHONY: install test test-ui audit generate run preview verify verify-omnibrain verify-live verify-http verify-delivery bootstrap docker clean
+
+install:
+	python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+
+test:
+	.venv/bin/python -m pytest -q --junitxml=test-results/junit.xml
+
+test-ui:
+	npm ci --no-audit --no-fund --ignore-scripts
+	node --test tests/test_web_ui.test.js tests/test_web_ui_dom.test.js
+
+audit:
+	.venv/bin/python scripts/audit_dependencies.py
+
+generate:
+	.venv/bin/python scripts/gen_profiles.py
+
+verify:
+	.venv/bin/python scripts/verify_offline.py
+
+verify-omnibrain:
+	.venv/bin/python scripts/verify_omnibrain_contract.py
+
+verify-live:
+	.venv/bin/python scripts/verify_providers_live.py
+
+verify-http:
+	.venv/bin/python scripts/verify_live_api.py
+
+verify-delivery:
+	.venv/bin/python scripts/verify_delivery_repo.py
+
+bootstrap:
+	./scripts/bootstrap_remote.sh --check
+
+run:
+	.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+preview:
+	./scripts/serve_preview.sh 8000
+
+docker:
+	docker compose up --build -d
+
+clean:
+	rm -rf .pytest_cache test-results/*.xml

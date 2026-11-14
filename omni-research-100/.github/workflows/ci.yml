@@ -1,0 +1,87 @@
+name: OMNI-RESEARCH 100 CI (dépôt autonome)
+
+on:
+  push:
+    paths:
+      - '**'
+  pull_request:
+    paths:
+      - '**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Tests Python (87) + interface (16) + intégrité des 100 agents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Installer les dépendances épinglées
+        run: pip install -r requirements.txt
+      - name: Intégrité des fichiers générés (100 profils)
+        run: python scripts/gen_profiles.py --check
+      - name: Analyse locale des dépendances
+        run: python scripts/audit_dependencies.py
+      - name: Analyse CVE (base complète, réseau CI)
+        run: |
+          pip install --quiet pip-audit==2.7.3
+          pip-audit -r requirements.txt -f json -o test-results/pip-audit.json || true
+      - name: Tests Python (unitaires, intégration, API, concurrence, pannes, sécurité, OmniBrain, citations)
+        run: python -m pytest -q --junitxml=test-results/junit.xml
+      - name: Catalogue des 100 agents (statut après tests)
+        run: python scripts/gen_profiles.py
+      - name: Installer jsdom pour les tests DOM
+        run: npm ci --no-audit --no-fund --ignore-scripts
+      - name: Tests de l'interface (Node, 5 statiques + 11 DOM jsdom)
+        run: node --test tests/test_web_ui.test.js tests/test_web_ui_dom.test.js
+      - name: Vérification hors ligne de bout en bout
+        run: python scripts/verify_offline.py
+      - name: Vérification HTTP de l'application réelle (38 contrôles)
+        env:
+          OR100_BASE_URL: http://127.0.0.1:8000
+          OR100_ADMIN: admin
+          OR100_PASSWORD: ci-local-password
+          OR100_OMNIBRAIN_KEY: ci-local-key
+          OMNI_AUTH_SECRET: ci-local-secret-32-bytes-minimum-here
+          OMNI_ADMIN_PASSWORD: ci-local-password
+          OMNI_USER_PASSWORD: ci-local-user
+          OMNI_OMNIBRAIN_API_KEY: ci-local-key
+          OMNI_DATABASE_URL: sqlite:///./data/ci.db
+          OMNI_SEARXNG_ENABLED: 'false'
+          OMNI_DNS_SSRF_CHECK: 'false'
+        run: |
+          mkdir -p data
+          uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/or100-uvicorn.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/api/health > /dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          python scripts/verify_live_api.py
+      - name: Compatibilité OmniBrain contre les sources réelles
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/verify_omnibrain_contract.py
+      - name: État live des fournisseurs (aucune simulation)
+        run: python scripts/verify_providers_live.py
+      - name: État du dépôt privé livré (vérification externe)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/verify_delivery_repo.py
+      - name: Conserver les résultats
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omni-research-100-test-results
+          path: test-results/

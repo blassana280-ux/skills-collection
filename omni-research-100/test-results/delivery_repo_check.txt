@@ -1,0 +1,19 @@
+{
+  "repo": "blassana280-ux/omni-research-100",
+  "checks": {
+    "repo_access": {
+      "ok": false,
+      "detail": "{\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/repos/repos#get-a-repository\",\"status\":\"403\"}"
+    }
+  },
+  "status": "BLOQUÉ",
+  "reason": "Le jeton de cette session ne peut pas accéder au dépôt privé (403 Resource not accessible by integration). Reconnecter GitHub dans CETTE session, puis relancer.",
+  "unverified": [
+    "branches",
+    "PR #1..#4",
+    "CI du dépôt autonome",
+    "protection de main",
+    "nombre de fichiers",
+    "SHA de l'arbre git"
+  ]
+}
