@@ -1,0 +1,14 @@
+[Unit]
+Description=OmniBrain SUPREME — sauvegarde SQLite vérifiée
+
+[Service]
+Type=oneshot
+WorkingDirectory=@FRAMEWORK@
+EnvironmentFile=-%h/.config/supreme/env
+ExecStart=@PYTHON@ -m supreme backup
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=@FRAMEWORK@/var

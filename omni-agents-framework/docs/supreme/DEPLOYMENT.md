@@ -1,0 +1,70 @@
+# Guide de déploiement OMNIBRAIN SUPREME 1.3.0
+
+Racine dépôt : `skills-collection/`. Framework : `skills-collection/omni-agents-framework/`.
+
+## Démarrage gratuit (local / sandbox)
+```bash
+cd omni-agents-framework
+python3 -m supreme catalog          # génère le catalogue 1000 agents
+python3 -m supreme sync             # charge le registre SQLite
+python3 -m supreme evaluate --activate   # valide + active sur preuve
+python3 -m supreme serve --port 8765     # API + tableau de bord
+```
+Aucune dépendance externe, aucun compte, aucun abonnement. SQLite local (`var/supreme/`).
+
+## Preview navigateur (Android compatible)
+Le serveur bind `0.0.0.0`. Dashboard mobile-first sur `/`. Jeton admin **jamais affiché** ;
+stocké dans `omni-agents-framework/var/supreme/api_token.txt` (`0600`, gitignoré).
+Pour la lecture anonyme en preview : `SUPREME_ALLOW_ANON_READ=1`. Les écritures exigent le jeton.
+Une preview navigateur locale n'est pas un déploiement cloud public.
+
+## GitHub
+- Code, profils, compétences, configurations versionnés dans le dépôt.
+- CI `.github/workflows/omnibrain-supreme.yml` : catalogue + tests sur Python 3.11/3.12/3.13.
+- Pull Requests documentées ; **aucune fusion automatique** (décision humaine).
+- Promotion vers `omni-agents-framework` autonome : **bloquée par 403** (jeton GitHub App),
+  documentée dans `docs/PROMOTION-403.md`, jamais contournée.
+
+## Migration 1.2.1 → 1.3.0 (schéma SQLite v3)
+1. Arrêter proprement les workers/ordonnanceurs et le serveur API (`SIGTERM`).
+2. Sauvegarder : `python3 -m supreme backup` ; vérifier l'intégrité du backup.
+3. Démarrer 1.3.0 : `init_db` applique les migrations additives v2→v3 sans supprimer de données.
+4. Auditer : `python3 -m supreme audit` ; contrôler `schema_version=3`, catalogue, sécurité, budget.
+5. Redémarrer workers/API. Aucune campagne LLM n'est lancée automatiquement.
+6. Connecter un fournisseur seulement via le chemin sécurisé de `PROVIDERS.md`, puis activer par paliers.
+
+## Fournisseurs IA (optionnels, fermés par défaut)
+- `MISTRAL_API_KEY` injectée par un secret manager, ou `MISTRAL_API_KEY_FILE` pointant vers un fichier privé 0600.
+- Saisie interactive : `python3 -m supreme providers --connect mistral` (terminal privé, pas de secret dans le chat).
+- Découverte : `python3 -m supreme providers --verify mistral`. Inférence : prix attestés + autorisation humaine bornée.
+- Aucun secret dans le dépôt, les journaux, les rapports ou l'API. Aucune dépense sans accord explicite.
+
+## Cloud (évolution, sur autorisation)
+L'architecture SQLite/stdlib peut évoluer vers un service managé (Postgres, file de messages,
+workers) sans réécriture des interfaces. Aucun fournisseur cloud n'est déployé ni payé
+actuellement. Toute dépense nécessite une approbation humaine explicite (niveau critique).
+
+## Variables d'environnement
+| Variable | Rôle |
+| --- | --- |
+| `SUPREME_VAR_DIR` | Répertoire des données runtime (défaut `var/supreme`) |
+| `SUPREME_API_TOKEN` | Jeton admin API (sinon généré) |
+| `SUPREME_ALLOW_ANON_READ` | `1` = lecture anonyme (preview) |
+| `OPENAI_API_KEY` / `MISTRAL_API_KEY` / … | Fournisseurs IA (optionnels, non configurés) |
+
+## Montée en charge horizontale réelle (v1.3.0, locale)
+La file de missions est persistante (SQLite WAL) et les workers sont des processus séparés
+avec propriétaire, bail expirant, heartbeat et fencing :
+```bash
+# Terminal 1 : API
+python3 -m supreme serve --port 8765 --host 0.0.0.0
+# Terminal 2..N : workers (pas de double commit ; reprise exclusive après crash)
+python3 -m supreme worker --interval 1 --lease-seconds 30 --heartbeat-seconds 5
+# Apprentissage périodique contrôlé
+python3 -m supreme learn --periodic --interval 300 --lease-seconds 30 --heartbeat-seconds 5
+```
+- Soumettre avec `run: false` (API) pour mettre en file ; les workers consomment.
+- Arrêt propre : `SIGINT`/`SIGTERM`. Reprise après `SIGKILL` testée en vrais processus
+  (`omni-agents-framework/tests/test_supreme_hardening.py`).
+- **Cloud non déployé** : cette architecture est prête à être répliquée (workers en conteneurs),
+  mais aucun déploiement cloud n'existe tant qu'il n'est pas autorisé et effectué.

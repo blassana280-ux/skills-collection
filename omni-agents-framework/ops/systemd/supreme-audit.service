@@ -1,0 +1,15 @@
+[Unit]
+Description=OmniBrain SUPREME — audit + scan sécurité quotidiens
+
+[Service]
+Type=oneshot
+WorkingDirectory=@FRAMEWORK@
+EnvironmentFile=-%h/.config/supreme/env
+ExecStart=@PYTHON@ -m supreme audit
+ExecStart=@PYTHON@ -m supreme guardian
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=@FRAMEWORK@/var
