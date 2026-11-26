@@ -1,0 +1,65 @@
+{
+  "policy": "PASS",
+  "pinned_dependencies": 11,
+  "unpinned_or_mismatched": [],
+  "packages": [
+    {
+      "name": "fastapi",
+      "pinned": "0.115.6",
+      "installed": "0.115.6"
+    },
+    {
+      "name": "uvicorn",
+      "pinned": "0.34.0",
+      "installed": "0.34.0"
+    },
+    {
+      "name": "pydantic",
+      "pinned": "2.10.4",
+      "installed": "2.10.4"
+    },
+    {
+      "name": "email-validator",
+      "pinned": "2.2.0",
+      "installed": "2.2.0"
+    },
+    {
+      "name": "httpx",
+      "pinned": "0.28.1",
+      "installed": "0.28.1"
+    },
+    {
+      "name": "SQLAlchemy",
+      "pinned": "2.0.36",
+      "installed": "2.0.36"
+    },
+    {
+      "name": "PyJWT",
+      "pinned": "2.10.1",
+      "installed": "2.10.1"
+    },
+    {
+      "name": "python-dotenv",
+      "pinned": "1.0.1",
+      "installed": "1.0.1"
+    },
+    {
+      "name": "PyYAML",
+      "pinned": "6.0.2",
+      "installed": "6.0.2"
+    },
+    {
+      "name": "pytest",
+      "pinned": "8.3.4",
+      "installed": "8.3.4"
+    },
+    {
+      "name": "pytest-asyncio",
+      "pinned": "0.25.0",
+      "installed": "0.25.0"
+    }
+  ],
+  "local_cve_scan": "non exécuté (accès réseau restreint dans ce contexte)",
+  "ci_cve_scan": "pip-audit -r requirements.txt (GitHub Actions, réseau runner)",
+  "note": "Les dépendances optionnelles commentées ne sont pas exigées."
+}

@@ -1,0 +1,1 @@
+"""OMNI-RESEARCH 100."""

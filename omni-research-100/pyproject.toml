@@ -1,0 +1,30 @@
+[project]
+name = "omni-research-100"
+version = "1.0.0"
+description = "Plateforme de recherche multi-agents (100 agents, 10 divisions, 3 modes)"
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-q --strict-markers"
+markers = [
+  "unit: test unitaire",
+  "integration: pipeline complet hors ligne",
+  "api: endpoints HTTP",
+  "providers: connecteurs de recherche",
+  "agents: profils spécialisés",
+  "concurrency: concurrence et limites",
+  "failure: pannes et bascule",
+  "security: sécurité",
+  "omnibrain: adaptateur OmniBrain",
+  "citations: preuves et citations",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

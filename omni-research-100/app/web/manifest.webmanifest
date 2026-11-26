@@ -1,0 +1,19 @@
+{
+  "name": "OMNI-RESEARCH 100",
+  "short_name": "OR100",
+  "description": "Plateforme de recherche multi-agents (100 agents, 10 divisions, 3 modes)",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1020",
+  "theme_color": "#0b1020",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

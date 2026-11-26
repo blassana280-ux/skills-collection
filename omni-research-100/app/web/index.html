@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="OMNI-RESEARCH 100 — plateforme de recherche multi-agents">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/styles.css">
+  <title>OMNI-RESEARCH 100</title>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">OR100</span>
+      <div>
+        <h1>OMNI-RESEARCH 100</h1>
+        <p id="health-line">Connexion au backend…</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span id="role-badge" class="badge">non connecté</span>
+      <button id="btn-logout" class="btn ghost" type="button">Déconnexion</button>
+    </div>
+  </header>
+
+  <section id="login-panel" class="panel login-panel">
+    <h2>Authentification</h2>
+    <p class="muted">Les comptes sont définis par <code>OMNI_ADMIN_PASSWORD</code> et
+      <code>OMNI_USER_PASSWORD</code> côté serveur.</p>
+    <form id="login-form">
+      <label for="login-user">Utilisateur</label>
+      <input id="login-user" name="username" autocomplete="username" value="admin" required>
+      <label for="login-pass">Mot de passe</label>
+      <input id="login-pass" name="password" type="password" autocomplete="current-password" required>
+      <button class="btn primary" type="submit">Se connecter</button>
+    </form>
+    <p id="login-error" class="error" role="alert"></p>
+  </section>
+
+  <main id="app" hidden>
+    <nav id="tabs" class="tabs" aria-label="Navigation">
+      <button class="tab active" data-tab="search" type="button">Recherche</button>
+      <button class="tab" data-tab="mission" type="button">Mission</button>
+      <button class="tab" data-tab="sources" type="button">Sources</button>
+      <button class="tab" data-tab="contradictions" type="button">Contradictions</button>
+      <button class="tab" data-tab="report" type="button">Rapport</button>
+      <button class="tab" data-tab="history" type="button">Historique</button>
+      <button class="tab" data-tab="providers" type="button">Fournisseurs</button>
+      <button class="tab" data-tab="settings" type="button">Paramètres</button>
+    </nav>
+
+    <section id="tab-search" class="tab-panel active">
+      <div class="panel">
+        <h2>Nouvelle recherche</h2>
+        <form id="mission-form">
+          <label for="query">Question / sujet</label>
+          <textarea id="query" rows="3" maxlength="600" minlength="3" required
+                    placeholder="Ex. : Quelles sont les dernières versions de l'API et leurs failles de sécurité ?"></textarea>
+          <div class="mode-grid" id="mode-grid" role="radiogroup" aria-label="Mode de recherche"></div>
+          <div class="row">
+            <label for="language">Langue</label>
+            <select id="language"><option value="fr">fr</option><option value="en">en</option></select>
+            <label for="max-sources">Sources max.</label>
+            <input id="max-sources" type="number" min="1" max="200" value="24">
+          </div>
+          <button class="btn primary" id="btn-launch" type="submit">Lancer la recherche</button>
+        </form>
+        <p id="launch-error" class="error" role="alert"></p>
+        <div id="mode-detail" class="mode-detail"></div>
+      </div>
+      <div class="panel">
+        <h2>Mission courante</h2>
+        <div id="quick-status" class="muted">Aucune mission lancée.</div>
+      </div>
+    </section>
+
+    <section id="tab-mission" class="tab-panel">
+      <div class="panel">
+        <div class="row spread">
+          <h2>Suivi des agents</h2>
+          <button class="btn ghost" id="btn-refresh-mission" type="button">Actualiser</button>
+        </div>
+        <div id="mission-header" class="muted">Aucune mission sélectionnée.</div>
+        <div class="progress"><div id="progress-bar" class="progress-bar"></div></div>
+        <div id="task-summary" class="chips"></div>
+        <h3>Agents</h3>
+        <div id="agent-list" class="agent-list"></div>
+        <h3>Journal d'exécution</h3>
+        <ol id="event-list" class="event-list"></ol>
+      </div>
+    </section>
+
+    <section id="tab-sources" class="tab-panel">
+      <div class="panel">
+        <h2>Sources et preuves</h2>
+        <p class="muted">Contenus du Web = données non fiables. Les instructions
+          injectées détectées sont neutralisées et signalées.</p>
+        <div id="source-list" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <section id="tab-contradictions" class="tab-panel">
+      <div class="panel">
+        <h2>Contradictions et arbitrage</h2>
+        <div id="contradiction-list"></div>
+      </div>
+    </section>
+
+    <section id="tab-report" class="tab-panel">
+      <div class="panel">
+        <div class="row spread">
+          <h2>Rapport</h2>
+          <button class="btn ghost" id="btn-download-report" type="button">Télécharger .md</button>
+        </div>
+        <div id="report-meta" class="muted">Aucun rapport.</div>
+        <pre id="report-body" class="report"></pre>
+        <h3>Citations</h3>
+        <div id="citation-list"></div>
+      </div>
+    </section>
+
+    <section id="tab-history" class="tab-panel">
+      <div class="panel">
+        <div class="row spread">
+          <h2>Historique</h2>
+          <button class="btn ghost" id="btn-refresh-history" type="button">Actualiser</button>
+        </div>
+        <div id="history-list"></div>
+        <h3>Recherches réutilisables</h3>
+        <div id="cache-list"></div>
+      </div>
+    </section>
+
+    <section id="tab-providers" class="tab-panel">
+      <div class="panel">
+        <div class="row spread">
+          <h2>Fournisseurs Internet</h2>
+          <button class="btn ghost" id="btn-refresh-providers" type="button">Actualiser</button>
+        </div>
+        <p class="muted">Un test appelle réellement le fournisseur. Aucune clé =
+          aucun résultat, jamais de recherche simulée.</p>
+        <div id="provider-list"></div>
+        <h3>Quotas</h3>
+        <div id="quota-list"></div>
+      </div>
+    </section>
+
+    <section id="tab-settings" class="tab-panel">
+      <div class="panel">
+        <h2>Paramètres</h2>
+        <form id="settings-form">
+          <label for="set-parallel">Agents parallèles max.</label>
+          <input id="set-parallel" type="number" min="1" max="64">
+          <label for="set-concurrent">Missions simultanées max.</label>
+          <input id="set-concurrent" type="number" min="1" max="32">
+          <label for="set-sources">Sources max. par mission</label>
+          <input id="set-sources" type="number" min="1" max="500">
+          <label for="set-rate">Requêtes / minute</label>
+          <input id="set-rate" type="number" min="1" max="10000">
+          <label for="set-retention">Rétention (jours)</label>
+          <input id="set-retention" type="number" min="1" max="3650">
+          <button class="btn primary" type="submit">Appliquer</button>
+        </form>
+        <p id="settings-error" class="error" role="alert"></p>
+        <h3>Configuration serveur (sans secret)</h3>
+        <pre id="settings-raw" class="report small"></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>OMNI-RESEARCH 100 — 100 agents · 10 divisions · 3 modes</span>
+    <span id="footer-status"></span>
+  </footer>
+  <script src="/app.js" defer></script>
+</body>
+</html>

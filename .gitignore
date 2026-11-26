@@ -29,3 +29,6 @@ scripts/*count*.py
 
 # Optional baseline for legacy JS validator (scripts/validate-skills.js)
 validation-baseline.json
+
+# Environnement Python local de l agent Arena (non versionne)
+.venv/

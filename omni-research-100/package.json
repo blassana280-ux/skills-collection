@@ -1,0 +1,12 @@
+{
+  "name": "omni-research-100-ui-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tests DOM de l'interface OMNI-RESEARCH 100 (hors production)",
+  "scripts": {
+    "test:ui": "node --test tests/test_web_ui.test.js tests/test_web_ui_dom.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "25.0.1"
+  }
+}

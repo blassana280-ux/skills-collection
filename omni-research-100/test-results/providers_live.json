@@ -1,0 +1,61 @@
+{
+  "query": "open source intelligence",
+  "network_used": true,
+  "simulated_results": false,
+  "providers": [
+    {
+      "provider": "searxng",
+      "configured": true,
+      "enabled": true,
+      "status_before": "configured",
+      "sources": 0,
+      "verified_live": false,
+      "status": "error",
+      "error_type": "ConnectError",
+      "detail": "[Errno -2] Name or service not known",
+      "latency_ms": 21.2
+    },
+    {
+      "provider": "tavily",
+      "configured": false,
+      "enabled": true,
+      "status_before": "not_configured",
+      "sources": 0,
+      "verified_live": false,
+      "status": "not_configured",
+      "detail": "aucun appel effectué (configuration absente ou désactivé)"
+    },
+    {
+      "provider": "brave",
+      "configured": false,
+      "enabled": true,
+      "status_before": "not_configured",
+      "sources": 0,
+      "verified_live": false,
+      "status": "not_configured",
+      "detail": "aucun appel effectué (configuration absente ou désactivé)"
+    },
+    {
+      "provider": "exa",
+      "configured": false,
+      "enabled": true,
+      "status_before": "not_configured",
+      "sources": 0,
+      "verified_live": false,
+      "status": "not_configured",
+      "detail": "aucun appel effectué (configuration absente ou désactivé)"
+    },
+    {
+      "provider": "firecrawl",
+      "configured": false,
+      "enabled": true,
+      "status_before": "not_configured",
+      "sources": 0,
+      "verified_live": false,
+      "status": "not_configured",
+      "detail": "aucun appel effectué (configuration absente ou désactivé)"
+    }
+  ],
+  "live_verified": [],
+  "conclusion": "Aucun fournisseur n'a pu être vérifié en direct : aucune clé/service joignable. Les connecteurs restent préparés et documentés, sans résultat fictif."
+}

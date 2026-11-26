@@ -1,0 +1,16 @@
+{
+  "date_utc": "2026-11-03",
+  "context": "Application réelle lancée par uvicorn sur 0.0.0.0:8000 (aperçu local, aucune infrastructure payante)",
+  "checks": {
+    "GET /api/health": {"http": 200, "agents": 100, "database": true, "providers_configured": [], "default_secret_in_use": false},
+    "GET /": {"http": 200, "content_type": "text/html; charset=utf-8"},
+    "GET /manifest.webmanifest": {"http": 200},
+    "POST /api/auth/login": {"http": 200, "role": "admin", "token_emitted": true},
+    "GET /api/providers": {"http": 200, "searxng_status": "not_configured", "verified_live": false},
+    "GET /api/agents/validation": {"http": 200, "valid": true, "agents": 100, "handlers": 100, "divisions": {"WEB": 10, "DEEP": 10, "NEWS": 10, "SCI": 10, "TECH": 10, "OSINT": 10, "SOC": 10, "FACT": 10, "DATA": 10, "SYN": 10}},
+    "POST /api/missions (fast)": {"http": 202, "mission_id": "mission-2610f38a5ffe41f2"},
+    "GET /api/missions/{id}": {"http": 200, "status": "insufficient_evidence", "sources": 0, "error": ""},
+    "GET /api/missions/{id}/report": {"http": 200, "verdict": "NEEDS_WORK", "markdown_chars": 3276}
+  },
+  "conclusion": "Aucune clé API fournie : la mission retourne zéro source et un rapport expliquant l'absence de preuves. Aucun résultat de recherche réel n'a été simulé."
+}

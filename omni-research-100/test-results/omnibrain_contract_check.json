@@ -1,0 +1,113 @@
+{
+  "status": "COMPATIBILITÉ VÉRIFIÉE CONTRE LES SOURCES RÉELLES",
+  "sources_read": [
+    "omnibrain_md",
+    "permissions",
+    "queue",
+    "bridge"
+  ],
+  "contract_version": "1.0",
+  "checks": {
+    "gates": {
+      "ok": true,
+      "source": [
+        "arbitration",
+        "completeness",
+        "evidence",
+        "execution",
+        "secrets",
+        "trace"
+      ],
+      "adapter": [
+        "completeness",
+        "evidence",
+        "execution",
+        "arbitration",
+        "secrets",
+        "trace"
+      ]
+    },
+    "arbitration": {
+      "ok": true,
+      "source_rule_present": true,
+      "implementation_ordered": true
+    },
+    "dangerous_actions": {
+      "ok": true,
+      "source": [
+        "merge_pr",
+        "force_push",
+        "delete_repo",
+        "delete_branch",
+        "rotate_secret",
+        "write_main"
+      ],
+      "denied_by_adapter": [
+        "merge_pr",
+        "force_push",
+        "delete_repo",
+        "delete_branch",
+        "rotate_secret",
+        "write_main",
+        "delete_data",
+        "change_permissions",
+        "disable_protection",
+        "purge_evidence",
+        "deploy_production"
+      ]
+    },
+    "queue_protocol": {
+      "ok": true,
+      "source_files": [
+        "omni-inbox.jsonl",
+        "cf100-outbox.jsonl",
+        "omni-done.jsonl"
+      ],
+      "adapter": {
+        "inbox": "omni-inbox.jsonl",
+        "outbox": "cf100-outbox.jsonl",
+        "done": "omni-done.jsonl"
+      }
+    },
+    "registry_export": {
+      "ok": true,
+      "agents_exported": 100,
+      "keys": [
+        "boundaries",
+        "brief_template",
+        "id",
+        "provenance",
+        "skills",
+        "specialties",
+        "title"
+      ]
+    },
+    "alignment": {
+      "ok": true,
+      "adapter_alignment": {
+        "common": [
+          "delete_branch",
+          "delete_repo",
+          "force_push",
+          "merge_pr",
+          "rotate_secret",
+          "write_main"
+        ],
+        "or100_only": [
+          "change_permissions",
+          "delete_data",
+          "deploy_production",
+          "disable_protection",
+          "purge_evidence"
+        ],
+        "omni_only": [],
+        "aligned": true
+      }
+    }
+  },
+  "limits": [
+    "Vérification de conformité au contrat et à l'adaptateur OR100 uniquement.",
+    "Aucun orchestrateur OmniBrain externe n'a été lancé (dépôts non modifiés).",
+    "Les sources sont lues en lecture seule via l'API GitHub publique."
+  ]
+}

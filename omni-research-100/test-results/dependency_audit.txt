@@ -1,0 +1,5 @@
+{
+  "policy": "PASS",
+  "pinned_dependencies": 11,
+  "unpinned_or_mismatched": []
+}
