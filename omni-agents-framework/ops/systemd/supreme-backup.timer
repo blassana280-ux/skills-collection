@@ -1,0 +1,11 @@
+[Unit]
+Description=Sauvegarde quotidienne OMNIBRAIN SUPREME
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=300
+Persistent=true
+Unit=supreme-backup.service
+
+[Install]
+WantedBy=timers.target

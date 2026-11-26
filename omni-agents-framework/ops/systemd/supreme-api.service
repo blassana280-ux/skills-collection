@@ -1,0 +1,24 @@
+[Unit]
+Description=OmniBrain SUPREME — API et dashboard (local)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=@FRAMEWORK@
+Environment=SUPREME_BIND=127.0.0.1
+Environment=SUPREME_ALLOW_ANON_READ=0
+EnvironmentFile=-%h/.config/supreme/env
+ExecStart=@PYTHON@ -m supreme serve --port 8765 --host 127.0.0.1
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGTERM
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=@FRAMEWORK@/var
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,21 @@
+[Unit]
+Description=OmniBrain SUPREME — protection continue (Guardian)
+
+[Service]
+Type=simple
+WorkingDirectory=@FRAMEWORK@
+EnvironmentFile=-%h/.config/supreme/env
+ExecStart=@PYTHON@ -m supreme guardian --periodic --interval 900 --lease-seconds 60 --heartbeat-seconds 10 --scheduler-id systemd
+Restart=on-failure
+RestartSec=10
+KillSignal=SIGTERM
+TimeoutStopSec=60
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=@FRAMEWORK@/var
+
+[Install]
+WantedBy=default.target

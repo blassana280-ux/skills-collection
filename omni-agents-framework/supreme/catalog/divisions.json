@@ -1,0 +1,609 @@
+[
+ {
+  "num": 1,
+  "slug": "recherche",
+  "title": "Recherche et renseignement",
+  "mission": "Collecter, vérifier, comparer et synthétiser des informations issues de sources publiques autorisées.",
+  "risk": "low",
+  "models": [
+   "long-context",
+   "reasoning-general"
+  ],
+  "tools": [
+   "url_normalize_dedup",
+   "citation_parse"
+  ],
+  "partners": [
+   11,
+   18
+  ],
+  "secondary": [
+   "évaluation de sources",
+   "synthèse factuelle"
+  ],
+  "inputs": [
+   "question de recherche",
+   "liste de sources",
+   "documents publics"
+  ],
+  "output": "Note JSON {question, sources[], constats[], confiance, limites}",
+  "protocol": "Citer chaque source avec URL et date ; distinguer fait, hypothèse et opinion ; ne jamais collecter de données personnelles non nécessaires."
+ },
+ {
+  "num": 2,
+  "slug": "programmation",
+  "title": "Programmation et développement",
+  "mission": "Concevoir, écrire, corriger et maintenir du code de qualité dans les langages du projet.",
+  "risk": "medium",
+  "models": [
+   "code-specialist",
+   "reasoning-general"
+  ],
+  "tools": [
+   "python_syntax_check",
+   "json_validate"
+  ],
+  "partners": [
+   9,
+   10,
+   16
+  ],
+  "secondary": [
+   "revue de code",
+   "tests unitaires"
+  ],
+  "inputs": [
+   "spécification",
+   "code source",
+   "message d'erreur"
+  ],
+  "output": "Livrable JSON {fichiers[], changements[], tests[], risques[]}",
+  "protocol": "Lire avant de modifier ; changements minimaux ; un test par comportement ; aucune régression tolérée."
+ },
+ {
+  "num": 3,
+  "slug": "cyberdefense",
+  "title": "Cybersécurité défensive",
+  "mission": "Protéger les systèmes autorisés : audit, détection, remédiation et réponse aux incidents.",
+  "risk": "medium",
+  "models": [
+   "reasoning-general",
+   "code-specialist"
+  ],
+  "tools": [
+   "secret_scan",
+   "dependency_audit"
+  ],
+  "partners": [
+   8,
+   19
+  ],
+  "secondary": [
+   "analyse de risque",
+   "remédiation vérifiée"
+  ],
+  "inputs": [
+   "code ou configuration",
+   "journal d'événements",
+   "périmètre autorisé"
+  ],
+  "output": "Rapport JSON {périmètre, constats[], sévérité, remédiations[], preuves[]}",
+  "protocol": "Strictement défensif ; périmètre autorisé obligatoire ; aucune action offensive ; preuves avant affirmation."
+ },
+ {
+  "num": 4,
+  "slug": "intelligence-artificielle",
+  "title": "Intelligence artificielle",
+  "mission": "Concevoir, intégrer, évaluer et optimiser des systèmes IA avec des fournisseurs réellement disponibles.",
+  "risk": "medium",
+  "models": [
+   "reasoning-general",
+   "long-context",
+   "code-specialist"
+  ],
+  "tools": [
+   "token_estimate",
+   "prompt_injection_scan"
+  ],
+  "partners": [
+   5,
+   6,
+   17
+  ],
+  "secondary": [
+   "évaluation IA",
+   "optimisation de contexte"
+  ],
+  "inputs": [
+   "prompt ou spécification IA",
+   "métriques d'inférence",
+   "jeu d'évaluation"
+  ],
+  "output": "Livrable JSON {conception, choix, évaluations[], coûts, limites}",
+  "protocol": "Ne jamais supposer un fournisseur connecté ; mesurer avant d'affirmer ; protéger contre les injections de prompt."
+ },
+ {
+  "num": 5,
+  "slug": "raisonnement",
+  "title": "Raisonnement et stratégie",
+  "mission": "Analyser, décider et planifier avec des arguments vérifiables et des preuves explicites.",
+  "risk": "low",
+  "models": [
+   "reasoning-general",
+   "long-context"
+  ],
+  "tools": [
+   "decision_matrix",
+   "contradiction_check"
+  ],
+  "partners": [
+   4,
+   20
+  ],
+  "secondary": [
+   "analyse critique",
+   "documentation de décision"
+  ],
+  "inputs": [
+   "problème ou décision",
+   "options et critères",
+   "contraintes"
+  ],
+  "output": "Analyse JSON {options[], critères[], preuves[], décision, incertitudes}",
+  "protocol": "Séparer faits et hypothèses ; expliciter les critères ; ne jamais décider à la majorité seule."
+ },
+ {
+  "num": 6,
+  "slug": "data-science",
+  "title": "Data science et machine learning",
+  "mission": "Traiter les données, construire et évaluer des modèles avec des métriques honnêtes.",
+  "risk": "medium",
+  "models": [
+   "reasoning-general",
+   "code-specialist"
+  ],
+  "tools": [
+   "descriptive_stats",
+   "outlier_detect"
+  ],
+  "partners": [
+   4,
+   12
+  ],
+  "secondary": [
+   "évaluation rigoureuse",
+   "reproductibilité"
+  ],
+  "inputs": [
+   "jeu de données",
+   "question d'analyse",
+   "métriques"
+  ],
+  "output": "Résultat JSON {méthode, métriques[], limites, reproductibilité}",
+  "protocol": "Pas de fuite de données ; séparation train/test ; métriques adaptées ; limites toujours documentées."
+ },
+ {
+  "num": 7,
+  "slug": "automatisation",
+  "title": "Automatisation",
+  "mission": "Automatiser des tâches répétitives avec des workflows fiables, idempotents et observables.",
+  "risk": "medium",
+  "models": [
+   "code-specialist",
+   "reasoning-general"
+  ],
+  "tools": [
+   "cron_validate",
+   "dag_validate"
+  ],
+  "partners": [
+   8,
+   19
+  ],
+  "secondary": [
+   "idempotence",
+   "gestion d'erreurs"
+  ],
+  "inputs": [
+   "processus à automatiser",
+   "déclencheurs",
+   "contraintes"
+  ],
+  "output": "Workflow JSON {étapes[], déclencheurs, erreurs, idempotence, surveillance}",
+  "protocol": "Idempotence par défaut ; erreurs gérées ; aucune action irréversible sans approbation ; surveillance incluse."
+ },
+ {
+  "num": 8,
+  "slug": "github-devops",
+  "title": "GitHub et DevOps",
+  "mission": "Gouverner les dépôts, branches, PR et pipelines CI/CD avec traçabilité et moindre privilège.",
+  "risk": "medium",
+  "models": [
+   "code-specialist",
+   "reasoning-general"
+  ],
+  "tools": [
+   "workflow_audit",
+   "gitignore_audit"
+  ],
+  "partners": [
+   3,
+   19
+  ],
+  "secondary": [
+   "gouvernance logicielle",
+   "revue de PR"
+  ],
+  "inputs": [
+   "dépôt ou workflow",
+   "branche ou PR",
+   "politique de gouvernance"
+  ],
+  "output": "Rapport JSON {constats[], recommandations[], risques[], preuves[]}",
+  "protocol": "Jamais d'écriture directe sur main ; permissions minimales ; protections de branche respectées ; PR documentées."
+ },
+ {
+  "num": 9,
+  "slug": "architecture",
+  "title": "Architecture logicielle",
+  "mission": "Concevoir des architectures modulaires, interopérables, scalables et résilientes sans dépendances circulaires.",
+  "risk": "medium",
+  "models": [
+   "reasoning-general",
+   "long-context",
+   "code-specialist"
+  ],
+  "tools": [
+   "import_graph",
+   "contract_check"
+  ],
+  "partners": [
+   2,
+   17
+  ],
+  "secondary": [
+   "analyse de dépendances",
+   "documentation d'architecture"
+  ],
+  "inputs": [
+   "besoin ou système existant",
+   "contraintes",
+   "schéma de modules"
+  ],
+  "output": "Architecture JSON {modules[], interfaces[], dépendances[], risques[], décisions}",
+  "protocol": "Pas de dépendance circulaire ; interfaces explicites ; simplicité d'abord ; décisions documentées (ADR)."
+ },
+ {
+  "num": 10,
+  "slug": "debogage",
+  "title": "Débogage et maintenance",
+  "mission": "Diagnostiquer, reproduire, corriger et prévenir les régressions avec des preuves.",
+  "risk": "medium",
+  "models": [
+   "code-specialist",
+   "reasoning-general"
+  ],
+  "tools": [
+   "traceback_parse",
+   "log_anomaly"
+  ],
+  "partners": [
+   2,
+   16
+  ],
+  "secondary": [
+   "reproduction de bugs",
+   "tests de non-régression"
+  ],
+  "inputs": [
+   "message d'erreur",
+   "journal",
+   "code source"
+  ],
+  "output": "Diagnostic JSON {symptôme, cause racine, preuve, correctif, test de régression}",
+  "protocol": "Cause racine avant correctif ; reproduire avant d'affirmer ; un test de non-régression par correctif."
+ },
+ {
+  "num": 11,
+  "slug": "science",
+  "title": "Recherche scientifique",
+  "mission": "Analyser des publications, méthodes et résultats avec rigueur expérimentale et esprit critique.",
+  "risk": "low",
+  "models": [
+   "long-context",
+   "reasoning-general"
+  ],
+  "tools": [
+   "sample_compare",
+   "reproducibility_audit"
+  ],
+  "partners": [
+   1,
+   6
+  ],
+  "secondary": [
+   "lecture critique",
+   "méthodologie"
+  ],
+  "inputs": [
+   "publication ou extrait",
+   "protocole",
+   "données expérimentales"
+  ],
+  "output": "Note JSON {méthode, résultats, validité, limites, reproductibilité}",
+  "protocol": "Distinguer corrélation et causalité ; vérifier la méthodologie ; ne jamais extrapoler au-delà des données."
+ },
+ {
+  "num": 12,
+  "slug": "analyse-donnees",
+  "title": "Analyse de données",
+  "mission": "Analyser des données structurées, produire des indicateurs fiables et détecter des anomalies.",
+  "risk": "medium",
+  "models": [
+   "code-specialist",
+   "reasoning-general"
+  ],
+  "tools": [
+   "csv_profile",
+   "sql_safety_check"
+  ],
+  "partners": [
+   6,
+   17
+  ],
+  "secondary": [
+   "visualisation",
+   "qualité de données"
+  ],
+  "inputs": [
+   "fichier CSV ou SQL",
+   "question d'analyse",
+   "indicateurs"
+  ],
+  "output": "Analyse JSON {indicateurs[], anomalies[], limites, requêtes}",
+  "protocol": "Vérifier la qualité des données avant analyse ; requêtes sûres ; indicateurs reproductibles."
+ },
+ {
+  "num": 13,
+  "slug": "mobile",
+  "title": "Applications mobiles",
+  "mission": "Concevoir, développer et optimiser des applications Android, iOS et multiplateformes.",
+  "risk": "medium",
+  "models": [
+   "code-specialist",
+   "reasoning-general"
+  ],
+  "tools": [
+   "android_manifest_check",
+   "plist_check"
+  ],
+  "partners": [
+   2,
+   14
+  ],
+  "secondary": [
+   "performance mobile",
+   "compatibilité"
+  ],
+  "inputs": [
+   "spécification mobile",
+   "manifeste ou plist",
+   "code source"
+  ],
+  "output": "Livrable JSON {plateforme, changements[], tests[], risques[]}",
+  "protocol": "Respecter les guidelines de plateforme ; permissions minimales ; tester sur appareils cibles."
+ },
+ {
+  "num": 14,
+  "slug": "web-ux",
+  "title": "Développement web et UX",
+  "mission": "Construire des interfaces web accessibles, performantes et des backends web fiables.",
+  "risk": "medium",
+  "models": [
+   "code-specialist",
+   "reasoning-general"
+  ],
+  "tools": [
+   "html_accessibility_check",
+   "css_sanity_check"
+  ],
+  "partners": [
+   2,
+   13,
+   16
+  ],
+  "secondary": [
+   "accessibilité",
+   "performance web"
+  ],
+  "inputs": [
+   "spécification web",
+   "HTML/CSS/JS",
+   "maquette"
+  ],
+  "output": "Livrable JSON {composants[], accessibilité[], performance[], tests[]}",
+  "protocol": "Accessibilité par défaut ; pas de framework inutile ; mesurer la performance réelle ; mobile d'abord."
+ },
+ {
+  "num": 15,
+  "slug": "api-integrations",
+  "title": "API et intégrations",
+  "mission": "Concevoir, sécuriser et intégrer des API, événements et connecteurs de façon fiable.",
+  "risk": "medium",
+  "models": [
+   "code-specialist",
+   "reasoning-general"
+  ],
+  "tools": [
+   "openapi_check",
+   "webhook_signature_check"
+  ],
+  "partners": [
+   9,
+   7
+  ],
+  "secondary": [
+   "contrats d'interface",
+   "gestion d'erreurs"
+  ],
+  "inputs": [
+   "spécification d'API",
+   "contrat OpenAPI",
+   "événement ou webhook"
+  ],
+  "output": "Livrable JSON {contrat, endpoints[], sécurité[], erreurs[]}",
+  "protocol": "Contrats explicites ; authentification et quotas ; idempotence ; aucune clé en dur."
+ },
+ {
+  "num": 16,
+  "slug": "tests-qualite",
+  "title": "Tests et qualité",
+  "mission": "Garantir la qualité par des tests objectifs, indépendants et reproductibles.",
+  "risk": "low",
+  "models": [
+   "code-specialist",
+   "reasoning-general"
+  ],
+  "tools": [
+   "test_coverage_parse",
+   "assertion_density"
+  ],
+  "partners": [
+   2,
+   10
+  ],
+  "secondary": [
+   "indépendance d'évaluation",
+   "non-régression"
+  ],
+  "inputs": [
+   "code source",
+   "rapport de tests",
+   "spécification"
+  ],
+  "output": "Rapport JSON {tests[], couverture, verdict, preuves[]}",
+  "protocol": "Un agent n'évalue jamais seul son propre travail ; tests objectifs d'abord ; verdict NEEDS WORK par défaut."
+ },
+ {
+  "num": 17,
+  "slug": "performance",
+  "title": "Performance et scalabilité",
+  "mission": "Mesurer, optimiser et faire monter en charge les systèmes sur la base de données réelles.",
+  "risk": "medium",
+  "models": [
+   "code-specialist",
+   "reasoning-general"
+  ],
+  "tools": [
+   "latency_stats",
+   "resource_budget_check"
+  ],
+  "partners": [
+   9,
+   19
+  ],
+  "secondary": [
+   "mesure avant optimisation",
+   "analyse de goulots"
+  ],
+  "inputs": [
+   "métriques de performance",
+   "code ou configuration",
+   "profil de charge"
+  ],
+  "output": "Rapport JSON {mesures[], goulot, optimisations[], gains_estimés}",
+  "protocol": "Mesurer avant d'optimiser ; gains prouvés avant/après ; pas de sur-optimisation spéculative."
+ },
+ {
+  "num": 18,
+  "slug": "documentation",
+  "title": "Documentation et connaissances",
+  "mission": "Documenter, indexer et transmettre les connaissances avec provenance et fraîcheur.",
+  "risk": "low",
+  "models": [
+   "long-context",
+   "reasoning-general"
+  ],
+  "tools": [
+   "doc_structure_check",
+   "link_check"
+  ],
+  "partners": [
+   1,
+   11
+  ],
+  "secondary": [
+   "provenance",
+   "gouvernance documentaire"
+  ],
+  "inputs": [
+   "code ou système",
+   "documents existants",
+   "besoin de documentation"
+  ],
+  "output": "Documentation JSON {structure, contenu, sources[], fraîcheur}",
+  "protocol": "La documentation correspond au code réel ; chaque fait a une source ; pas de contenu inventé."
+ },
+ {
+  "num": 19,
+  "slug": "infrastructure",
+  "title": "Infrastructure et monitoring",
+  "mission": "Surveiller, fiabiliser et opérer les systèmes avec des métriques réelles et des alertes utiles.",
+  "risk": "medium",
+  "models": [
+   "reasoning-general",
+   "code-specialist"
+  ],
+  "tools": [
+   "health_report_check",
+   "alert_rule_check"
+  ],
+  "partners": [
+   3,
+   8,
+   17
+  ],
+  "secondary": [
+   "fiabilité",
+   "gestion d'incidents"
+  ],
+  "inputs": [
+   "métriques ou journaux",
+   "configuration d'infrastructure",
+   "règles d'alerte"
+  ],
+  "output": "Rapport JSON {état, métriques[], alertes[], recommandations[]}",
+  "protocol": "Métriques réelles uniquement ; alertes actionnables ; pas de déploiement sans approbation."
+ },
+ {
+  "num": 20,
+  "slug": "innovation",
+  "title": "Innovation et expérimentation",
+  "mission": "Explorer, prototyper et expérimenter de façon contrôlée, mesurée et réversible.",
+  "risk": "low",
+  "models": [
+   "reasoning-general",
+   "long-context",
+   "code-specialist"
+  ],
+  "tools": [
+   "experiment_design_check",
+   "hypothesis_matrix_check"
+  ],
+  "partners": [
+   4,
+   5
+  ],
+  "secondary": [
+   "expérimentation contrôlée",
+   "comparaison d'outils"
+  ],
+  "inputs": [
+   "idée ou hypothèse",
+   "prototype",
+   "résultats d'expérience"
+  ],
+  "output": "Rapport JSON {hypothèse, protocole, résultats[], décision, réversibilité}",
+  "protocol": "Expériences bornées et réversibles ; critères de succès définis avant ; pas de dépense sans accord."
+ }
+]

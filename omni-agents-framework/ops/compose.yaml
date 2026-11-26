@@ -1,0 +1,66 @@
+# Déploiement local durable — aucune exposition publique par défaut.
+#   docker compose -f ops/compose.yaml up -d
+# Les ports sont liés à 127.0.0.1. Changer cela exige une autorisation humaine.
+# Les secrets sont injectés via un fichier privé hors dépôt (env_file), jamais ici.
+name: omnibrain-supreme
+
+x-common: &common
+  build:
+    context: ..
+    dockerfile: ops/Dockerfile
+  image: omnibrain-supreme:1.4.0
+  restart: unless-stopped
+  volumes:
+    - supreme-var:/data
+  environment:
+    SUPREME_VAR_DIR: /data
+    SUPREME_ALLOW_ANON_READ: "0"
+  env_file:
+    - path: ./supreme.env
+      required: false
+  security_opt:
+    - no-new-privileges:true
+  read_only: true
+  tmpfs:
+    - /tmp
+  user: "10001:10001"
+
+services:
+  api:
+    <<: *common
+    command: ["python3", "-m", "supreme", "serve", "--host", "0.0.0.0", "--port", "8765"]
+    ports:
+      - "127.0.0.1:8765:8765"
+
+  worker:
+    <<: *common
+    command: ["python3", "-m", "supreme", "worker", "--interval", "1",
+              "--lease-seconds", "30", "--heartbeat-seconds", "5", "--worker-id", "compose-worker"]
+    depends_on:
+      - api
+
+  learn:
+    <<: *common
+    command: ["python3", "-m", "supreme", "learn", "--periodic", "--interval", "900",
+              "--lease-seconds", "60", "--heartbeat-seconds", "10", "--scheduler-id", "compose"]
+    depends_on:
+      - api
+
+  guardian:
+    <<: *common
+    command: ["python3", "-m", "supreme", "guardian", "--periodic", "--interval", "900",
+              "--lease-seconds", "60", "--heartbeat-seconds", "10", "--scheduler-id", "compose"]
+    depends_on:
+      - api
+
+  backup:
+    <<: *common
+    # Sauvegarde quotidienne : le conteneur s'exécute une fois puis attend.
+    # En production, préférer un timer hôte (ops/systemd/supreme-backup.timer)
+    # ou `docker compose run --rm backup` planifié par cron.
+    command: ["python3", "-m", "supreme", "backup"]
+    restart: "no"
+    profiles: ["manual"]
+
+volumes:
+  supreme-var:
